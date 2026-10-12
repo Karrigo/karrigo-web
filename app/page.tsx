@@ -97,7 +97,7 @@ export default async function HomePage() {
         </Screen>
       </section>
 
-      {/* Real kitchens, real prices, scrolling past — the marketing page's
+      {/* Real kitchens, scrolling past — the marketing page's
           own appetiser. */}
       <div className="pt-xxl md:pt-gap-wide">
         <KitchenRail />

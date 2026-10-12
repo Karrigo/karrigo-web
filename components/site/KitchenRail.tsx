@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { dishes } from "@/lib/fixtures";
-import { formatKobo } from "@/lib/money";
 
 /**
  * An endlessly scrolling row of dish photos — pure CSS, no JS. The list is
@@ -25,11 +24,8 @@ export function KitchenRail() {
                     className="object-cover"
                   />
                 </div>
-                <div className="mt-md flex items-baseline justify-between">
+                <div className="mt-md">
                   <span className="text-site-label font-bold">{dish.name}</span>
-                  <span className="text-site-label text-accent-text font-bold">
-                    {formatKobo(dish.priceKobo)}
-                  </span>
                 </div>
               </div>
             ))}
