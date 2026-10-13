@@ -243,10 +243,15 @@ export const stores: Store[] = [
 ];
 
 export const dishes = [
-  { name: "Pounded yam & egusi", image: "/food/poundo.jpg", priceKobo: 330000 },
-  { name: "Jollof & chicken", image: "/food/jollof-chicken.jpg", priceKobo: 280000 },
-  { name: "Grilled chicken", image: "/food/barbeque.jpg", priceKobo: 450000 },
-  { name: "Suya, full wrap", image: "/food/meat.jpg", priceKobo: 150000 },
+  { image: "/food/poundo.jpg" },
+  { image: "/groceries/cutout/milo.webp" },
+  { image: "/food/jollof-chicken.jpg" },
+  { image: "/groceries/cutout/indomiepepper.webp" },
+  { image: "/food/barbeque.jpg" },
+  { image: "/groceries/cutout/tinpeakmilk.webp" },
+  { image: "/food/meat.jpg" },
+  { image: "/groceries/cutout/gpspaghetti.webp" },
+  { image: "/groceries/cutout/indomiecarton.webp" },
 ] as const;
 
 /** Each area's pill on the homepage's areas panel. The tones are the design's
