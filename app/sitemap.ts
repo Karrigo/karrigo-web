@@ -14,6 +14,7 @@ const PAGES: { path: string; priority: number }[] = [
   { path: "/contact", priority: 0.4 },
   { path: "/terms", priority: 0.2 },
   { path: "/privacy", priority: 0.2 },
+  { path: "/delete-account", priority: 0.2 },
 ];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
