@@ -5,6 +5,10 @@ import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { formatKobo } from "@/lib/money";
 import {
+  RIDER_STATES,
+  RIDER_STATE_LABEL,
+  matchesRiderState,
+  type RiderState,
   ORDER_FILTERS,
   ORDER_FILTER_LABEL,
   isUnassigned,
@@ -17,6 +21,7 @@ import { PAYMENT_LABEL, STAGE_LABEL } from "@/lib/admin/types";
 import type { AdminRole } from "@/lib/admin/types";
 import { CountTab, EmptyState, StatusChip, type Tone } from "@/components/admin/ui";
 
+import { RiderOperations } from "./RiderOperations";
 import { OrderDetail } from "./OrderDetail";
 import { useLiveElapsed } from "./useLiveElapsed";
 
@@ -38,12 +43,14 @@ export function OrdersBoard({
   // which may well be delivered or cancelled, so the filter opens wide enough
   // to contain it rather than showing an empty board.
   const [filter, setFilter] = useState<OrderFilter>(openOrder ? "all" : "active");
+  const [riderState, setRiderState] = useState<RiderState>("ALL");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(openOrder ?? null);
 
   const rows = orders
     .filter((order) => matchesFilter(order, filter))
-    .filter((order) => matchesQuery(order, query));
+    .filter((order) => matchesQuery(order, query))
+    .filter((order) => matchesRiderState(order, riderState));
 
   const selected =
     orders.find((order) => order.id === selectedId || order.code === selectedId) ??
@@ -63,6 +70,14 @@ export function OrdersBoard({
               onClick={() => setFilter(key)}
             />
           ))}
+          <select
+            aria-label="Filter by rider state"
+            value={riderState}
+            onChange={(event) => setRiderState(event.target.value as RiderState)}
+            className="bg-text/6 text-text h-8 rounded-pill px-3 text-xs font-medium focus-visible:outline-2 focus-visible:outline-accent"
+          >
+            {RIDER_STATES.map((state) => <option key={state} value={state}>{RIDER_STATE_LABEL[state]}</option>)}
+          </select>
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -79,7 +94,7 @@ export function OrdersBoard({
                 ? `No orders match “${query}”`
                 : orders.length === 0
                   ? "No orders yet"
-                  : `No ${filter === "all" ? "" : `${filter} `}orders`
+                  : riderState !== "ALL" ? `No ${RIDER_STATE_LABEL[riderState].toLowerCase()} orders in this view` : `No ${filter === "all" ? "" : `${filter} `}orders`
             }
             text={
               query
@@ -188,9 +203,7 @@ function OrderRow({
         <span className="text-text/55 text-[11.5px] font-light">{order.customerPhone}</span>
       </span>
       <span className="truncate">{order.kitchens}</span>
-      <span className={cn("truncate", unassigned && "text-warning")}>
-        {order.riderName ?? "Unassigned"}
-      </span>
+      <RiderOperations order={order} />
       <span className="flex flex-wrap gap-[5px]">
         <StatusChip tone={stage.tone}>{stage.label}</StatusChip>
         {late && <StatusChip tone="danger">Late</StatusChip>}

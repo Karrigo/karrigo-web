@@ -97,7 +97,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Request an OTP code by SMS — used only for signup phone verification and password reset, not routine login (see POST /auth/login). `intent` lets the server refuse before sending anything when the code could not help: signup on a number that already has a password (409, accountExists: true), reset on a number with no account (404, accountNotFound: true). */
+        /** Request an OTP code over WhatsApp — used only for signup phone verification and password reset, not routine login (see POST /auth/login). `intent` lets the server refuse before sending anything when the code could not help: signup on a number that already has a password (409, accountExists: true), reset on a number with no account (404, accountNotFound: true). */
         post: operations["AuthController_requestOtp"];
         delete?: never;
         options?: never;
@@ -2023,6 +2023,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/kitchen-console/kitchen/owner-photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload (or replace) the owner's photo. Required before approval. OWNER only. */
+        post: operations["KitchenConsoleController_uploadOwnerPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/kitchen-console/kitchen/cac": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload (or replace) the optional CAC certificate (image or PDF). OWNER only. */
+        post: operations["KitchenConsoleController_uploadCacDocument"];
+        /** Remove the CAC certificate. OWNER only. */
+        delete: operations["KitchenConsoleController_deleteCacDocument"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/kitchen-console/kitchen/photos/{id}": {
         parameters: {
             query?: never;
@@ -2835,6 +2870,7 @@ export interface components {
             phone: string;
             /** @enum {string} */
             intent: "signup" | "reset";
+            channel?: string;
         };
         RequestOtpResponseDto: Record<string, never>;
         RequestPhoneChangeDto: {
@@ -2901,6 +2937,7 @@ export interface components {
         };
         RequestKitchenOtpDto: {
             phone: string;
+            channel?: string;
         };
         RequestKitchenEmailOtpDto: {
             /** Format: email */
@@ -2938,6 +2975,12 @@ export interface components {
             missing: ("LOCATION" | "RIDER_FEE")[];
             /** @description Verification photos uploaded so far; the kitchen needs exactly KITCHEN_PHOTOS_REQUIRED. */
             verificationPhotoCount: number;
+            /** @description What an admin still needs before approving: location, photos, owner photo. Empty = onboarding done. */
+            onboardingMissing: ("LOCATION" | "VERIFICATION_PHOTOS" | "OWNER_PHOTO")[];
+            /** @description Short-lived signed URL of the owner's photo, if uploaded. Only on the kitchen's own profile read. */
+            ownerPhotoUrl?: string | null;
+            /** @description Short-lived signed URL of the optional CAC certificate, if uploaded. */
+            cacDocumentUrl?: string | null;
             ratingAvg: number;
             ratingsCount: number;
             servesFood: boolean;
@@ -3257,6 +3300,12 @@ export interface components {
             missing: ("LOCATION" | "RIDER_FEE")[];
             /** @description Verification photos uploaded so far; the kitchen needs exactly KITCHEN_PHOTOS_REQUIRED. */
             verificationPhotoCount: number;
+            /** @description What an admin still needs before approving: location, photos, owner photo. Empty = onboarding done. */
+            onboardingMissing: ("LOCATION" | "VERIFICATION_PHOTOS" | "OWNER_PHOTO")[];
+            /** @description Short-lived signed URL of the owner's photo, if uploaded. Only on the kitchen's own profile read. */
+            ownerPhotoUrl?: string | null;
+            /** @description Short-lived signed URL of the optional CAC certificate, if uploaded. */
+            cacDocumentUrl?: string | null;
             ratingAvg: number;
             ratingsCount: number;
             servesFood: boolean;
@@ -3543,11 +3592,32 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        AdminRiderWaitDto: {
+            /** @description True when unrecorded legacy intervals are excluded from the total. */
+            isPartial: boolean;
+            /** @description Unknown for legacy acceptances; live until the first acceptance. */
+            initialWaitSeconds: number | null;
+            totalWaitSeconds: number;
+            currentWaitSeconds: number;
+            /**
+             * Format: date-time
+             * @description Null when no wait is running, including terminal orders.
+             */
+            currentWaitStartedAt: string | null;
+            /** Format: date-time */
+            measuredAt: string;
+        };
         AdminOrderListItemDto: {
             customer: components["schemas"]["AdminPersonSummaryDto"];
             rider: components["schemas"]["AdminRiderSummaryDto"] | null;
             kitchenOrders: components["schemas"]["AdminOrderListKitchenDto"][];
             payments: components["schemas"]["AdminPaymentDto"][];
+            /** Format: date-time */
+            currentRiderAcceptedAt: string | null;
+            /** @description Recorded assignments only; legacy pointers without history are not invented. */
+            assignmentCount: number;
+            reassignmentCount: number;
+            riderWait: components["schemas"]["AdminRiderWaitDto"];
             id: string;
             code: string;
             /** @description Unguessable token for the public tracking link, GET /public/track/:token. Null on orders placed before it existed. */
@@ -3616,6 +3686,20 @@ export interface components {
             page: number;
             pageSize: number;
         };
+        AdminRiderAssignmentDto: {
+            id: string;
+            riderId: string;
+            rider: components["schemas"]["AdminRiderSummaryDto"];
+            /** @enum {string} */
+            status: "ACTIVE" | "CANCELLED" | "ABANDONED" | "COMPLETED";
+            /** Format: date-time */
+            acceptedAt: string | null;
+            /** Format: date-time */
+            endedAt: string | null;
+            /** @enum {string|null} */
+            abandonReason: "VEHICLE_PROBLEM" | "EMERGENCY" | "KITCHEN_DELAY" | "CUSTOMER_UNREACHABLE" | "OTHER" | null;
+            abandonNote: string | null;
+        };
         AdminCustomerSummaryDto: {
             id: string;
             name: string | null;
@@ -3678,6 +3762,8 @@ export interface components {
             adminName?: string;
         };
         AdminOrderDetailDto: {
+            /** @description Chronological assignment history, including unknown legacy acceptance times. */
+            riderAssignments: components["schemas"]["AdminRiderAssignmentDto"][];
             customer: components["schemas"]["AdminCustomerSummaryDto"];
             rider: components["schemas"]["AdminRiderSummaryDto"] | null;
             address: components["schemas"]["AdminOrderAddressDto"];
@@ -3690,6 +3776,12 @@ export interface components {
             supportTickets: components["schemas"]["AdminOrderTicketDto"][];
             /** @description Chronological: lifecycle timestamps plus admin actions on this order. */
             timeline: components["schemas"]["AdminOrderTimelineEventDto"][];
+            /** Format: date-time */
+            currentRiderAcceptedAt: string | null;
+            /** @description Recorded assignments only; legacy pointers without history are not invented. */
+            assignmentCount: number;
+            reassignmentCount: number;
+            riderWait: components["schemas"]["AdminRiderWaitDto"];
             id: string;
             code: string;
             /** @description Unguessable token for the public tracking link, GET /public/track/:token. Null on orders placed before it existed. */
@@ -4590,6 +4682,12 @@ export interface components {
             missing: ("LOCATION" | "RIDER_FEE")[];
             /** @description Verification photos uploaded so far; the kitchen needs exactly KITCHEN_PHOTOS_REQUIRED. */
             verificationPhotoCount: number;
+            /** @description What an admin still needs before approving: location, photos, owner photo. Empty = onboarding done. */
+            onboardingMissing: ("LOCATION" | "VERIFICATION_PHOTOS" | "OWNER_PHOTO")[];
+            /** @description Short-lived signed URL of the owner's photo, if uploaded. Only on the kitchen's own profile read. */
+            ownerPhotoUrl?: string | null;
+            /** @description Short-lived signed URL of the optional CAC certificate, if uploaded. */
+            cacDocumentUrl?: string | null;
             ratingAvg: number;
             ratingsCount: number;
             servesFood: boolean;
@@ -4763,10 +4861,20 @@ export interface components {
             sortOrder?: number;
             isSoldOut?: boolean;
         };
+        KitchenRiderSummaryDto: {
+            id: string;
+            name: string;
+            phone: string | null;
+            vehicleType: string | null;
+        };
         KitchenOrderParentAddressDto: {
             area: string;
         };
         KitchenOrderParentSummaryDto: {
+            rider: components["schemas"]["KitchenRiderSummaryDto"] | null;
+            currentAssignmentId: string | null;
+            /** Format: date-time */
+            currentAssignmentAcceptedAt: string | null;
             code: string;
             /**
              * @description AWAITING_PAYMENT = accepted, but don't start yet; ACCEPTED or later = paid.
@@ -5294,6 +5402,12 @@ export interface components {
             customer: components["schemas"]["AcceptedOrderCustomerDto"];
             kitchenOrders: components["schemas"]["AcceptedOrderKitchenOrderDto"][];
             payments: components["schemas"]["AcceptedOrderPaymentDto"][];
+        };
+        AbandonOrderDto: {
+            /** @enum {string} */
+            reason: "VEHICLE_PROBLEM" | "EMERGENCY" | "KITCHEN_DELAY" | "CUSTOMER_UNREACHABLE" | "OTHER";
+            /** @description Required when reason is OTHER. */
+            note?: string;
         };
         ReportProblemDto: {
             reason: string;
@@ -7767,6 +7881,8 @@ export interface operations {
     AdminController_listOrders: {
         parameters: {
             query: {
+                /** @description Current pointer state, or at least two recorded assignments regardless of current state. */
+                riderState?: "UNASSIGNED" | "ASSIGNED" | "REASSIGNED";
                 status?: "PLACED" | "AWAITING_PAYMENT" | "ACCEPTED" | "PREPARING" | "READY" | "PICKED_UP" | "DELIVERING" | "DELIVERED" | "CANCELLED" | "REFUNDED";
                 /** @description Orders with a slice from this kitchen (Kitchen id). */
                 kitchenId?: string;
@@ -9985,6 +10101,93 @@ export interface operations {
             };
         };
     };
+    KitchenConsoleController_uploadOwnerPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing file, wrong MIME type, or over the size limit. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid kitchen access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KitchenConsoleController_uploadCacDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing file, wrong MIME type, or over the size limit. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid kitchen access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KitchenConsoleController_deleteCacDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed (or there was none). */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid kitchen access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     KitchenConsoleController_deleteVerificationPhoto: {
         parameters: {
             query?: never;
@@ -11734,7 +11937,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AbandonOrderDto"];
+            };
+        };
         responses: {
             204: {
                 headers: {
