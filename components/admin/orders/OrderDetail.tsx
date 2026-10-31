@@ -8,6 +8,7 @@ import { isActive, type LiveOrder, type OrderDetailView } from "@/lib/admin/orde
 import { say } from "@/lib/admin/store";
 import { CANCEL_REASON_LABEL, PAYMENT_LABEL, type AdminRole } from "@/lib/admin/types";
 import { Eyebrow } from "@/components/admin/ui";
+import { RiderOperations } from "./RiderOperations";
 import { useLiveElapsed } from "./useLiveElapsed";
 import {
   giveCredit,
@@ -49,6 +50,8 @@ export function OrderDetail({ order, role }: { order: LiveOrder; role: AdminRole
       cancelled = true;
     };
   }, [order.id]);
+
+  const currentOrder = detail ? { ...order, ...detail.riderOperations } : order;
 
   const canRefund =
     role === "SUPER_ADMIN" && !order.refunded && order.paymentStatus === "SUCCEEDED";
@@ -100,11 +103,35 @@ export function OrderDetail({ order, role }: { order: LiveOrder; role: AdminRole
       <div className="bg-text/8 border-text/8 grid grid-cols-3 gap-px border-b">
         <Fact label="Customer" value={order.customerName} sub={order.customerPhone} />
         <Fact label="Kitchen" value={order.kitchens} />
-        <Fact label="Rider" value={order.riderName ?? "Unassigned"} />
+        <Fact label="Rider" value={currentOrder.riderName ?? "Unassigned"} />
       </div>
+
+      <section aria-label="Rider operations" className="border-text/8 border-b px-lg py-lg">
+        <h3 className="mb-2 text-sm font-bold">Rider operations</h3>
+        <RiderOperations order={currentOrder} summary />
+      </section>
 
       {detail && (
         <>
+          <section aria-label="Rider assignment history" className="border-text/8 border-b px-lg py-lg">
+            <h3 className="mb-3 text-sm font-bold">Rider assignment history</h3>
+            {detail.riderAssignments.length === 0 ? (
+              <p className="text-text/62 text-xs">{currentOrder.riderId ? "This legacy rider has no recorded assignment history. Acceptance time is unknown." : "No rider has a recorded assignment yet."}</p>
+            ) : (
+              <ol className="flex flex-col gap-4">
+                {detail.riderAssignments.map((assignment) => (
+                  <li key={assignment.id} className="border-text/16 border-l-2 pl-3 text-xs">
+                    <p className="text-sm font-semibold">{assignment.riderName}</p>
+                    <p className="text-text/62">{ASSIGNMENT_STATUS_LABEL[assignment.status]}</p>
+                    <p className="mt-1">Accepted: {assignment.acceptedAt ? assignmentTime(assignment.acceptedAt) : "Time unknown"}</p>
+                    {assignment.endedAt && <p>Ended: {assignmentTime(assignment.endedAt)}</p>}
+                    {assignment.reason && <p className="mt-1 font-medium">{assignment.reason}</p>}
+                    {assignment.note && <p className="text-text/62 mt-1 whitespace-pre-wrap break-words">{assignment.note}</p>}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
           <ol className="border-text/8 flex flex-col border-b px-[22px] py-lg">
             {detail.timeline.map((step) => (
               <li
@@ -251,6 +278,21 @@ export function OrderDetail({ order, role }: { order: LiveOrder; role: AdminRole
       )}
     </div>
   );
+}
+
+const ASSIGNMENT_STATUS_LABEL = {
+  ACTIVE: "Current assignment",
+  ABANDONED: "Abandoned",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+};
+
+const assignmentClock = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Africa/Lagos", dateStyle: "medium", timeStyle: "short",
+});
+
+function assignmentTime(at: string) {
+  return assignmentClock.format(new Date(at));
 }
 
 function Buttons({

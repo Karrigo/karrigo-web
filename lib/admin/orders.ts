@@ -1,6 +1,6 @@
 import type { Schemas } from "@/lib/api/types";
 import { formatKobo, nairaToKobo } from "@/lib/money";
-import { ageLabel, whenLabel } from "./format";
+import { ageLabel, durationLabel, whenLabel } from "./format";
 import { type OrderStage, type PaymentMethod } from "./types";
 
 /**
@@ -53,6 +53,11 @@ export type LiveOrder = {
   customerPhone: string;
   kitchens: string;
   riderName: string | null;
+  riderId: string | null;
+  currentRiderAcceptedAt: string | null;
+  assignmentCount: number;
+  reassignmentCount: number;
+  riderWait: Schemas["AdminRiderWaitDto"];
   payment: PaymentMethod;
   paymentStatus: Schemas["AdminPaymentDto"]["status"] | null;
   totalKobo: number;
@@ -114,9 +119,64 @@ export function liveOrder(o: Schemas["AdminOrderListItemDto"], now = new Date())
     customerPhone: o.customer.phone,
     kitchens: o.kitchenOrders.map((k) => k.kitchen.name).join(" + ") || "—",
     riderName: o.rider ? (o.rider.user.name ?? o.rider.user.phone) : null,
+    riderId: o.riderId,
+    currentRiderAcceptedAt: o.currentRiderAcceptedAt,
+    assignmentCount: o.assignmentCount,
+    reassignmentCount: o.reassignmentCount,
+    riderWait: o.riderWait,
     payment: paymentMethodOf(payment),
     paymentStatus: payment?.status ?? null,
     totalKobo: nairaToKobo(o.totalNaira),
+  };
+}
+
+export const RIDER_STATES = ["ALL", "UNASSIGNED", "ASSIGNED", "REASSIGNED"] as const;
+export type RiderState = (typeof RIDER_STATES)[number];
+export const RIDER_STATE_LABEL: Record<RiderState, string> = {
+  ALL: "All rider states",
+  UNASSIGNED: "Unassigned",
+  ASSIGNED: "Assigned",
+  REASSIGNED: "Reassigned",
+};
+
+/** Reassignments are history, so an unassigned order can also be reassigned. */
+export function matchesRiderState(order: LiveOrder, state: RiderState): boolean {
+  if (state === "UNASSIGNED") return order.riderId === null;
+  if (state === "ASSIGNED") return order.riderId !== null;
+  if (state === "REASSIGNED") return order.assignmentCount >= 2;
+  return true;
+}
+
+function waitLabel(seconds: number): string {
+  return seconds < 60 ? `${Math.max(0, Math.floor(seconds))} sec` : durationLabel(seconds / 60);
+}
+
+/** Advance only a running wait from its server measurement. Known initial
+ * wait and terminal totals stay fixed. The default is hydration-stable. */
+export function riderOperationsView(order: LiveOrder, now = new Date(order.riderWait.measuredAt)) {
+  const wait = order.riderWait;
+  const waiting = wait.currentWaitStartedAt !== null && isActive(order) && order.riderId === null;
+  const extraSeconds = waiting
+    ? Math.max(0, Math.floor((now.getTime() - new Date(wait.measuredAt).getTime()) / 1000))
+    : 0;
+  const totalWaitSeconds = wait.totalWaitSeconds + extraSeconds;
+  const partial = wait.isPartial || wait.initialWaitSeconds === null;
+  const currentWaitLabel = waiting ? waitLabel(wait.currentWaitSeconds + extraSeconds) : "—";
+  return {
+    name: order.riderName ?? (order.riderId ? "Assigned rider" : waiting ? "Waiting for rider" : "No rider assigned"),
+    timing: order.riderId
+      ? order.currentRiderAcceptedAt
+        ? `Accepted ${ageLabel(order.currentRiderAcceptedAt, now)}`
+        : "Acceptance time unknown"
+      : waiting ? currentWaitLabel : "",
+    initialWaitLabel: wait.initialWaitSeconds === null
+      ? "Unknown"
+      : waitLabel(wait.initialWaitSeconds + (order.assignmentCount === 0 ? extraSeconds : 0)),
+    totalWaitLabel: partial
+      ? totalWaitSeconds > 0 ? `At least ${waitLabel(totalWaitSeconds)}` : "Unknown"
+      : waitLabel(totalWaitSeconds),
+    currentWaitLabel,
+    reassignmentLabel: order.reassignmentCount > 0 ? `Reassigned ${order.reassignmentCount}×` : null,
   };
 }
 
@@ -174,6 +234,16 @@ export function matchesQuery(order: LiveOrder, query: string): boolean {
 /* ---------------------------------------------------------------- detail */
 
 export type OrderDetailView = {
+  riderOperations: Pick<LiveOrder, "riderId" | "riderName" | "currentRiderAcceptedAt" | "assignmentCount" | "reassignmentCount" | "riderWait">;
+  riderAssignments: {
+    id: string;
+    riderName: string;
+    status: Schemas["AdminRiderAssignmentDto"]["status"];
+    acceptedAt: string | null;
+    endedAt: string | null;
+    reason: string | null;
+    note: string | null;
+  }[];
   address: string;
   instructions: string | null;
   items: { name: string; qty: number; unitPriceKobo: number }[];
@@ -190,6 +260,14 @@ export type OrderDetailView = {
   tickets: { id: string; subject: string; status: string }[];
 };
 
+const ABANDON_REASON_LABEL: Record<NonNullable<Schemas["AdminRiderAssignmentDto"]["abandonReason"]>, string> = {
+  VEHICLE_PROBLEM: "Vehicle problem",
+  EMERGENCY: "Emergency",
+  KITCHEN_DELAY: "Kitchen delay",
+  CUSTOMER_UNREACHABLE: "Customer unreachable",
+  OTHER: "Other",
+};
+
 export function orderDetailView(o: Schemas["AdminOrderDetailDto"]): OrderDetailView {
   const steps: { label: string; at: string | null }[] = [
     { label: "Placed", at: o.placedAt },
@@ -203,6 +281,23 @@ export function orderDetailView(o: Schemas["AdminOrderDetailDto"]): OrderDetailV
   const ended = o.status === "DELIVERED" || o.status === "CANCELLED" || o.status === "REFUNDED";
 
   return {
+    riderOperations: {
+      riderId: o.riderId,
+      riderName: o.rider ? (o.rider.user.name ?? o.rider.user.phone) : null,
+      currentRiderAcceptedAt: o.currentRiderAcceptedAt,
+      assignmentCount: o.assignmentCount,
+      reassignmentCount: o.reassignmentCount,
+      riderWait: o.riderWait,
+    },
+    riderAssignments: o.riderAssignments.map((assignment) => ({
+      id: assignment.id,
+      riderName: assignment.rider.user.name ?? assignment.rider.user.phone,
+      status: assignment.status,
+      acceptedAt: assignment.acceptedAt,
+      endedAt: assignment.endedAt,
+      reason: assignment.abandonReason ? ABANDON_REASON_LABEL[assignment.abandonReason] : null,
+      note: assignment.abandonNote,
+    })),
     address: `${o.address.line1}, ${o.address.area}`,
     instructions: o.address.instructions ?? null,
     items: o.kitchenOrders.flatMap((k) =>

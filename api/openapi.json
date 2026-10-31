@@ -224,7 +224,7 @@
             "description": "Resend cooldown, wrong-code lockout, or the per-number daily limit — retryAfterSeconds in the body."
           }
         },
-        "summary": "Request an OTP code by SMS — used only for signup phone verification and password reset, not routine login (see POST /auth/login). `intent` lets the server refuse before sending anything when the code could not help: signup on a number that already has a password (409, accountExists: true), reset on a number with no account (404, accountNotFound: true).",
+        "summary": "Request an OTP code over WhatsApp — used only for signup phone verification and password reset, not routine login (see POST /auth/login). `intent` lets the server refuse before sending anything when the code could not help: signup on a number that already has a password (409, accountExists: true), reset on a number with no account (404, accountNotFound: true).",
         "tags": [
           "Auth — Consumer & Rider"
         ]
@@ -3006,6 +3006,20 @@
       "get": {
         "operationId": "AdminController_listOrders",
         "parameters": [
+          {
+            "name": "riderState",
+            "required": false,
+            "in": "query",
+            "description": "Current pointer state, or at least two recorded assignments regardless of current state.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "UNASSIGNED",
+                "ASSIGNED",
+                "REASSIGNED"
+              ]
+            }
+          },
           {
             "name": "status",
             "required": false,
@@ -6043,6 +6057,79 @@
         ]
       }
     },
+    "/v1/kitchen-console/kitchen/owner-photo": {
+      "post": {
+        "operationId": "KitchenConsoleController_uploadOwnerPhoto",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "400": {
+            "description": "Missing file, wrong MIME type, or over the size limit."
+          },
+          "401": {
+            "description": "Missing or invalid kitchen access token."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload (or replace) the owner's photo. Required before approval. OWNER only.",
+        "tags": [
+          "Kitchen Console"
+        ]
+      }
+    },
+    "/v1/kitchen-console/kitchen/cac": {
+      "post": {
+        "operationId": "KitchenConsoleController_uploadCacDocument",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "400": {
+            "description": "Missing file, wrong MIME type, or over the size limit."
+          },
+          "401": {
+            "description": "Missing or invalid kitchen access token."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload (or replace) the optional CAC certificate (image or PDF). OWNER only.",
+        "tags": [
+          "Kitchen Console"
+        ]
+      },
+      "delete": {
+        "operationId": "KitchenConsoleController_deleteCacDocument",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Removed (or there was none)."
+          },
+          "401": {
+            "description": "Missing or invalid kitchen access token."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove the CAC certificate. OWNER only.",
+        "tags": [
+          "Kitchen Console"
+        ]
+      }
+    },
     "/v1/kitchen-console/kitchen/photos/{id}": {
       "delete": {
         "operationId": "KitchenConsoleController_deleteVerificationPhoto",
@@ -8058,6 +8145,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbandonOrderDto"
+              }
+            }
+          }
+        },
         "responses": {
           "204": {
             "description": ""
@@ -8349,6 +8446,9 @@
               "signup",
               "reset"
             ]
+          },
+          "channel": {
+            "type": "string"
           }
         },
         "required": [
@@ -8597,6 +8697,9 @@
         "properties": {
           "phone": {
             "type": "string"
+          },
+          "channel": {
+            "type": "string"
           }
         },
         "required": [
@@ -8729,6 +8832,28 @@
             "type": "number",
             "description": "Verification photos uploaded so far; the kitchen needs exactly KITCHEN_PHOTOS_REQUIRED."
           },
+          "onboardingMissing": {
+            "type": "array",
+            "description": "What an admin still needs before approving: location, photos, owner photo. Empty = onboarding done.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "LOCATION",
+                "VERIFICATION_PHOTOS",
+                "OWNER_PHOTO"
+              ]
+            }
+          },
+          "ownerPhotoUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short-lived signed URL of the owner's photo, if uploaded. Only on the kitchen's own profile read."
+          },
+          "cacDocumentUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short-lived signed URL of the optional CAC certificate, if uploaded."
+          },
           "ratingAvg": {
             "type": "number"
           },
@@ -8813,6 +8938,7 @@
           "riderBaseFeeNaira",
           "missing",
           "verificationPhotoCount",
+          "onboardingMissing",
           "ratingAvg",
           "ratingsCount",
           "servesFood",
@@ -9931,6 +10057,28 @@
             "type": "number",
             "description": "Verification photos uploaded so far; the kitchen needs exactly KITCHEN_PHOTOS_REQUIRED."
           },
+          "onboardingMissing": {
+            "type": "array",
+            "description": "What an admin still needs before approving: location, photos, owner photo. Empty = onboarding done.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "LOCATION",
+                "VERIFICATION_PHOTOS",
+                "OWNER_PHOTO"
+              ]
+            }
+          },
+          "ownerPhotoUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short-lived signed URL of the owner's photo, if uploaded. Only on the kitchen's own profile read."
+          },
+          "cacDocumentUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short-lived signed URL of the optional CAC certificate, if uploaded."
+          },
           "ratingAvg": {
             "type": "number"
           },
@@ -10046,6 +10194,7 @@
           "riderBaseFeeNaira",
           "missing",
           "verificationPhotoCount",
+          "onboardingMissing",
           "ratingAvg",
           "ratingsCount",
           "servesFood",
@@ -11084,6 +11233,44 @@
           "updatedAt"
         ]
       },
+      "AdminRiderWaitDto": {
+        "type": "object",
+        "properties": {
+          "isPartial": {
+            "type": "boolean",
+            "description": "True when unrecorded legacy intervals are excluded from the total."
+          },
+          "initialWaitSeconds": {
+            "type": "number",
+            "nullable": true,
+            "description": "Unknown for legacy acceptances; live until the first acceptance."
+          },
+          "totalWaitSeconds": {
+            "type": "number"
+          },
+          "currentWaitSeconds": {
+            "type": "number"
+          },
+          "currentWaitStartedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "Null when no wait is running, including terminal orders."
+          },
+          "measuredAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "isPartial",
+          "initialWaitSeconds",
+          "totalWaitSeconds",
+          "currentWaitSeconds",
+          "currentWaitStartedAt",
+          "measuredAt"
+        ]
+      },
       "AdminOrderListItemDto": {
         "type": "object",
         "properties": {
@@ -11110,6 +11297,21 @@
             "items": {
               "$ref": "#/components/schemas/AdminPaymentDto"
             }
+          },
+          "currentRiderAcceptedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "assignmentCount": {
+            "type": "number",
+            "description": "Recorded assignments only; legacy pointers without history are not invented."
+          },
+          "reassignmentCount": {
+            "type": "number"
+          },
+          "riderWait": {
+            "$ref": "#/components/schemas/AdminRiderWaitDto"
           },
           "id": {
             "type": "string"
@@ -11262,6 +11464,10 @@
           "rider",
           "kitchenOrders",
           "payments",
+          "currentRiderAcceptedAt",
+          "assignmentCount",
+          "reassignmentCount",
+          "riderWait",
           "id",
           "code",
           "trackingToken",
@@ -11317,6 +11523,64 @@
           "total",
           "page",
           "pageSize"
+        ]
+      },
+      "AdminRiderAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "riderId": {
+            "type": "string"
+          },
+          "rider": {
+            "$ref": "#/components/schemas/AdminRiderSummaryDto"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "CANCELLED",
+              "ABANDONED",
+              "COMPLETED"
+            ]
+          },
+          "acceptedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "endedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "abandonReason": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "VEHICLE_PROBLEM",
+              "EMERGENCY",
+              "KITCHEN_DELAY",
+              "CUSTOMER_UNREACHABLE",
+              "OTHER"
+            ]
+          },
+          "abandonNote": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "riderId",
+          "rider",
+          "status",
+          "acceptedAt",
+          "endedAt",
+          "abandonReason",
+          "abandonNote"
         ]
       },
       "AdminCustomerSummaryDto": {
@@ -11557,6 +11821,13 @@
       "AdminOrderDetailDto": {
         "type": "object",
         "properties": {
+          "riderAssignments": {
+            "description": "Chronological assignment history, including unknown legacy acceptance times.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminRiderAssignmentDto"
+            }
+          },
           "customer": {
             "$ref": "#/components/schemas/AdminCustomerSummaryDto"
           },
@@ -11613,6 +11884,21 @@
             "items": {
               "$ref": "#/components/schemas/AdminOrderTimelineEventDto"
             }
+          },
+          "currentRiderAcceptedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "assignmentCount": {
+            "type": "number",
+            "description": "Recorded assignments only; legacy pointers without history are not invented."
+          },
+          "reassignmentCount": {
+            "type": "number"
+          },
+          "riderWait": {
+            "$ref": "#/components/schemas/AdminRiderWaitDto"
           },
           "id": {
             "type": "string"
@@ -11761,6 +12047,7 @@
           }
         },
         "required": [
+          "riderAssignments",
           "customer",
           "rider",
           "address",
@@ -11770,6 +12057,10 @@
           "payout",
           "supportTickets",
           "timeline",
+          "currentRiderAcceptedAt",
+          "assignmentCount",
+          "reassignmentCount",
+          "riderWait",
           "id",
           "code",
           "trackingToken",
@@ -14997,6 +15288,28 @@
             "type": "number",
             "description": "Verification photos uploaded so far; the kitchen needs exactly KITCHEN_PHOTOS_REQUIRED."
           },
+          "onboardingMissing": {
+            "type": "array",
+            "description": "What an admin still needs before approving: location, photos, owner photo. Empty = onboarding done.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "LOCATION",
+                "VERIFICATION_PHOTOS",
+                "OWNER_PHOTO"
+              ]
+            }
+          },
+          "ownerPhotoUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short-lived signed URL of the owner's photo, if uploaded. Only on the kitchen's own profile read."
+          },
+          "cacDocumentUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short-lived signed URL of the optional CAC certificate, if uploaded."
+          },
           "ratingAvg": {
             "type": "number"
           },
@@ -15087,6 +15400,7 @@
           "riderBaseFeeNaira",
           "missing",
           "verificationPhotoCount",
+          "onboardingMissing",
           "ratingAvg",
           "ratingsCount",
           "servesFood",
@@ -15639,6 +15953,31 @@
           }
         }
       },
+      "KitchenRiderSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "vehicleType": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phone",
+          "vehicleType"
+        ]
+      },
       "KitchenOrderParentAddressDto": {
         "type": "object",
         "properties": {
@@ -15653,6 +15992,24 @@
       "KitchenOrderParentSummaryDto": {
         "type": "object",
         "properties": {
+          "rider": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/KitchenRiderSummaryDto"
+              }
+            ]
+          },
+          "currentAssignmentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentAssignmentAcceptedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
           "code": {
             "type": "string"
           },
@@ -15708,6 +16065,9 @@
           }
         },
         "required": [
+          "rider",
+          "currentAssignmentId",
+          "currentAssignmentAcceptedAt",
           "code",
           "status",
           "placedAt",
@@ -17444,6 +17804,28 @@
           "customer",
           "kitchenOrders",
           "payments"
+        ]
+      },
+      "AbandonOrderDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "enum": [
+              "VEHICLE_PROBLEM",
+              "EMERGENCY",
+              "KITCHEN_DELAY",
+              "CUSTOMER_UNREACHABLE",
+              "OTHER"
+            ],
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "description": "Required when reason is OTHER."
+          }
+        },
+        "required": [
+          "reason"
         ]
       },
       "ReportProblemDto": {
