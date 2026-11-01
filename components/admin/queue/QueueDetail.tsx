@@ -5,9 +5,9 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
 import { formatKobo } from "@/lib/money";
 import {
-  QUEUE_STATUS_LABEL,
   balanceFields,
   payoutKobo,
+  queueStatusLabel,
   type QueueItem,
   type QueueKind,
   type QueueStatus,
@@ -18,7 +18,7 @@ import { VERIFICATION_PHOTOS_REQUIRED, photosNeededText } from "@/lib/kitchen/ty
 import { kitchenDetail, riderDocumentUrl, storePhotos } from "@/app/(admin)/admin/queue-actions";
 import { KitchenProducts } from "./KitchenProducts";
 
-type Decision = "approve" | "reject" | "suspend" | "payout";
+type Decision = "approve" | "reject" | "suspend" | "payout" | "declineAppeal";
 
 const TONE: Record<QueueStatus, Tone> = {
   PENDING: "warning",
@@ -43,6 +43,8 @@ export function QueueDetail({
   item,
   role,
   onDecide,
+  onDeclineAppeal,
+  onSetRequiresCac,
   onPayout,
   busy,
 }: {
@@ -50,6 +52,9 @@ export function QueueDetail({
   item: QueueItem;
   role: AdminRole;
   onDecide: (item: QueueItem, status: QueueStatus, note: string) => void;
+  /** Answer an appeal without lifting the suspension; the owner may appeal again. */
+  onDeclineAppeal: (item: QueueItem, response: string) => void;
+  onSetRequiresCac: (item: QueueItem, requiresCac: boolean) => void;
   onPayout?: () => void;
   busy: boolean;
 }) {
@@ -67,6 +72,9 @@ export function QueueDetail({
     fields: { key: string; value: string }[];
     menuItems: number;
     photos: { id: string; url: string }[];
+    /** Kitchens only: what is on file, so the checklist can say what's missing. */
+    hasOwnerPhoto: boolean | null;
+    hasCacDocument: boolean | null;
   } | null>(null);
 
   useEffect(() => {
@@ -75,13 +83,20 @@ export function QueueDetail({
     if (kind === "kitchens") {
       kitchenDetail(item.id).then((result) => {
         if (!cancelled && result.ok) {
-          setMore({ id: item.id, fields: result.fields, menuItems: result.menuItems, photos: result.photos });
+          setMore({
+            id: item.id,
+            fields: result.fields,
+            menuItems: result.menuItems,
+            photos: result.photos,
+            hasOwnerPhoto: result.hasOwnerPhoto,
+            hasCacDocument: result.hasCacDocument,
+          });
         }
       });
     } else {
       storePhotos(item.id).then((result) => {
         if (!cancelled && result.ok) {
-          setMore({ id: item.id, fields: [], menuItems: 0, photos: result.photos });
+          setMore({ id: item.id, fields: [], menuItems: 0, photos: result.photos, hasOwnerPhoto: null, hasCacDocument: null });
         }
       });
     }
@@ -119,7 +134,7 @@ export function QueueDetail({
       case "approve":
         return {
           title:
-            item.status === "SUSPENDED"
+            item.status === "SUSPENDED" && !item.neverApproved
               ? `Put ${item.title} back live?`
               : `Approve ${item.title}?`,
           text: isKitchen
@@ -130,7 +145,7 @@ export function QueueDetail({
               ? "They can go online and receive trip offers."
               : "They can go online and receive trip offers. No guarantor's form is on file yet.",
           button:
-            isPartner && item.status === "SUSPENDED" ? "Reactivate" : "Approve",
+            isPartner && item.status === "SUSPENDED" ? (item.neverApproved ? "Approve" : "Reactivate") : "Approve",
           tone: "go" as const,
           requiresNote: false,
           run: () =>
@@ -164,6 +179,15 @@ export function QueueDetail({
           tone: "bad" as const,
           requiresNote: true,
           run: () => onDecide(item, "SUSPENDED", note.trim()),
+        };
+      case "declineAppeal":
+        return {
+          title: `Decline ${item.title}'s appeal?`,
+          text: `The ${noun} stays ${item.neverApproved ? "rejected" : "suspended"}. The owner is emailed your answer, sees it in the app, and can appeal again. To accept the appeal, ${item.neverApproved ? "approve" : "reactivate"} instead.`,
+          button: "Send answer",
+          tone: "dark" as const,
+          requiresNote: true,
+          run: () => onDeclineAppeal(item, note.trim()),
         };
       case "payout":
         return {
@@ -215,7 +239,14 @@ export function QueueDetail({
     }
   }
   if (item.status === "SUSPENDED") {
-    actions.push({ label: `Reactivate ${noun}`, decision: "approve", tone: "go" });
+    actions.push({
+      label: item.neverApproved ? `Approve ${noun}` : `Reactivate ${noun}`,
+      decision: "approve",
+      tone: "go",
+    });
+    if (isPartner && item.appeal) {
+      actions.push({ label: "Decline appeal", decision: "declineAppeal", tone: "bad" });
+    }
   }
 
   const extra = more?.id === item.id ? more : null;
@@ -235,6 +266,10 @@ export function QueueDetail({
         ...item.checks,
         ...(isKitchen && photos
           ? [{ label: `${photos.length} of ${VERIFICATION_PHOTOS_REQUIRED} kitchen photos`, ok: photos.length >= VERIFICATION_PHOTOS_REQUIRED }]
+          : []),
+        ...(isKitchen && extra.hasOwnerPhoto !== null ? [{ label: "Owner's photo", ok: extra.hasOwnerPhoto }] : []),
+        ...(isKitchen && item.requiresCac && extra.hasCacDocument !== null
+          ? [{ label: "CAC certificate (required)", ok: extra.hasCacDocument }]
           : []),
         ...(isKitchen ? [{
           label: extra.menuItems ? `${extra.menuItems} dishes on the menu` : "No dishes yet",
@@ -257,7 +292,7 @@ export function QueueDetail({
           <p className="text-text/62 mt-2 text-[12.5px]">{item.sub}</p>
         </div>
         <StatusChip tone={TONE[item.status]}>
-          {QUEUE_STATUS_LABEL[item.status]}
+          {queueStatusLabel(item)}
         </StatusChip>
       </header>
 
@@ -265,6 +300,14 @@ export function QueueDetail({
         <div className="bg-warning-bg border-text/8 border-b px-[22px] py-3 text-[12.5px]/[1.5]">
           <p className="font-semibold">Appeal from the owner · {item.appeal.at}</p>
           {item.appeal.note && <p className="text-text/85 mt-1">{item.appeal.note}</p>}
+        </div>
+      )}
+
+      {!item.appeal && item.appealResponse && (
+        <div className="bg-text/6 border-text/8 border-b px-[22px] py-3 text-[12.5px]/[1.5]">
+          <p className="font-semibold">You declined their appeal{item.appealResponse.at ? ` · ${item.appealResponse.at}` : ""}</p>
+          <p className="text-text/85 mt-1">{item.appealResponse.note}</p>
+          <p className="text-text/62 mt-1">They can appeal again.</p>
         </div>
       )}
 
@@ -322,6 +365,24 @@ export function QueueDetail({
         ))}
       </ul>
 
+      {isPartner && item.status !== "ACTIVE" && (
+        <div className="border-text/8 flex items-center justify-between gap-3 border-b px-[22px] py-3">
+          <span className="text-[13px]">
+            {item.requiresCac
+              ? "CAC certificate required before approval"
+              : "CAC certificate is optional"}
+          </span>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => onSetRequiresCac(item, !item.requiresCac)}
+            className="text-accent-text text-[12px] font-semibold disabled:opacity-40"
+          >
+            {item.requiresCac ? "Make optional" : "Require it"}
+          </button>
+        </div>
+      )}
+
       {isPartner && photos && photos.length > 0 && (
         <div className="border-text/8 border-b px-[22px] py-lg">
           <Eyebrow className="text-[10.5px]">
@@ -363,13 +424,15 @@ export function QueueDetail({
           >
             <span className="text-[13.5px] font-semibold">{confirm.title}</span>
             <span className="text-text/80 text-[12.5px]/[1.5]">{confirm.text}</span>
-            {(pending === "reject" || pending === "suspend") && (
+            {(pending === "reject" || pending === "suspend" || pending === "declineAppeal") && (
               <textarea
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
                 rows={2}
                 placeholder={
-                  pending === "reject" && item.status === "APPROVED"
+                  pending === "declineAppeal"
+                    ? "Your answer (required) · the owner reads it"
+                    : pending === "reject" && item.status === "APPROVED"
                     ? "What needs to change? (required)"
                     : confirm.requiresNote
                       ? `Reason (required) · the ${noun} sees this`

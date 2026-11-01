@@ -311,3 +311,15 @@ export function StatusBanner({
     </div>
   );
 }
+
+/** Ops' answer to an appeal they declined. Shown above the appeal form: the
+ *  suspension stands, and the owner can reply with another appeal. */
+export function AppealAnswer({ response }: { response: string }) {
+  return (
+    <div className="bg-bg rounded-panel-sm p-xl">
+      <p className="text-site-title">We reviewed your appeal</p>
+      <p className="text-site-label text-text-secondary mt-xs">It stays as it is for now. You can appeal again.</p>
+      <p className="bg-surface-raised rounded-field text-site-label mt-md px-lg py-md font-semibold">“{response}”</p>
+    </div>
+  );
+}

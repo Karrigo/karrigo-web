@@ -9,6 +9,8 @@ const store = (overrides: Partial<StoreApplication> = {}): StoreApplication => (
   note: null,
   appealNote: null,
   appealedAt: null,
+  appealResponse: null,
+  neverApproved: false,
   area: null,
   landmarkNote: null,
   hasLocation: false,

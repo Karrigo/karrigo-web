@@ -4,23 +4,67 @@ import { EmptyState, LinkTab, StatusChip } from "@/components/admin/ui";
 import { api, type Schemas } from "@/lib/api/client";
 import { whenLabel } from "@/lib/admin/format";
 import { requireAdmin } from "@/lib/admin/session";
-import { clearProductFlag } from "../../moderation-actions";
+import {
+  clearProductFlag,
+  clearStoreProductFlag,
+  declineProductAppeal,
+  declineStoreProductAppeal,
+} from "../../moderation-actions";
 
 type Search = { view?: string };
 
+type Row = {
+  id: string;
+  name: string;
+  owner: string;
+  flaggedAt: string;
+  flagNote: string | null;
+  flagAppealNote: string | null;
+  flagAppealedAt: string | null;
+  clear: (note: string) => Promise<{ ok: true; message: string } | { ok: false; error: string }>;
+  decline: (note: string) => Promise<{ ok: true; message: string } | { ok: false; error: string }>;
+};
+
 /**
- * Products ops has hidden from customers. A kitchen owner can appeal a flag
- * once; those come first, because someone is waiting for an answer. Clearing
- * a flag puts the product back on sale and drops the appeal with it.
+ * Products ops has hidden from customers. A kitchen or store owner can appeal
+ * a flag; those come first, because someone is waiting for an answer. Ops can
+ * clear the flag (puts the product back on sale and drops the appeal) or
+ * decline the appeal with an answer, which leaves it hidden and lets the
+ * owner appeal again.
  */
 export default async function FlaggedPage({ searchParams }: { searchParams: Promise<Search> }) {
   await requireAdmin();
   const { view = "" } = await searchParams;
-  const items = await api<Schemas["FlaggedItemResponseDto"][]>("/admin/flagged-items", {
-    scope: "admin",
-    query: view === "appealed" ? { hasAppeal: true } : {},
-  });
-  const sorted = [...items].sort(
+  const query = view === "appealed" ? { hasAppeal: true } : {};
+  const [items, products] = await Promise.all([
+    api<Schemas["FlaggedItemResponseDto"][]>("/admin/flagged-items", { scope: "admin", query }),
+    api<Schemas["FlaggedProductResponseDto"][]>("/admin/flagged-products", { scope: "admin", query }),
+  ]);
+  const rows: Row[] = [
+    ...items.map((item) => ({
+      id: `item-${item.itemId}`,
+      name: item.itemName,
+      owner: item.kitchenName,
+      flaggedAt: item.flaggedAt,
+      flagNote: item.flagNote,
+      flagAppealNote: item.flagAppealNote,
+      flagAppealedAt: item.flagAppealedAt,
+      clear: clearProductFlag.bind(null, item.itemId),
+      decline: declineProductAppeal.bind(null, item.itemId),
+    })),
+    ...products.map((product) => ({
+      id: `product-${product.productId}`,
+      name: product.productName,
+      owner: product.storeName,
+      flaggedAt: product.flaggedAt,
+      flagNote: product.flagNote,
+      flagAppealNote: product.flagAppealNote,
+      flagAppealedAt: product.flagAppealedAt,
+      clear: clearStoreProductFlag.bind(null, product.productId),
+      decline: declineStoreProductAppeal.bind(null, product.productId),
+    })),
+  ];
+  const sorted = rows.sort(
     (a, b) => Number(!!b.flagAppealedAt) - Number(!!a.flagAppealedAt) || b.flaggedAt.localeCompare(a.flaggedAt),
   );
 
@@ -42,35 +86,47 @@ export default async function FlaggedPage({ searchParams }: { searchParams: Prom
             text="To flag a product, open its kitchen under Kitchens and choose Show products."
           />
         ) : (
-          sorted.map((item) => (
-            <div key={item.itemId} className="border-text/6 flex flex-wrap items-start justify-between gap-3 border-b px-lg py-3.5">
+          sorted.map((row) => (
+            <div key={row.id} className="border-text/6 flex flex-wrap items-start justify-between gap-3 border-b px-lg py-3.5">
               <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-1">
                 <span className="text-text text-[14px] font-semibold">
-                  {item.itemName} · {item.kitchenName}
-                  {item.flagAppealedAt && (
+                  {row.name} · {row.owner}
+                  {row.flagAppealedAt && (
                     <span className="ml-2 align-middle">
                       <StatusChip tone="warning">Appealed</StatusChip>
                     </span>
                   )}
                 </span>
-                {item.flagNote && <p className="text-text/85 text-[13px]/[1.5]">Flagged for: {item.flagNote}</p>}
-                {item.flagAppealNote && (
-                  <p className="text-text/85 text-[13px]/[1.5]">Owner&rsquo;s appeal: “{item.flagAppealNote}”</p>
+                {row.flagNote && <p className="text-text/85 text-[13px]/[1.5]">Flagged for: {row.flagNote}</p>}
+                {row.flagAppealNote && (
+                  <p className="text-text/85 text-[13px]/[1.5]">Owner&rsquo;s appeal: “{row.flagAppealNote}”</p>
                 )}
                 <span className="text-text/55 text-[12px] font-light">
-                  Flagged {whenLabel(item.flaggedAt)}
-                  {item.flagAppealedAt ? ` · appealed ${whenLabel(item.flagAppealedAt)}` : ""}
+                  Flagged {whenLabel(row.flaggedAt)}
+                  {row.flagAppealedAt ? ` · appealed ${whenLabel(row.flagAppealedAt)}` : ""}
                 </span>
               </div>
-              <div className="flex max-w-full flex-[0_1_320px] justify-end">
+              <div className="flex max-w-full flex-[0_1_320px] flex-wrap justify-end gap-2">
+                {row.flagAppealedAt && (
+                  <ConfirmAction
+                    size="sm"
+                    tone="line"
+                    label="Decline appeal"
+                    title={`Decline the appeal for ${row.name}?`}
+                    text={`It stays hidden. ${row.owner}'s owner is emailed your answer, sees it in the app, and can appeal again.`}
+                    confirm="Send answer"
+                    note={{ placeholder: "Your answer (required) · the owner reads it", required: true }}
+                    run={row.decline}
+                  />
+                )}
                 <ConfirmAction
                   size="sm"
                   tone="go"
                   label="Clear flag"
-                  title={`Put ${item.itemName} back on sale?`}
-                  text={`Customers can see and order it from ${item.kitchenName} again.`}
+                  title={`Put ${row.name} back on sale?`}
+                  text={`Customers can see and order it from ${row.owner} again.`}
                   confirm="Clear flag"
-                  run={clearProductFlag.bind(null, item.itemId)}
+                  run={row.clear}
                 />
               </div>
             </div>

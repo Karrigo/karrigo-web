@@ -35,9 +35,10 @@ export const STAGE_LABEL: Record<OrderStage, string> = {
 
 /** Why a cancelled order was cancelled. The customer is never charged in any
  *  of these cases (SYNC_WEB_ADMIN.md §2). */
-export const CANCEL_REASON_LABEL: Record<"CUSTOMER" | "KITCHENS_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT", string> = {
+export const CANCEL_REASON_LABEL: Record<"CUSTOMER" | "KITCHENS_DECLINED" | "STORE_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT", string> = {
   CUSTOMER: "Cancelled by the customer",
   KITCHENS_DECLINED: "Every kitchen declined",
+  STORE_DECLINED: "The store declined",
   PAYMENT_EXPIRED: "Not paid in time",
   KITCHEN_TIMEOUT: "No kitchen answered in time",
 };

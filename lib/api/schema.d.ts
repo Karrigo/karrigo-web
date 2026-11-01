@@ -688,6 +688,40 @@ export interface paths {
         patch: operations["StoreConsoleController_updateProfile"];
         trace?: never;
     };
+    "/v1/store-console/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Register this store app install for push notifications (new orders, payments). Upserts on the Expo push token — store sessions share the staff identity with kitchen sessions, so one row covers both roles. */
+        post: operations["StoreConsoleController_registerDevice"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-console/devices/{expoPushToken}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Unregister a push token (on sign-out). */
+        delete: operations["StoreConsoleController_unregisterDevice"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/store-console/geocode": {
         parameters: {
             query?: never;
@@ -733,6 +767,24 @@ export interface paths {
         put?: never;
         /** Appeal a suspension with a message (once per suspension). OWNER only. */
         post: operations["StoreConsoleController_appeal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-console/support-tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** This store staff member's own support tickets. */
+        get: operations["StoreConsoleController_listSupportTickets"];
+        put?: never;
+        /** File a support ticket as this store. */
+        post: operations["StoreConsoleController_reportProblem"];
         delete?: never;
         options?: never;
         head?: never;
@@ -842,6 +894,299 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/store-console/store/photos/update-request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The latest photo-update request for the locked-photos status UI. OWNER only. */
+        get: operations["StoreConsoleController_getPhotoUpdateRequest"];
+        put?: never;
+        /** Request a photo update after approval locked the set: the reason goes to support, and an approved request unlocks edits for 7 days. OWNER only. */
+        post: operations["StoreConsoleController_requestPhotoUpdate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-console/store/owner-photo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload (or replace) the owner's photo. Required before approval. OWNER only. */
+        post: operations["StoreConsoleController_uploadOwnerPhoto"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-console/store/cac": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload (or replace) the optional CAC certificate (image or PDF). OWNER only. */
+        post: operations["StoreConsoleController_uploadCacDocument"];
+        /** Remove the CAC certificate. OWNER only. */
+        delete: operations["StoreConsoleController_deleteCacDocument"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-console/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The store’s full catalog — sections with their products. OWNER only. */
+        get: operations["StoreConsoleController_getCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-console/catalog/sections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a catalog section. OWNER only. Requires the store to have set a location first. */
+        post: operations["StoreConsoleController_createSection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-console/catalog/sections/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an empty catalog section. OWNER only. */
+        delete: operations["StoreConsoleController_deleteSection"];
+        options?: never;
+        head?: never;
+        /** Update a catalog section. OWNER only. */
+        patch: operations["StoreConsoleController_updateSection"];
+        trace?: never;
+    };
+    "/v1/store-console/catalog/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a catalog product. OWNER only. Requires the store to have set a location first. */
+        post: operations["StoreConsoleController_createProduct"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-console/catalog/products/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a catalog product. OWNER only. */
+        delete: operations["StoreConsoleController_deleteProduct"];
+        options?: never;
+        head?: never;
+        /** Update a catalog product — including moving it to another section via sectionId and toggling sold out. OWNER only. */
+        patch: operations["StoreConsoleController_updateProduct"];
+        trace?: never;
+    };
+    "/v1/store-console/catalog/products/{id}/appeal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Appeal the flag on one of your products. Any active store staff. */
+        post: operations["StoreConsoleController_appealProductFlag"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-console/catalog/products/{id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload a catalog product's photo. OWNER only. */
+        post: operations["StoreConsoleController_uploadProductImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-console/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The incoming-order queue, oldest first, optionally filtered by status. */
+        get: operations["StoreConsoleController_listOrders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-console/orders/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Transition this store's slice of an order (and roll up the parent Order's status). */
+        patch: operations["StoreConsoleController_updateOrderStatus"];
+        trace?: never;
+    };
+    "/v1/store-console/orders/{id}/acknowledge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Acknowledge the new-order alert for this order (the incoming-order screen was opened). Idempotent: the first device wins, repeats return the stored alert. */
+        post: operations["StoreConsoleController_acknowledgeOrder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-console/store/payouts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Settled payout history. OWNER only. */
+        get: operations["StoreConsoleController_listPayouts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-console/store/earnings-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Next-payout projection, computed from the same unpaid-slice set a real payout run would settle. OWNER only. */
+        get: operations["StoreConsoleController_getEarningsSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/stores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List active, discoverable stores. */
+        get: operations["StoresController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/stores/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A store's public page — profile plus its sections; flagged items omitted. */
+        get: operations["StoresController_getBySlug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/payments/banks": {
         parameters: {
             query?: never;
@@ -887,6 +1232,74 @@ export interface paths {
         put?: never;
         /** Start a Paystack checkout. Only while the order is AWAITING_PAYMENT and before paymentDueAt. Each call returns a fresh checkout; the order is confirmed by Paystack’s webhook, never by the redirect, so re-read the order until it shows ACCEPTED. */
         post: operations["PaymentsController_initialize"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/support-tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** File a support ticket as the signed-in customer/rider. */
+        post: operations["SupportTicketsController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/support-tickets/with-attachment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** File a support ticket with one private image attachment. */
+        post: operations["SupportTicketsController_createWithAttachment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/support-tickets/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The caller's own support tickets. */
+        get: operations["SupportTicketsController_listMine"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every active kitchen (and, for GROCERY, every active store) with its menu, in one response. `type` defaults to FOOD. Flagged items are omitted. Cached for a few seconds. */
+        get: operations["CatalogController_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1064,6 +1477,40 @@ export interface paths {
         patch: operations["AdminController_updateKitchenStatus"];
         trace?: never;
     };
+    "/v1/admin/kitchens/{id}/appeal/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Answer a suspended kitchen's appeal without lifting the suspension. The owner sees `response` and may appeal again. Emails the owners. Writes an AuditLog row. */
+        post: operations["AdminController_declineKitchenAppeal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/kitchens/{id}/requires-cac": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Require (or stop requiring) the CAC certificate before this kitchen can be approved. Writes an AuditLog row. */
+        patch: operations["AdminController_setKitchenRequiresCac"];
+        trace?: never;
+    };
     "/v1/admin/menu-items/{id}/flag": {
         parameters: {
             query?: never;
@@ -1082,6 +1529,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/menu-items/{id}/appeal/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Answer a menu item flag appeal without clearing the flag. The owner sees `response` and may appeal again. Emails the owners. Writes an AuditLog row. */
+        post: operations["AdminController_declineItemAppeal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/admin/flagged-items": {
         parameters: {
             query?: never;
@@ -1093,6 +1557,92 @@ export interface paths {
         get: operations["AdminController_listFlaggedItems"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/store-products/{id}/flag": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Flag a store product: hidden from customers and not orderable until cleared. Requires a `note` (1-500) the owner sees. Any admin role (moderation, same policy as banning a kitchen). Writes an AuditLog row. */
+        post: operations["AdminController_flagProduct"];
+        /** Clear a store product flag (and any appeal). Any admin role (moderation, same policy as banning a kitchen). Writes an AuditLog row. */
+        delete: operations["AdminController_clearProductFlag"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/store-products/{id}/appeal/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Answer a store product flag appeal without clearing the flag. The owner sees `response` and may appeal again. Emails the owners. Writes an AuditLog row. */
+        post: operations["AdminController_declineProductAppeal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/flagged-products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Flagged store products, newest flag first. `storeId` narrows to one store; `hasAppeal=true` shows only appealed ones. Any admin role. */
+        get: operations["AdminController_listFlaggedProducts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/photo-update-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Verification-photo update requests (kitchens and stores), pending first then newest. Any admin role. */
+        get: operations["AdminController_listPhotoUpdateRequests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/photo-update-requests/{id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve or reject a verification-photo update request. Approval unlocks the vendor’s photos for 7 days. Any admin role (no money moves here). */
+        post: operations["AdminController_decidePhotoUpdateRequest"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1297,6 +1847,23 @@ export interface paths {
         put?: never;
         /** Trigger a real Paystack transfer for every one of this kitchen’s unpaid completed orders. Writes an AuditLog row. */
         post: operations["AdminController_payoutKitchen"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/stores/{id}/payout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Trigger a real Paystack transfer for every one of this store’s unpaid completed slices. Writes an AuditLog row. */
+        post: operations["AdminController_payoutStore"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1628,6 +2195,40 @@ export interface paths {
         head?: never;
         /** Approve (→ ACTIVE, needs the required verification photos) or suspend/reject (→ SUSPENDED, `note` required) a store. Emails the owners. Writes an AuditLog row. */
         patch: operations["AdminStoresController_updateStoreStatus"];
+        trace?: never;
+    };
+    "/v1/admin/stores/{id}/appeal/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Answer a suspended store's appeal without lifting the suspension. The owner sees `response` and may appeal again. Emails the owners. Writes an AuditLog row. */
+        post: operations["AdminStoresController_declineStoreAppeal"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/stores/{id}/requires-cac": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Require (or stop requiring) the CAC certificate before this store can be approved. Writes an AuditLog row. */
+        patch: operations["AdminStoresController_setStoreRequiresCac"];
         trace?: never;
     };
     "/v1/reviews": {
@@ -2075,6 +2676,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/kitchen-console/kitchen/photos/update-request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The latest photo-update request for the locked-photos status UI. OWNER only. */
+        get: operations["KitchenConsoleController_getPhotoUpdateRequest"];
+        put?: never;
+        /** Request a photo update after approval locked the set: the reason goes to support, and an approved request unlocks edits for 7 days. OWNER only. */
+        post: operations["KitchenConsoleController_requestPhotoUpdate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/kitchen-console/menu/sections": {
         parameters: {
             query?: never;
@@ -2213,7 +2832,7 @@ export interface paths {
         patch: operations["KitchenConsoleController_updateOrderStatus"];
         trace?: never;
     };
-    "/v1/support-tickets": {
+    "/v1/kitchen-console/orders/{id}/acknowledge": {
         parameters: {
             query?: never;
             header?: never;
@@ -2222,15 +2841,15 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** File a support ticket as the signed-in customer/rider. */
-        post: operations["SupportTicketsController_create"];
+        /** Acknowledge the new-order alert for this order (the incoming-order screen was opened). Idempotent: the first device wins, repeats return the stored alert. */
+        post: operations["KitchenConsoleController_acknowledgeOrder"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/v1/support-tickets/with-attachment": {
+    "/v1/kitchen-console/kitchen/order-alert-phone/otp/request": {
         parameters: {
             query?: never;
             header?: never;
@@ -2239,25 +2858,42 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** File a support ticket with one private image attachment. */
-        post: operations["SupportTicketsController_createWithAttachment"];
+        /** Send a WhatsApp code to the dedicated order-alert number (step 1 of verification). OWNER only. */
+        post: operations["KitchenConsoleController_requestOrderAlertPhoneOtp"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/v1/support-tickets/me": {
+    "/v1/kitchen-console/kitchen/order-alert-phone/otp/verify": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** The caller's own support tickets. */
-        get: operations["SupportTicketsController_listMine"];
+        get?: never;
         put?: never;
-        post?: never;
+        /** Verify the dedicated order-alert number with the code just sent to it (step 2). Saves the number with a fresh verification timestamp; a wrong or foreign code saves nothing. OWNER only. */
+        post: operations["KitchenConsoleController_verifyOrderAlertPhoneOtp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/kitchen-console/kitchen/order-alert-phone/call-permission": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request WhatsApp call permission: sends the approved permission template to the verified dedicated number and records REQUESTED (step 3). Only the signed reply webhook records GRANTED or DENIED — sending or reading the request never counts as a grant. Code path only while calling is disabled (503 until enabled). OWNER only. */
+        post: operations["KitchenConsoleController_requestOrderCallPermission"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2993,11 +3629,39 @@ export interface components {
             appealNote: string | null;
             /** Format: date-time */
             appealedAt: string | null;
+            /** @description An admin's answer to a declined appeal; the owner may appeal again. */
+            appealResponse: string | null;
+            /** Format: date-time */
+            appealRespondedAt: string | null;
+            /**
+             * Format: date-time
+             * @description Null until an admin first approves: a SUSPENDED row with null is a declined application, not a ban.
+             */
+            firstApprovedAt: string | null;
+            /** @description The owner's display name (shared by the business's kitchen and store). */
+            ownerName: string | null;
+            /** @description Approval needs the CAC certificate on file. */
+            requiresCac: boolean;
             /** Format: date-time */
             reviewedAt: string | null;
             payoutBankCode: string | null;
             payoutAccountNumber: string | null;
             payoutAccountName: string | null;
+            /** @description Dedicated number fallback calls ring when a new order goes unacknowledged. Null until verified. */
+            orderAlertPhone: string | null;
+            /** Format: date-time */
+            orderAlertPhoneVerifiedAt: string | null;
+            /** @description True when a verified dedicated number exists — Task 8's call fallback is reachable. */
+            orderAlertCallingReady: boolean;
+            /**
+             * @description WhatsApp call-permission state for the dedicated number — UI hint only.
+             *     The provider rechecks live Meta start_call permission before every dial;
+             *     only the signed reply webhook writes GRANTED or DENIED.
+             * @enum {string}
+             */
+            orderAlertCallPermissionStatus: "UNKNOWN" | "REQUESTED" | "GRANTED" | "DENIED";
+            /** Format: date-time */
+            orderAlertCallPermissionUpdatedAt: string | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -3087,6 +3751,19 @@ export interface components {
             appealNote: string | null;
             /** Format: date-time */
             appealedAt: string | null;
+            /** @description An admin's answer to a declined appeal; the owner may appeal again. */
+            appealResponse: string | null;
+            /** Format: date-time */
+            appealRespondedAt: string | null;
+            /**
+             * Format: date-time
+             * @description Null until an admin first approves: a SUSPENDED row with null is a declined application, not a ban.
+             */
+            firstApprovedAt: string | null;
+            /** @description The owner's display name (shared by the business's kitchen and store). */
+            ownerName: string | null;
+            /** @description Approval needs the CAC certificate on file. */
+            requiresCac: boolean;
             /** Format: date-time */
             reviewedAt: string | null;
             payoutBankCode: string | null;
@@ -3123,6 +3800,19 @@ export interface components {
             appealNote: string | null;
             /** Format: date-time */
             appealedAt: string | null;
+            /** @description An admin's answer to a declined appeal; the owner may appeal again. */
+            appealResponse: string | null;
+            /** Format: date-time */
+            appealRespondedAt: string | null;
+            /**
+             * Format: date-time
+             * @description Null until an admin first approves: a SUSPENDED row with null is a declined application, not a ban.
+             */
+            firstApprovedAt: string | null;
+            /** @description The owner's display name (shared by the business's kitchen and store). */
+            ownerName: string | null;
+            /** @description Approval needs the CAC certificate on file. */
+            requiresCac: boolean;
             /** Format: date-time */
             reviewedAt: string | null;
             payoutBankCode: string | null;
@@ -3136,6 +3826,12 @@ export interface components {
             missing: ("LOCATION" | "RIDER_FEE")[];
             /** @description Verification photos uploaded so far; the store needs exactly STORE_PHOTOS_REQUIRED. */
             verificationPhotoCount: number;
+            /** @description What an admin still needs before approving: location, photos, owner photo. Empty = onboarding done. */
+            onboardingMissing: ("LOCATION" | "VERIFICATION_PHOTOS" | "OWNER_PHOTO")[];
+            /** @description Short-lived signed URL of the owner's photo, if uploaded. Only on the store's own profile read. */
+            ownerPhotoUrl?: string | null;
+            /** @description Short-lived signed URL of the optional CAC certificate, if uploaded. */
+            cacDocumentUrl?: string | null;
         };
         GeocodeResultResponseDto: {
             label: string;
@@ -3147,6 +3843,8 @@ export interface components {
         };
         UpdateStoreProfileDto: {
             name?: string;
+            /** @description The owner's display name; stored on the Business, shared by its kitchen and store. */
+            ownerName?: string;
             area?: string;
             lat?: number;
             lng?: number;
@@ -3159,6 +3857,27 @@ export interface components {
         };
         AppealDto: {
             message: string;
+        };
+        StoreReportProblemDto: {
+            subject: string;
+            body?: string;
+        };
+        SupportTicketResponseDto: {
+            id: string;
+            userId: string | null;
+            kitchenStaffId: string | null;
+            orderId: string | null;
+            /** @enum {string} */
+            channel: "WHATSAPP" | "IN_APP";
+            /** @enum {string} */
+            status: "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
+            subject: string;
+            body: string | null;
+            attachmentPath: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         RegisterBusinessKitchenDto: {
             kitchenName: string;
@@ -3173,6 +3892,259 @@ export interface components {
             id: string;
             /** @description Short-lived signed URL; the photos are private admin-review evidence. */
             url: string;
+        };
+        StorePhotoUpdateRequestDto: {
+            /**
+             * @description Why the vendor needs to change the locked photos (e.g. new shopfront paint).
+             * @example We repainted the shopfront sign and need to retake the photos.
+             */
+            reason: string;
+        };
+        StoreProductResponseDto: {
+            id: string;
+            storeId: string;
+            sectionId: string;
+            slug: string;
+            name: string;
+            description: string | null;
+            priceNaira: number;
+            imageUrl: string | null;
+            unit: string | null;
+            isSoldOut: boolean;
+            tags: {
+                label: string;
+                tone: string;
+            }[];
+            sortOrder: number;
+            /** Format: date-time */
+            flaggedAt: string | null;
+            flagNote: string | null;
+            flagAppealNote: string | null;
+            /** Format: date-time */
+            flagAppealedAt: string | null;
+            /** @description An admin's answer to a declined appeal; the owner may appeal again. */
+            flagAppealResponse: string | null;
+            /** Format: date-time */
+            flagAppealRespondedAt: string | null;
+        };
+        StoreSectionWithProductsResponseDto: {
+            products: components["schemas"]["StoreProductResponseDto"][];
+            id: string;
+            storeId: string;
+            label: string;
+            note: string | null;
+            sortOrder: number;
+        };
+        CreateStoreSectionDto: {
+            label: string;
+            note?: string;
+            sortOrder?: number;
+        };
+        StoreSectionResponseDto: {
+            id: string;
+            storeId: string;
+            label: string;
+            note: string | null;
+            sortOrder: number;
+        };
+        UpdateStoreSectionDto: {
+            label?: string;
+            note?: string;
+            sortOrder?: number;
+        };
+        CreateStoreProductDto: {
+            sectionId: string;
+            name: string;
+            description?: string;
+            priceNaira: number;
+            /** Format: uri */
+            imageUrl?: string;
+            tags?: {
+                label: string;
+                tone: string;
+            }[];
+            unit?: string;
+            sortOrder?: number;
+        };
+        UpdateStoreProductDto: {
+            sectionId?: string;
+            name?: string;
+            description?: string;
+            priceNaira?: number;
+            /** Format: uri */
+            imageUrl?: string;
+            tags?: {
+                label: string;
+                tone: string;
+            }[];
+            unit?: string;
+            isSoldOut?: boolean;
+            sortOrder?: number;
+        };
+        StoreOrderItemResponseDto: {
+            id: string;
+            storeOrderId: string;
+            storeProductId: string;
+            nameSnapshot: string;
+            qty: number;
+            unitPriceNaira: number;
+            /** @description True when the store couldn't supply this line; it isn't charged. */
+            unavailable: boolean;
+        };
+        StoreRiderSummaryDto: {
+            id: string;
+            name: string;
+            phone: string | null;
+            vehicleType: string | null;
+        };
+        StoreOrderParentAddressDto: {
+            area: string;
+        };
+        StoreOrderParentSummaryDto: {
+            rider: components["schemas"]["StoreRiderSummaryDto"] | null;
+            currentAssignmentId: string | null;
+            /** Format: date-time */
+            currentAssignmentAcceptedAt: string | null;
+            code: string;
+            /**
+             * @description AWAITING_PAYMENT = accepted, but don't start yet; ACCEPTED or later = paid.
+             * @enum {string}
+             */
+            status: "PLACED" | "AWAITING_PAYMENT" | "ACCEPTED" | "PREPARING" | "READY" | "PICKED_UP" | "DELIVERING" | "DELIVERED" | "CANCELLED" | "REFUNDED";
+            /** Format: date-time */
+            placedAt: string;
+            /** Format: date-time */
+            acceptedAt: string | null;
+            /**
+             * Format: date-time
+             * @description While AWAITING_PAYMENT: when the customer's payment window closes.
+             */
+            paymentDueAt: string | null;
+            /**
+             * Format: date-time
+             * @description Set once the customer has paid — the store may start packing.
+             */
+            paidAt: string | null;
+            /** @enum {string|null} */
+            cancelReason: "CUSTOMER" | "KITCHENS_DECLINED" | "STORE_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT" | null;
+            address: components["schemas"]["StoreOrderParentAddressDto"];
+        };
+        StoreOrderWithDetailsResponseDto: {
+            /** @enum {string} */
+            status: "PLACED" | "ACCEPTED" | "PREPARING" | "READY" | "PICKED_UP" | "CANCELLED";
+            items: components["schemas"]["StoreOrderItemResponseDto"][];
+            order: components["schemas"]["StoreOrderParentSummaryDto"];
+            id: string;
+            orderId: string;
+            storeId: string;
+            subtotalNaira: number;
+            deliveryFeeNaira: number;
+            payoutId: string | null;
+            /**
+             * Format: date-time
+             * @description When the store marked its part READY; null until then.
+             */
+            readyAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        UpdateStoreOrderStatusDto: {
+            /** @enum {string} */
+            status: "PLACED" | "ACCEPTED" | "PREPARING" | "READY" | "PICKED_UP" | "CANCELLED";
+            /** @description StoreOrderItem ids the store can't supply. Only valid when accepting. */
+            unavailableItemIds?: string[];
+        };
+        StoreOrderResponseDto: {
+            /** @enum {string} */
+            status: "PLACED" | "ACCEPTED" | "PREPARING" | "READY" | "PICKED_UP" | "CANCELLED";
+            id: string;
+            orderId: string;
+            storeId: string;
+            subtotalNaira: number;
+            deliveryFeeNaira: number;
+            payoutId: string | null;
+            /**
+             * Format: date-time
+             * @description When the store marked its part READY; null until then.
+             */
+            readyAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        StorePayoutOrderLineDto: {
+            id: string;
+            subtotalNaira: number;
+            deliveryFeeNaira: number;
+            order: {
+                code: string;
+                address: {
+                    area?: string;
+                };
+            };
+        };
+        StorePayoutResponseDto: {
+            id: string;
+            amountNaira: number;
+            /** @enum {string} */
+            status: "PENDING" | "FAILED" | "SETTLED";
+            /** Format: date-time */
+            settledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            storeOrdersPaidOut: components["schemas"]["StorePayoutOrderLineDto"][];
+        };
+        StoreEarningsSummaryResponseDto: {
+            groceryCommissionRate: number | null;
+            /** @description The GROCERY rate stores pay out at. */
+            commissionRate: number;
+            salesNaira: number;
+            commissionNaira: number;
+            nextPayoutNaira: number;
+            nextPayoutOrders: number;
+            nextPayoutDaysAway: number;
+        };
+        StorePublicResponseDto: {
+            id: string;
+            slug: string;
+            name: string;
+            area: string | null;
+            heroImageUrl: string | null;
+            isOpen: boolean;
+            noticeText: string | null;
+            minOrderNaira: number | null;
+            maxItemsPerOrder: number | null;
+        };
+        StorePublicProductDto: {
+            id: string;
+            slug: string;
+            name: string;
+            description: string | null;
+            priceNaira: number;
+            imageUrl: string | null;
+            unit: string | null;
+            isSoldOut: boolean;
+        };
+        StorePublicSectionDto: {
+            id: string;
+            label: string;
+            note: string | null;
+            products: components["schemas"]["StorePublicProductDto"][];
+        };
+        StorePublicWithCatalogResponseDto: {
+            id: string;
+            slug: string;
+            name: string;
+            area: string | null;
+            heroImageUrl: string | null;
+            isOpen: boolean;
+            noticeText: string | null;
+            minOrderNaira: number | null;
+            maxItemsPerOrder: number | null;
+            sections: components["schemas"]["StorePublicSectionDto"][];
         };
         BankResponseDto: {
             name: string;
@@ -3189,6 +4161,13 @@ export interface components {
         InitializePaymentResponseDto: {
             authorizationUrl: string;
             reference: string;
+        };
+        CreateSupportTicketDto: {
+            orderId?: string;
+            /** @enum {string} */
+            channel?: "WHATSAPP" | "IN_APP";
+            subject: string;
+            body?: string;
         };
         AdminLoginDto: {
             /** Format: email */
@@ -3267,7 +4246,7 @@ export interface components {
         TransactionResponseDto: {
             id: string;
             /** @enum {string} */
-            type: "ORDER_CHARGE" | "REFUND" | "KITCHEN_PAYOUT" | "RIDER_PAYOUT" | "CASH_SETTLEMENT" | "CREDIT_ISSUED" | "CREDIT_REDEEMED";
+            type: "ORDER_CHARGE" | "REFUND" | "KITCHEN_PAYOUT" | "STORE_PAYOUT" | "RIDER_PAYOUT" | "CASH_SETTLEMENT" | "CREDIT_ISSUED" | "CREDIT_REDEEMED";
             amountNaira: number;
             partyUserId: string | null;
             partyKitchenId: string | null;
@@ -3318,11 +4297,39 @@ export interface components {
             appealNote: string | null;
             /** Format: date-time */
             appealedAt: string | null;
+            /** @description An admin's answer to a declined appeal; the owner may appeal again. */
+            appealResponse: string | null;
+            /** Format: date-time */
+            appealRespondedAt: string | null;
+            /**
+             * Format: date-time
+             * @description Null until an admin first approves: a SUSPENDED row with null is a declined application, not a ban.
+             */
+            firstApprovedAt: string | null;
+            /** @description The owner's display name (shared by the business's kitchen and store). */
+            ownerName: string | null;
+            /** @description Approval needs the CAC certificate on file. */
+            requiresCac: boolean;
             /** Format: date-time */
             reviewedAt: string | null;
             payoutBankCode: string | null;
             payoutAccountNumber: string | null;
             payoutAccountName: string | null;
+            /** @description Dedicated number fallback calls ring when a new order goes unacknowledged. Null until verified. */
+            orderAlertPhone: string | null;
+            /** Format: date-time */
+            orderAlertPhoneVerifiedAt: string | null;
+            /** @description True when a verified dedicated number exists — Task 8's call fallback is reachable. */
+            orderAlertCallingReady: boolean;
+            /**
+             * @description WhatsApp call-permission state for the dedicated number — UI hint only.
+             *     The provider rechecks live Meta start_call permission before every dial;
+             *     only the signed reply webhook writes GRANTED or DENIED.
+             * @enum {string}
+             */
+            orderAlertCallPermissionStatus: "UNKNOWN" | "REQUESTED" | "GRANTED" | "DENIED";
+            /** Format: date-time */
+            orderAlertCallPermissionUpdatedAt: string | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -3343,6 +4350,12 @@ export interface components {
             /** @description Required (non-blank) when suspending; the service enforces that. */
             note?: string;
         };
+        DeclineAppealDto: {
+            response: string;
+        };
+        UpdateRequiresCacDto: {
+            requiresCac: boolean;
+        };
         FlagItemDto: {
             note: string;
         };
@@ -3360,6 +4373,10 @@ export interface components {
             flagAppealNote: string | null;
             /** Format: date-time */
             flagAppealedAt: string | null;
+            /** @description An admin's answer to a declined appeal; the owner may appeal again. */
+            flagAppealResponse: string | null;
+            /** Format: date-time */
+            flagAppealRespondedAt: string | null;
             id: string;
             kitchenId: string;
             sectionId: string;
@@ -3388,6 +4405,22 @@ export interface components {
             itemName: string;
             kitchenId: string;
             kitchenName: string;
+        };
+        FlaggedProductResponseDto: {
+            /** Format: date-time */
+            flaggedAt: string;
+            flagNote: string | null;
+            flagAppealNote: string | null;
+            /** Format: date-time */
+            flagAppealedAt: string | null;
+            productId: string;
+            productName: string;
+            storeId: string;
+            storeName: string;
+        };
+        DecidePhotoUpdateRequestDto: {
+            /** @enum {string} */
+            decision: "APPROVED" | "REJECTED";
         };
         AdminRiderListUserDto: {
             name: string | null;
@@ -3458,7 +4491,7 @@ export interface components {
         AdminRiderPayoutDto: {
             id: string;
             /** @enum {string} */
-            type: "ORDER_CHARGE" | "REFUND" | "KITCHEN_PAYOUT" | "RIDER_PAYOUT" | "CASH_SETTLEMENT" | "CREDIT_ISSUED" | "CREDIT_REDEEMED";
+            type: "ORDER_CHARGE" | "REFUND" | "KITCHEN_PAYOUT" | "STORE_PAYOUT" | "RIDER_PAYOUT" | "CASH_SETTLEMENT" | "CREDIT_ISSUED" | "CREDIT_REDEEMED";
             amountNaira: number;
             partyUserId: string | null;
             partyKitchenId: string | null;
@@ -3661,7 +4694,7 @@ export interface components {
              */
             paidAt: string | null;
             /** @enum {string|null} */
-            cancelReason: "CUSTOMER" | "KITCHENS_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT" | null;
+            cancelReason: "CUSTOMER" | "KITCHENS_DECLINED" | "STORE_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT" | null;
             /**
              * @description After delivery: AWAITING_CONFIRMATION until the customer confirms (CONFIRMED), reports it never arrived (DISPUTED), or receiptDueAt passes (AUTO_CONFIRMED). Null before delivery and on orders delivered before this existed.
              * @enum {string|null}
@@ -3825,7 +4858,7 @@ export interface components {
              */
             paidAt: string | null;
             /** @enum {string|null} */
-            cancelReason: "CUSTOMER" | "KITCHENS_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT" | null;
+            cancelReason: "CUSTOMER" | "KITCHENS_DECLINED" | "STORE_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT" | null;
             /**
              * @description After delivery: AWAITING_CONFIRMATION until the customer confirms (CONFIRMED), reports it never arrived (DISPUTED), or receiptDueAt passes (AUTO_CONFIRMED). Null before delivery and on orders delivered before this existed.
              * @enum {string|null}
@@ -3851,7 +4884,7 @@ export interface components {
         AdminTransactionDto: {
             id: string;
             /** @enum {string} */
-            type: "ORDER_CHARGE" | "REFUND" | "KITCHEN_PAYOUT" | "RIDER_PAYOUT" | "CASH_SETTLEMENT" | "CREDIT_ISSUED" | "CREDIT_REDEEMED";
+            type: "ORDER_CHARGE" | "REFUND" | "KITCHEN_PAYOUT" | "STORE_PAYOUT" | "RIDER_PAYOUT" | "CASH_SETTLEMENT" | "CREDIT_ISSUED" | "CREDIT_REDEEMED";
             amountNaira: number;
             partyUserId: string | null;
             partyKitchenId: string | null;
@@ -3966,7 +4999,7 @@ export interface components {
              */
             paidAt: string | null;
             /** @enum {string|null} */
-            cancelReason: "CUSTOMER" | "KITCHENS_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT" | null;
+            cancelReason: "CUSTOMER" | "KITCHENS_DECLINED" | "STORE_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT" | null;
             /**
              * @description After delivery: AWAITING_CONFIRMATION until the customer confirms (CONFIRMED), reports it never arrived (DISPUTED), or receiptDueAt passes (AUTO_CONFIRMED). Null before delivery and on orders delivered before this existed.
              * @enum {string|null}
@@ -3988,7 +5021,26 @@ export interface components {
         KitchenPayoutResultResponseDto: {
             id: string;
             /** @enum {string} */
-            type: "ORDER_CHARGE" | "REFUND" | "KITCHEN_PAYOUT" | "RIDER_PAYOUT" | "CASH_SETTLEMENT" | "CREDIT_ISSUED" | "CREDIT_REDEEMED";
+            type: "ORDER_CHARGE" | "REFUND" | "KITCHEN_PAYOUT" | "STORE_PAYOUT" | "RIDER_PAYOUT" | "CASH_SETTLEMENT" | "CREDIT_ISSUED" | "CREDIT_REDEEMED";
+            amountNaira: number;
+            partyUserId: string | null;
+            partyKitchenId: string | null;
+            orderId: string | null;
+            paymentId: string | null;
+            /** @enum {string} */
+            status: "PENDING" | "FAILED" | "SETTLED";
+            /** Format: date-time */
+            settledAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            paystackStatus: string;
+            orderCount: number;
+            grossNaira: number;
+        };
+        StorePayoutResultResponseDto: {
+            id: string;
+            /** @enum {string} */
+            type: "ORDER_CHARGE" | "REFUND" | "KITCHEN_PAYOUT" | "STORE_PAYOUT" | "RIDER_PAYOUT" | "CASH_SETTLEMENT" | "CREDIT_ISSUED" | "CREDIT_REDEEMED";
             amountNaira: number;
             partyUserId: string | null;
             partyKitchenId: string | null;
@@ -4007,7 +5059,7 @@ export interface components {
         RiderPayoutResultResponseDto: {
             id: string;
             /** @enum {string} */
-            type: "ORDER_CHARGE" | "REFUND" | "KITCHEN_PAYOUT" | "RIDER_PAYOUT" | "CASH_SETTLEMENT" | "CREDIT_ISSUED" | "CREDIT_REDEEMED";
+            type: "ORDER_CHARGE" | "REFUND" | "KITCHEN_PAYOUT" | "STORE_PAYOUT" | "RIDER_PAYOUT" | "CASH_SETTLEMENT" | "CREDIT_ISSUED" | "CREDIT_REDEEMED";
             amountNaira: number;
             partyUserId: string | null;
             partyKitchenId: string | null;
@@ -4607,6 +5659,19 @@ export interface components {
             appealNote: string | null;
             /** Format: date-time */
             appealedAt: string | null;
+            /** @description An admin's answer to a declined appeal; the owner may appeal again. */
+            appealResponse: string | null;
+            /** Format: date-time */
+            appealRespondedAt: string | null;
+            /**
+             * Format: date-time
+             * @description Null until an admin first approves: a SUSPENDED row with null is a declined application, not a ban.
+             */
+            firstApprovedAt: string | null;
+            /** @description The owner's display name (shared by the business's kitchen and store). */
+            ownerName: string | null;
+            /** @description Approval needs the CAC certificate on file. */
+            requiresCac: boolean;
             /** Format: date-time */
             reviewedAt: string | null;
             payoutBankCode: string | null;
@@ -4700,11 +5765,39 @@ export interface components {
             appealNote: string | null;
             /** Format: date-time */
             appealedAt: string | null;
+            /** @description An admin's answer to a declined appeal; the owner may appeal again. */
+            appealResponse: string | null;
+            /** Format: date-time */
+            appealRespondedAt: string | null;
+            /**
+             * Format: date-time
+             * @description Null until an admin first approves: a SUSPENDED row with null is a declined application, not a ban.
+             */
+            firstApprovedAt: string | null;
+            /** @description The owner's display name (shared by the business's kitchen and store). */
+            ownerName: string | null;
+            /** @description Approval needs the CAC certificate on file. */
+            requiresCac: boolean;
             /** Format: date-time */
             reviewedAt: string | null;
             payoutBankCode: string | null;
             payoutAccountNumber: string | null;
             payoutAccountName: string | null;
+            /** @description Dedicated number fallback calls ring when a new order goes unacknowledged. Null until verified. */
+            orderAlertPhone: string | null;
+            /** Format: date-time */
+            orderAlertPhoneVerifiedAt: string | null;
+            /** @description True when a verified dedicated number exists — Task 8's call fallback is reachable. */
+            orderAlertCallingReady: boolean;
+            /**
+             * @description WhatsApp call-permission state for the dedicated number — UI hint only.
+             *     The provider rechecks live Meta start_call permission before every dial;
+             *     only the signed reply webhook writes GRANTED or DENIED.
+             * @enum {string}
+             */
+            orderAlertCallPermissionStatus: "UNKNOWN" | "REQUESTED" | "GRANTED" | "DENIED";
+            /** Format: date-time */
+            orderAlertCallPermissionUpdatedAt: string | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -4713,6 +5806,8 @@ export interface components {
         };
         UpdateKitchenProfileDto: {
             name?: string;
+            /** @description The owner's display name; stored on the Business, shared by its kitchen and store. */
+            ownerName?: string;
             cuisine?: string;
             area?: string;
             lat?: number;
@@ -4786,27 +5881,13 @@ export interface components {
             subject: string;
             body?: string;
         };
-        SupportTicketResponseDto: {
-            id: string;
-            userId: string | null;
-            kitchenStaffId: string | null;
-            orderId: string | null;
-            /** @enum {string} */
-            channel: "WHATSAPP" | "IN_APP";
-            /** @enum {string} */
-            status: "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
-            subject: string;
-            body: string | null;
-            attachmentPath: string | null;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
         VerificationPhotoResponseDto: {
             id: string;
             /** @description Short-lived signed URL; the photos are private admin-review evidence. */
             url: string;
+        };
+        KitchenPhotoUpdateRequestDto: {
+            reason: string;
         };
         CreateMenuSectionDto: {
             label: string;
@@ -4896,7 +5977,7 @@ export interface components {
              */
             paidAt: string | null;
             /** @enum {string|null} */
-            cancelReason: "CUSTOMER" | "KITCHENS_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT" | null;
+            cancelReason: "CUSTOMER" | "KITCHENS_DECLINED" | "STORE_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT" | null;
             address: components["schemas"]["KitchenOrderParentAddressDto"];
         };
         KitchenOrderWithDetailsResponseDto: {
@@ -4955,12 +6036,12 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
-        CreateSupportTicketDto: {
-            orderId?: string;
-            /** @enum {string} */
-            channel?: "WHATSAPP" | "IN_APP";
-            subject: string;
-            body?: string;
+        RequestOrderAlertPhoneOtpDto: {
+            phone: string;
+        };
+        VerifyOrderAlertPhoneOtpDto: {
+            phone: string;
+            code: string;
         };
         AddressResponseDto: {
             id: string;
@@ -5049,7 +6130,10 @@ export interface components {
             downloads: number | null;
         };
         OrderLineInputDto: {
-            menuItemId: string;
+            /** @description Kitchen line. Exactly one of menuItemId/storeProductId must be set. */
+            menuItemId?: string;
+            /** @description Store line. Exactly one of menuItemId/storeProductId must be set. */
+            storeProductId?: string;
             qty: number;
         };
         PlaceOrderDto: {
@@ -5160,7 +6244,7 @@ export interface components {
              */
             paidAt: string | null;
             /** @enum {string|null} */
-            cancelReason: "CUSTOMER" | "KITCHENS_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT" | null;
+            cancelReason: "CUSTOMER" | "KITCHENS_DECLINED" | "STORE_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT" | null;
             /**
              * @description After delivery: AWAITING_CONFIRMATION until the customer confirms (CONFIRMED), reports it never arrived (DISPUTED), or receiptDueAt passes (AUTO_CONFIRMED). Null before delivery and on orders delivered before this existed.
              * @enum {string|null}
@@ -5380,7 +6464,7 @@ export interface components {
              */
             paidAt: string | null;
             /** @enum {string|null} */
-            cancelReason: "CUSTOMER" | "KITCHENS_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT" | null;
+            cancelReason: "CUSTOMER" | "KITCHENS_DECLINED" | "STORE_DECLINED" | "PAYMENT_EXPIRED" | "KITCHEN_TIMEOUT" | null;
             /**
              * @description After delivery: AWAITING_CONFIRMATION until the customer confirms (CONFIRMED), reports it never arrived (DISPUTED), or receiptDueAt passes (AUTO_CONFIRMED). Null before delivery and on orders delivered before this existed.
              * @enum {string|null}
@@ -6690,6 +7774,67 @@ export interface operations {
             };
         };
     };
+    StoreConsoleController_registerDevice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterDeviceDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_unregisterDevice: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                expoPushToken: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Device doesn't exist or belongs to another staff member. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     StoreConsoleController_geocode: {
         parameters: {
             query: {
@@ -6799,6 +7944,62 @@ export interface operations {
             };
             /** @description The store is not suspended, or already appealed. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_listSupportTickets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportTicketResponseDto"][];
+                };
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_reportProblem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreReportProblemDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportTicketResponseDto"];
+                };
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7099,6 +8300,842 @@ export interface operations {
             };
         };
     };
+    StoreConsoleController_getPhotoUpdateRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_requestPhotoUpdate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StorePhotoUpdateRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The photos are not locked, or a request is already pending. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_uploadOwnerPhoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing file, wrong MIME type, or over the size limit. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_uploadCacDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing file, wrong MIME type, or over the size limit. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_deleteCacDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Removed (or there was none). */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_getCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreSectionWithProductsResponseDto"][];
+                };
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_createSection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStoreSectionDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreSectionResponseDto"];
+                };
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The store has not set a location yet. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_deleteSection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Section doesn't exist or belongs to another store. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description This section still has products — move or delete them first. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_updateSection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStoreSectionDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreSectionResponseDto"];
+                };
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Section doesn't exist or belongs to another store. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_createProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateStoreProductDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreProductResponseDto"];
+                };
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The target section doesn't exist or belongs to another store. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The store has not set a location yet. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_deleteProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deleted. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product doesn't exist or belongs to another store. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description This product has order history and can't be deleted — mark it sold out instead. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_updateProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStoreProductDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreProductResponseDto"];
+                };
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product (or target section) doesn't exist or belongs to another store. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_appealProductFlag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description StoreProduct id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppealDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreProductResponseDto"];
+                };
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product doesn't exist or belongs to another store. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The product is not flagged, or already appealed. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_uploadProductImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreProductResponseDto"];
+                };
+            };
+            /** @description Missing file, wrong MIME type, or over the size limit. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Product doesn't exist or belongs to another store. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_listOrders: {
+        parameters: {
+            query?: {
+                status?: "PLACED" | "ACCEPTED" | "PREPARING" | "READY" | "PICKED_UP" | "CANCELLED";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreOrderWithDetailsResponseDto"][];
+                };
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_updateOrderStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description StoreOrder id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateStoreOrderStatusDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreOrderResponseDto"];
+                };
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order doesn't exist or belongs to another store. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a valid transition from the current status; `code: AWAITING_PAYMENT` when moving to PREPARING before the customer has paid; or no rider has accepted yet (required before PICKED_UP). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_acknowledgeOrder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description StoreOrder id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order doesn't exist or belongs to another store. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_listPayouts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorePayoutResponseDto"][];
+                };
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoreConsoleController_getEarningsSummary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreEarningsSummaryResponseDto"];
+                };
+            };
+            /** @description Missing or invalid partner access token. 409 NO_STORE if the business has no store yet. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    StoresController_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorePublicResponseDto"][];
+                };
+            };
+        };
+    };
+    StoresController_getBySlug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorePublicWithCatalogResponseDto"];
+                };
+            };
+            /** @description Store not found or not ACTIVE. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     PaymentsController_listBanks: {
         parameters: {
             query?: never;
@@ -7195,6 +9232,127 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    SupportTicketsController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSupportTicketDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportTicketResponseDto"];
+                };
+            };
+            /** @description Missing or invalid access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SupportTicketsController_createWithAttachment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                    orderId?: string;
+                    subject: string;
+                    body?: string;
+                };
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportTicketResponseDto"];
+                };
+            };
+            /** @description Missing image, unsupported type, or over the size limit. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    SupportTicketsController_listMine: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportTicketResponseDto"][];
+                };
+            };
+            /** @description Missing or invalid access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CatalogController_get: {
+        parameters: {
+            query?: {
+                /** @description Defaults to FOOD. */
+                type?: "FOOD" | "GROCERY";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
             };
         };
     };
@@ -7571,6 +9729,84 @@ export interface operations {
             };
         };
     };
+    AdminController_declineKitchenAppeal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeclineAppealDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KitchenResponseDto"];
+                };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Kitchen not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminController_setKitchenRequiresCac: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRequiresCacDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KitchenResponseDto"];
+                };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Kitchen not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     AdminController_flagItem: {
         parameters: {
             query?: never;
@@ -7659,6 +9895,52 @@ export interface operations {
             };
         };
     };
+    AdminController_declineItemAppeal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeclineAppealDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MenuItemResponseDto"];
+                };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Menu item not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description This item has no open appeal. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     AdminController_listFlaggedItems: {
         parameters: {
             query?: {
@@ -7680,6 +9962,228 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["FlaggedItemResponseDto"][];
                 };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminController_flagProduct: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FlagItemDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreProductResponseDto"];
+                };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Store product not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description This product is already flagged. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminController_clearProductFlag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreProductResponseDto"];
+                };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Store product not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description This product is not flagged. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminController_declineProductAppeal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeclineAppealDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreProductResponseDto"];
+                };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Store product not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description This product has no open appeal. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminController_listFlaggedProducts: {
+        parameters: {
+            query?: {
+                /** @description Only products of this store. */
+                storeId?: string;
+                /** @description true: only products whose owner has sent an appeal. */
+                hasAppeal?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlaggedProductResponseDto"][];
+                };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminController_listPhotoUpdateRequests: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>[];
+                };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminController_decidePhotoUpdateRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Photo-update request id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecidePhotoUpdateRequestDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Missing or invalid admin access token. */
             401: {
@@ -7963,7 +10467,7 @@ export interface operations {
     AdminController_listTransactions: {
         parameters: {
             query: {
-                type?: "ORDER_CHARGE" | "REFUND" | "KITCHEN_PAYOUT" | "RIDER_PAYOUT" | "CASH_SETTLEMENT" | "CREDIT_ISSUED" | "CREDIT_REDEEMED";
+                type?: "ORDER_CHARGE" | "REFUND" | "KITCHEN_PAYOUT" | "STORE_PAYOUT" | "RIDER_PAYOUT" | "CASH_SETTLEMENT" | "CREDIT_ISSUED" | "CREDIT_REDEEMED";
                 status?: "PENDING" | "FAILED" | "SETTLED";
                 /** @description Ledger rows whose party is this kitchen (KITCHEN_PAYOUT). */
                 kitchenId?: string;
@@ -8164,6 +10668,56 @@ export interface operations {
                 };
             };
             /** @description This kitchen has no payout account on file yet. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description SUPER_ADMIN only. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Nothing to pay out — no unpaid completed orders. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminController_payoutStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Store id. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorePayoutResultResponseDto"];
+                };
+            };
+            /** @description This store has no payout account on file yet. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -9139,6 +11693,84 @@ export interface operations {
             };
             /** @description VERIFICATION_PHOTOS_REQUIRED — too few photos to approve. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminStoresController_declineStoreAppeal: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeclineAppealDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreResponseDto"];
+                };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Store not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminStoresController_setStoreRequiresCac: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateRequiresCacDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreResponseDto"];
+                };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Store not found. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -10230,6 +12862,80 @@ export interface operations {
             };
         };
     };
+    KitchenConsoleController_getPhotoUpdateRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid kitchen access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KitchenConsoleController_requestPhotoUpdate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KitchenPhotoUpdateRequestDto"];
+            };
+        };
+        responses: {
+            /** @description The pending photo-update request. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid kitchen access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The photos are not locked, or a request is already pending. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     KitchenConsoleController_createSection: {
         parameters: {
             query?: never;
@@ -10639,84 +13345,14 @@ export interface operations {
             };
         };
     };
-    SupportTicketsController_create: {
+    KitchenConsoleController_acknowledgeOrder: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateSupportTicketDto"];
+            path: {
+                /** @description KitchenOrder id. */
+                id: string;
             };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SupportTicketResponseDto"];
-                };
-            };
-            /** @description Missing or invalid access token. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    SupportTicketsController_createWithAttachment: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": {
-                    /** Format: binary */
-                    file: string;
-                    orderId?: string;
-                    subject: string;
-                    body?: string;
-                };
-            };
-        };
-        responses: {
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SupportTicketResponseDto"];
-                };
-            };
-            /** @description Missing image, unsupported type, or over the size limit. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Missing or invalid access token. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    SupportTicketsController_listMine: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -10725,12 +13361,135 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["SupportTicketResponseDto"][];
-                };
+                content?: never;
             };
-            /** @description Missing or invalid access token. */
+            /** @description Missing or invalid kitchen access token. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Order doesn't exist or belongs to another kitchen. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KitchenConsoleController_requestOrderAlertPhoneOtp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestOrderAlertPhoneOtpDto"];
+            };
+        };
+        responses: {
+            /** @description `{ resendCooldownSeconds }`, plus `testCode` for allowlisted test numbers. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not a valid Nigerian phone number. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid kitchen access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KitchenConsoleController_verifyOrderAlertPhoneOtp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyOrderAlertPhoneOtpDto"];
+            };
+        };
+        responses: {
+            /** @description `{ orderAlertPhone, orderAlertPhoneVerifiedAt, orderAlertCallingReady }`. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Expired code or invalid input. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid kitchen access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is STAFF, not OWNER. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    KitchenConsoleController_requestOrderCallPermission: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `{ orderAlertCallPermissionStatus, orderAlertCallPermissionUpdatedAt }`. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid kitchen access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No verified dedicated number to send the request to. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

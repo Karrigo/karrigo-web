@@ -5,18 +5,20 @@ import { useState, useTransition } from "react";
 import { cn } from "@/lib/cn";
 import { formatKobo } from "@/lib/money";
 import {
-  QUEUE_STATUS_LABEL,
   QUEUE_TABS,
   payoutKobo,
+  queueStatusLabel,
   type QueueItem,
   type QueueKind,
   type QueueStatus,
 } from "@/lib/admin/queue";
 import { say } from "@/lib/admin/store";
 import {
+  declineAppeal,
   payOut,
   setKitchenStatus,
   setRiderVerification,
+  setRequiresCac,
   setStoreStatus,
 } from "@/app/(admin)/admin/queue-actions";
 import type { AdminRole } from "@/lib/admin/types";
@@ -64,6 +66,16 @@ export function ReviewQueue({
       say(result.ok ? result.message : result.error);
       if (result.ok) setSelectedId(null);
     });
+  }
+
+  function declineAppealFor(item: QueueItem, response: string) {
+    if (kind === "riders") return;
+    run(() => declineAppeal(kind, item.id, response));
+  }
+
+  function setCac(item: QueueItem, requiresCac: boolean) {
+    if (kind === "riders") return;
+    run(() => setRequiresCac(kind, item.id, requiresCac));
   }
 
   function decide(item: QueueItem, status: QueueStatus, note: string) {
@@ -128,7 +140,7 @@ export function ReviewQueue({
                       ? missing === 0
                         ? "Ready to review"
                         : `${missing} missing`
-                      : QUEUE_STATUS_LABEL[item.status]}
+                      : queueStatusLabel(item)}
                   </StatusChip>
                   <span className="text-text/55 text-[11.5px] font-light">
                     {item.status === "PENDING"
@@ -151,6 +163,8 @@ export function ReviewQueue({
             item={selected}
             role={role}
             onDecide={decide}
+            onDeclineAppeal={declineAppealFor}
+            onSetRequiresCac={setCac}
             busy={busy}
             onPayout={
               kind === "stores"

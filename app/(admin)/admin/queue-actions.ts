@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { ApiError, api, type Schemas } from "@/lib/api/client";
+import { approvalBlockedMessage } from "@/lib/admin/approval";
 import { VERIFICATION_PHOTOS_REQUIRED, photosNeededText } from "@/lib/kitchen/types";
 import { requireAdmin, requireSuperAdmin } from "@/lib/admin/session";
 import { formatKobo, nairaToKobo } from "@/lib/money";
@@ -46,6 +47,8 @@ export async function setKitchenStatus(
         error: photosNeededText(details.have ?? 0, details.required ?? VERIFICATION_PHOTOS_REQUIRED),
       };
     }
+    const blocked = error instanceof ApiError && error.status === 422 ? approvalBlockedMessage("kitchen", error.body) : null;
+    if (blocked) return { ok: false, error: blocked };
     return fail(error);
   }
 }
@@ -103,6 +106,42 @@ export async function setStoreStatus(
         error: photosNeededText(details.have ?? 0, details.required ?? VERIFICATION_PHOTOS_REQUIRED),
       };
     }
+    const blocked = error instanceof ApiError && error.status === 422 ? approvalBlockedMessage("store", error.body) : null;
+    if (blocked) return { ok: false, error: blocked };
+    return fail(error);
+  }
+}
+
+/** Answers a suspended kitchen's or store's appeal without lifting the suspension.
+ *  The owner sees the answer and may appeal again. */
+export async function declineAppeal(kind: "kitchens" | "stores", id: string, response: string): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    if (!response.trim()) return { ok: false, error: "Write an answer — the owner reads it." };
+    await api(`/admin/${kind}/${encodeURIComponent(id)}/appeal/decline`, {
+      method: "POST",
+      scope: "admin",
+      body: { response: response.trim() },
+    });
+    refresh();
+    return { ok: true, message: "Answer sent · they can appeal again" };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/** Marks a kitchen or store as needing its CAC certificate before it can be approved. */
+export async function setRequiresCac(kind: "kitchens" | "stores", id: string, requiresCac: boolean): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    await api(`/admin/${kind}/${encodeURIComponent(id)}/requires-cac`, {
+      method: "PATCH",
+      scope: "admin",
+      body: { requiresCac },
+    });
+    refresh();
+    return { ok: true, message: requiresCac ? "CAC certificate now required" : "CAC certificate no longer required" };
+  } catch (error) {
     return fail(error);
   }
 }
@@ -150,6 +189,9 @@ export async function kitchenDetail(id: string): Promise<
       fields: { key: string; value: string }[];
       menuItems: number;
       photos: Schemas["AdminKitchenVerificationPhotoDto"][];
+      /** Whether the owner's photo and the CAC certificate are on file (the files themselves stay private). */
+      hasOwnerPhoto: boolean;
+      hasCacDocument: boolean;
     }
   | { ok: false; error: string }
 > {
@@ -162,6 +204,8 @@ export async function kitchenDetail(id: string): Promise<
     return {
       ok: true,
       menuItems: k.stats.menuItemCount,
+      hasOwnerPhoto: !!k.ownerPhotoUrl,
+      hasCacDocument: !!k.cacDocumentUrl,
       // Signed URLs that expire: fetched when the kitchen is opened, never kept.
       photos: k.verificationPhotos ?? [],
       fields: owner

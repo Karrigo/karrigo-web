@@ -1554,6 +1554,74 @@
         ]
       }
     },
+    "/v1/store-console/devices": {
+      "post": {
+        "operationId": "StoreConsoleController_registerDevice",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register this store app install for push notifications (new orders, payments). Upserts on the Expo push token — store sessions share the staff identity with kitchen sessions, so one row covers both roles.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/devices/{expoPushToken}": {
+      "delete": {
+        "operationId": "StoreConsoleController_unregisterDevice",
+        "parameters": [
+          {
+            "name": "expoPushToken",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "404": {
+            "description": "Device doesn't exist or belongs to another staff member."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unregister a push token (on sign-out).",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
     "/v1/store-console/geocode": {
       "get": {
         "operationId": "StoreConsoleController_geocode",
@@ -1691,6 +1759,77 @@
           }
         ],
         "summary": "Appeal a suspension with a message (once per suspension). OWNER only.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/support-tickets": {
+      "post": {
+        "operationId": "StoreConsoleController_reportProblem",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreReportProblemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportTicketResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "File a support ticket as this store.",
+        "tags": [
+          "Store Console"
+        ]
+      },
+      "get": {
+        "operationId": "StoreConsoleController_listSupportTickets",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SupportTicketResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "This store staff member's own support tickets.",
         "tags": [
           "Store Console"
         ]
@@ -2007,6 +2146,901 @@
         ]
       }
     },
+    "/v1/store-console/store/photos/update-request": {
+      "post": {
+        "operationId": "StoreConsoleController_requestPhotoUpdate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorePhotoUpdateRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          },
+          "409": {
+            "description": "The photos are not locked, or a request is already pending."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Request a photo update after approval locked the set: the reason goes to support, and an approved request unlocks edits for 7 days. OWNER only.",
+        "tags": [
+          "Store Console"
+        ]
+      },
+      "get": {
+        "operationId": "StoreConsoleController_getPhotoUpdateRequest",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The latest photo-update request for the locked-photos status UI. OWNER only.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/store/owner-photo": {
+      "post": {
+        "operationId": "StoreConsoleController_uploadOwnerPhoto",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "400": {
+            "description": "Missing file, wrong MIME type, or over the size limit."
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload (or replace) the owner's photo. Required before approval. OWNER only.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/store/cac": {
+      "post": {
+        "operationId": "StoreConsoleController_uploadCacDocument",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "400": {
+            "description": "Missing file, wrong MIME type, or over the size limit."
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload (or replace) the optional CAC certificate (image or PDF). OWNER only.",
+        "tags": [
+          "Store Console"
+        ]
+      },
+      "delete": {
+        "operationId": "StoreConsoleController_deleteCacDocument",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Removed (or there was none)."
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove the CAC certificate. OWNER only.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/catalog": {
+      "get": {
+        "operationId": "StoreConsoleController_getCatalog",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StoreSectionWithProductsResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The store’s full catalog — sections with their products. OWNER only.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/catalog/sections": {
+      "post": {
+        "operationId": "StoreConsoleController_createSection",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStoreSectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreSectionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          },
+          "409": {
+            "description": "The store has not set a location yet."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a catalog section. OWNER only. Requires the store to have set a location first.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/catalog/sections/{id}": {
+      "patch": {
+        "operationId": "StoreConsoleController_updateSection",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoreSectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreSectionResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          },
+          "404": {
+            "description": "Section doesn't exist or belongs to another store."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a catalog section. OWNER only.",
+        "tags": [
+          "Store Console"
+        ]
+      },
+      "delete": {
+        "operationId": "StoreConsoleController_deleteSection",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          },
+          "404": {
+            "description": "Section doesn't exist or belongs to another store."
+          },
+          "409": {
+            "description": "This section still has products — move or delete them first."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete an empty catalog section. OWNER only.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/catalog/products": {
+      "post": {
+        "operationId": "StoreConsoleController_createProduct",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStoreProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreProductResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          },
+          "404": {
+            "description": "The target section doesn't exist or belongs to another store."
+          },
+          "409": {
+            "description": "The store has not set a location yet."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a catalog product. OWNER only. Requires the store to have set a location first.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/catalog/products/{id}": {
+      "patch": {
+        "operationId": "StoreConsoleController_updateProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoreProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreProductResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          },
+          "404": {
+            "description": "Product (or target section) doesn't exist or belongs to another store."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a catalog product — including moving it to another section via sectionId and toggling sold out. OWNER only.",
+        "tags": [
+          "Store Console"
+        ]
+      },
+      "delete": {
+        "operationId": "StoreConsoleController_deleteProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          },
+          "404": {
+            "description": "Product doesn't exist or belongs to another store."
+          },
+          "409": {
+            "description": "This product has order history and can't be deleted — mark it sold out instead."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a catalog product. OWNER only.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/catalog/products/{id}/appeal": {
+      "post": {
+        "operationId": "StoreConsoleController_appealProductFlag",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "StoreProduct id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppealDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreProductResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "404": {
+            "description": "Product doesn't exist or belongs to another store."
+          },
+          "409": {
+            "description": "The product is not flagged, or already appealed."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Appeal the flag on one of your products. Any active store staff.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/catalog/products/{id}/image": {
+      "post": {
+        "operationId": "StoreConsoleController_uploadProductImage",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreProductResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing file, wrong MIME type, or over the size limit."
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          },
+          "404": {
+            "description": "Product doesn't exist or belongs to another store."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload a catalog product's photo. OWNER only.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/orders": {
+      "get": {
+        "operationId": "StoreConsoleController_listOrders",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PLACED",
+                "ACCEPTED",
+                "PREPARING",
+                "READY",
+                "PICKED_UP",
+                "CANCELLED"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StoreOrderWithDetailsResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The incoming-order queue, oldest first, optionally filtered by status.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/orders/{id}/status": {
+      "patch": {
+        "operationId": "StoreConsoleController_updateOrderStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "StoreOrder id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStoreOrderStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreOrderResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "404": {
+            "description": "Order doesn't exist or belongs to another store."
+          },
+          "409": {
+            "description": "Not a valid transition from the current status; `code: AWAITING_PAYMENT` when moving to PREPARING before the customer has paid; or no rider has accepted yet (required before PICKED_UP)."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Transition this store's slice of an order (and roll up the parent Order's status).",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/orders/{id}/acknowledge": {
+      "post": {
+        "operationId": "StoreConsoleController_acknowledgeOrder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "StoreOrder id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "404": {
+            "description": "Order doesn't exist or belongs to another store."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Acknowledge the new-order alert for this order (the incoming-order screen was opened). Idempotent: the first device wins, repeats return the stored alert.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/store/payouts": {
+      "get": {
+        "operationId": "StoreConsoleController_listPayouts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StorePayoutResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Settled payout history. OWNER only.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/store-console/store/earnings-summary": {
+      "get": {
+        "operationId": "StoreConsoleController_getEarningsSummary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreEarningsSummaryResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid partner access token. 409 NO_STORE if the business has no store yet."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Next-payout projection, computed from the same unpaid-slice set a real payout run would settle. OWNER only.",
+        "tags": [
+          "Store Console"
+        ]
+      }
+    },
+    "/v1/stores": {
+      "get": {
+        "operationId": "StoresController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StorePublicResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List active, discoverable stores.",
+        "tags": [
+          "Stores (public catalog)"
+        ]
+      }
+    },
+    "/v1/stores/{slug}": {
+      "get": {
+        "operationId": "StoresController_getBySlug",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorePublicWithCatalogResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Store not found or not ACTIVE."
+          }
+        },
+        "summary": "A store's public page — profile plus its sections; flagged items omitted.",
+        "tags": [
+          "Stores (public catalog)"
+        ]
+      }
+    },
     "/v1/payments/banks": {
       "get": {
         "operationId": "PaymentsController_listBanks",
@@ -2119,6 +3153,177 @@
         "summary": "Start a Paystack checkout. Only while the order is AWAITING_PAYMENT and before paymentDueAt. Each call returns a fresh checkout; the order is confirmed by Paystack’s webhook, never by the redirect, so re-read the order until it shows ACCEPTED.",
         "tags": [
           "Payments"
+        ]
+      }
+    },
+    "/v1/support-tickets": {
+      "post": {
+        "operationId": "SupportTicketsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSupportTicketDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportTicketResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "File a support ticket as the signed-in customer/rider.",
+        "tags": [
+          "Support Tickets"
+        ]
+      }
+    },
+    "/v1/support-tickets/with-attachment": {
+      "post": {
+        "operationId": "SupportTicketsController_createWithAttachment",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "orderId": {
+                    "type": "string"
+                  },
+                  "subject": {
+                    "type": "string"
+                  },
+                  "body": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file",
+                  "subject"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportTicketResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing image, unsupported type, or over the size limit."
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "File a support ticket with one private image attachment.",
+        "tags": [
+          "Support Tickets"
+        ]
+      }
+    },
+    "/v1/support-tickets/me": {
+      "get": {
+        "operationId": "SupportTicketsController_listMine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SupportTicketResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The caller's own support tickets.",
+        "tags": [
+          "Support Tickets"
+        ]
+      }
+    },
+    "/v1/catalog": {
+      "get": {
+        "operationId": "CatalogController_get",
+        "parameters": [
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Defaults to FOOD.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "FOOD",
+                "GROCERY"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Every active kitchen (and, for GROCERY, every active store) with its menu, in one response. `type` defaults to FOOD. Flagged items are omitted. Cached for a few seconds.",
+        "tags": [
+          "Catalog (public)"
         ]
       }
     },
@@ -2589,6 +3794,110 @@
         ]
       }
     },
+    "/v1/admin/kitchens/{id}/appeal/decline": {
+      "post": {
+        "operationId": "AdminController_declineKitchenAppeal",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeclineAppealDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitchenResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          },
+          "404": {
+            "description": "Kitchen not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Answer a suspended kitchen's appeal without lifting the suspension. The owner sees `response` and may appeal again. Emails the owners. Writes an AuditLog row.",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/v1/admin/kitchens/{id}/requires-cac": {
+      "patch": {
+        "operationId": "AdminController_setKitchenRequiresCac",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRequiresCacDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitchenResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          },
+          "404": {
+            "description": "Kitchen not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Require (or stop requiring) the CAC certificate before this kitchen can be approved. Writes an AuditLog row.",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
     "/v1/admin/menu-items/{id}/flag": {
       "post": {
         "operationId": "AdminController_flagItem",
@@ -2687,6 +3996,61 @@
         ]
       }
     },
+    "/v1/admin/menu-items/{id}/appeal/decline": {
+      "post": {
+        "operationId": "AdminController_declineItemAppeal",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeclineAppealDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MenuItemResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          },
+          "404": {
+            "description": "Menu item not found."
+          },
+          "409": {
+            "description": "This item has no open appeal."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Answer a menu item flag appeal without clearing the flag. The owner sees `response` and may appeal again. Emails the owners. Writes an AuditLog row.",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
     "/v1/admin/flagged-items": {
       "get": {
         "operationId": "AdminController_listFlaggedItems",
@@ -2734,6 +4098,287 @@
           }
         ],
         "summary": "Flagged menu items, newest flag first. `kitchenId` narrows to one kitchen; `hasAppeal=true` shows only appealed ones. Any admin role.",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/v1/admin/store-products/{id}/flag": {
+      "post": {
+        "operationId": "AdminController_flagProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FlagItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreProductResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          },
+          "404": {
+            "description": "Store product not found."
+          },
+          "409": {
+            "description": "This product is already flagged."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Flag a store product: hidden from customers and not orderable until cleared. Requires a `note` (1-500) the owner sees. Any admin role (moderation, same policy as banning a kitchen). Writes an AuditLog row.",
+        "tags": [
+          "Admin"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminController_clearProductFlag",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreProductResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          },
+          "404": {
+            "description": "Store product not found."
+          },
+          "409": {
+            "description": "This product is not flagged."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Clear a store product flag (and any appeal). Any admin role (moderation, same policy as banning a kitchen). Writes an AuditLog row.",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/v1/admin/store-products/{id}/appeal/decline": {
+      "post": {
+        "operationId": "AdminController_declineProductAppeal",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeclineAppealDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreProductResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          },
+          "404": {
+            "description": "Store product not found."
+          },
+          "409": {
+            "description": "This product has no open appeal."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Answer a store product flag appeal without clearing the flag. The owner sees `response` and may appeal again. Emails the owners. Writes an AuditLog row.",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/v1/admin/flagged-products": {
+      "get": {
+        "operationId": "AdminController_listFlaggedProducts",
+        "parameters": [
+          {
+            "name": "storeId",
+            "required": false,
+            "in": "query",
+            "description": "Only products of this store.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hasAppeal",
+            "required": false,
+            "in": "query",
+            "description": "true: only products whose owner has sent an appeal.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FlaggedProductResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Flagged store products, newest flag first. `storeId` narrows to one store; `hasAppeal=true` shows only appealed ones. Any admin role.",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/v1/admin/photo-update-requests": {
+      "get": {
+        "operationId": "AdminController_listPhotoUpdateRequests",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Verification-photo update requests (kitchens and stores), pending first then newest. Any admin role.",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/v1/admin/photo-update-requests/{id}/decision": {
+      "post": {
+        "operationId": "AdminController_decidePhotoUpdateRequest",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Photo-update request id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecidePhotoUpdateRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve or reject a verification-photo update request. Approval unlocks the vendor’s photos for 7 days. Any admin role (no money moves here).",
         "tags": [
           "Admin"
         ]
@@ -3204,6 +4849,7 @@
                 "ORDER_CHARGE",
                 "REFUND",
                 "KITCHEN_PAYOUT",
+                "STORE_PAYOUT",
                 "RIDER_PAYOUT",
                 "CASH_SETTLEMENT",
                 "CREDIT_ISSUED",
@@ -3515,6 +5161,55 @@
           }
         ],
         "summary": "Trigger a real Paystack transfer for every one of this kitchen’s unpaid completed orders. Writes an AuditLog row.",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/v1/admin/stores/{id}/payout": {
+      "post": {
+        "operationId": "AdminController_payoutStore",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Store id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorePayoutResultResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "This store has no payout account on file yet."
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          },
+          "403": {
+            "description": "SUPER_ADMIN only."
+          },
+          "409": {
+            "description": "Nothing to pay out — no unpaid completed orders."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Trigger a real Paystack transfer for every one of this store’s unpaid completed slices. Writes an AuditLog row.",
         "tags": [
           "Admin"
         ]
@@ -4935,6 +6630,110 @@
         ]
       }
     },
+    "/v1/admin/stores/{id}/appeal/decline": {
+      "post": {
+        "operationId": "AdminStoresController_declineStoreAppeal",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeclineAppealDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          },
+          "404": {
+            "description": "Store not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Answer a suspended store's appeal without lifting the suspension. The owner sees `response` and may appeal again. Emails the owners. Writes an AuditLog row.",
+        "tags": [
+          "Admin — Stores"
+        ]
+      }
+    },
+    "/v1/admin/stores/{id}/requires-cac": {
+      "patch": {
+        "operationId": "AdminStoresController_setStoreRequiresCac",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRequiresCacDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          },
+          "404": {
+            "description": "Store not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Require (or stop requiring) the CAC certificate before this store can be approved. Writes an AuditLog row.",
+        "tags": [
+          "Admin — Stores"
+        ]
+      }
+    },
     "/v1/reviews": {
       "post": {
         "operationId": "ReviewsController_submit",
@@ -6169,6 +7968,69 @@
         ]
       }
     },
+    "/v1/kitchen-console/kitchen/photos/update-request": {
+      "post": {
+        "operationId": "KitchenConsoleController_requestPhotoUpdate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KitchenPhotoUpdateRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The pending photo-update request."
+          },
+          "401": {
+            "description": "Missing or invalid kitchen access token."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          },
+          "409": {
+            "description": "The photos are not locked, or a request is already pending."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Request a photo update after approval locked the set: the reason goes to support, and an approved request unlocks edits for 7 days. OWNER only.",
+        "tags": [
+          "Kitchen Console"
+        ]
+      },
+      "get": {
+        "operationId": "KitchenConsoleController_getPhotoUpdateRequest",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Missing or invalid kitchen access token."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The latest photo-update request for the locked-photos status UI. OWNER only.",
+        "tags": [
+          "Kitchen Console"
+        ]
+      }
+    },
     "/v1/kitchen-console/menu/sections": {
       "post": {
         "operationId": "KitchenConsoleController_createSection",
@@ -6659,33 +8521,68 @@
         ]
       }
     },
-    "/v1/support-tickets": {
+    "/v1/kitchen-console/orders/{id}/acknowledge": {
       "post": {
-        "operationId": "SupportTicketsController_create",
+        "operationId": "KitchenConsoleController_acknowledgeOrder",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "KitchenOrder id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "401": {
+            "description": "Missing or invalid kitchen access token."
+          },
+          "404": {
+            "description": "Order doesn't exist or belongs to another kitchen."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Acknowledge the new-order alert for this order (the incoming-order screen was opened). Idempotent: the first device wins, repeats return the stored alert.",
+        "tags": [
+          "Kitchen Console"
+        ]
+      }
+    },
+    "/v1/kitchen-console/kitchen/order-alert-phone/otp/request": {
+      "post": {
+        "operationId": "KitchenConsoleController_requestOrderAlertPhoneOtp",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateSupportTicketDto"
+                "$ref": "#/components/schemas/RequestOrderAlertPhoneOtpDto"
               }
             }
           }
         },
         "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SupportTicketResponseDto"
-                }
-              }
-            }
+          "200": {
+            "description": "`{ resendCooldownSeconds }`, plus `testCode` for allowlisted test numbers."
+          },
+          "400": {
+            "description": "Not a valid Nigerian phone number."
           },
           "401": {
-            "description": "Missing or invalid access token."
+            "description": "Missing or invalid kitchen access token."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
           }
         },
         "security": [
@@ -6693,61 +8590,38 @@
             "bearer": []
           }
         ],
-        "summary": "File a support ticket as the signed-in customer/rider.",
+        "summary": "Send a WhatsApp code to the dedicated order-alert number (step 1 of verification). OWNER only.",
         "tags": [
-          "Support Tickets"
+          "Kitchen Console"
         ]
       }
     },
-    "/v1/support-tickets/with-attachment": {
+    "/v1/kitchen-console/kitchen/order-alert-phone/otp/verify": {
       "post": {
-        "operationId": "SupportTicketsController_createWithAttachment",
+        "operationId": "KitchenConsoleController_verifyOrderAlertPhoneOtp",
         "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary"
-                  },
-                  "orderId": {
-                    "type": "string"
-                  },
-                  "subject": {
-                    "type": "string"
-                  },
-                  "body": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "file",
-                  "subject"
-                ]
+                "$ref": "#/components/schemas/VerifyOrderAlertPhoneOtpDto"
               }
             }
           }
         },
         "responses": {
-          "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SupportTicketResponseDto"
-                }
-              }
-            }
+          "200": {
+            "description": "`{ orderAlertPhone, orderAlertPhoneVerifiedAt, orderAlertCallingReady }`."
           },
           "400": {
-            "description": "Missing image, unsupported type, or over the size limit."
+            "description": "Expired code or invalid input."
           },
           "401": {
-            "description": "Missing or invalid access token."
+            "description": "Missing or invalid kitchen access token."
+          },
+          "403": {
+            "description": "Caller is STAFF, not OWNER."
           }
         },
         "security": [
@@ -6755,32 +8629,25 @@
             "bearer": []
           }
         ],
-        "summary": "File a support ticket with one private image attachment.",
+        "summary": "Verify the dedicated order-alert number with the code just sent to it (step 2). Saves the number with a fresh verification timestamp; a wrong or foreign code saves nothing. OWNER only.",
         "tags": [
-          "Support Tickets"
+          "Kitchen Console"
         ]
       }
     },
-    "/v1/support-tickets/me": {
-      "get": {
-        "operationId": "SupportTicketsController_listMine",
+    "/v1/kitchen-console/kitchen/order-alert-phone/call-permission": {
+      "post": {
+        "operationId": "KitchenConsoleController_requestOrderCallPermission",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SupportTicketResponseDto"
-                  }
-                }
-              }
-            }
+            "description": "`{ orderAlertCallPermissionStatus, orderAlertCallPermissionUpdatedAt }`."
           },
           "401": {
-            "description": "Missing or invalid access token."
+            "description": "Missing or invalid kitchen access token."
+          },
+          "409": {
+            "description": "No verified dedicated number to send the request to."
           }
         },
         "security": [
@@ -6788,9 +8655,9 @@
             "bearer": []
           }
         ],
-        "summary": "The caller's own support tickets.",
+        "summary": "Request WhatsApp call permission: sends the approved permission template to the verified dedicated number and records REQUESTED (step 3). Only the signed reply webhook records GRANTED or DENIED — sending or reading the request never counts as a grant. Code path only while calling is disabled (503 until enabled). OWNER only.",
         "tags": [
-          "Support Tickets"
+          "Kitchen Console"
         ]
       }
     },
@@ -8895,6 +10762,31 @@
             "type": "string",
             "nullable": true
           },
+          "appealResponse": {
+            "type": "string",
+            "nullable": true,
+            "description": "An admin's answer to a declined appeal; the owner may appeal again."
+          },
+          "appealRespondedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "firstApprovedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "Null until an admin first approves: a SUSPENDED row with null is a declined application, not a ban."
+          },
+          "ownerName": {
+            "type": "string",
+            "nullable": true,
+            "description": "The owner's display name (shared by the business's kitchen and store)."
+          },
+          "requiresCac": {
+            "type": "boolean",
+            "description": "Approval needs the CAC certificate on file."
+          },
           "reviewedAt": {
             "format": "date-time",
             "type": "string",
@@ -8909,6 +10801,35 @@
             "nullable": true
           },
           "payoutAccountName": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderAlertPhone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Dedicated number fallback calls ring when a new order goes unacknowledged. Null until verified."
+          },
+          "orderAlertPhoneVerifiedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "orderAlertCallingReady": {
+            "type": "boolean",
+            "description": "True when a verified dedicated number exists — Task 8's call fallback is reachable."
+          },
+          "orderAlertCallPermissionStatus": {
+            "description": "WhatsApp call-permission state for the dedicated number — UI hint only.\nThe provider rechecks live Meta start_call permission before every dial;\nonly the signed reply webhook writes GRANTED or DENIED.",
+            "enum": [
+              "UNKNOWN",
+              "REQUESTED",
+              "GRANTED",
+              "DENIED"
+            ],
+            "type": "string"
+          },
+          "orderAlertCallPermissionUpdatedAt": {
+            "format": "date-time",
             "type": "string",
             "nullable": true
           },
@@ -8949,10 +10870,20 @@
           "rejectionNote",
           "appealNote",
           "appealedAt",
+          "appealResponse",
+          "appealRespondedAt",
+          "firstApprovedAt",
+          "ownerName",
+          "requiresCac",
           "reviewedAt",
           "payoutBankCode",
           "payoutAccountNumber",
           "payoutAccountName",
+          "orderAlertPhone",
+          "orderAlertPhoneVerifiedAt",
+          "orderAlertCallingReady",
+          "orderAlertCallPermissionStatus",
+          "orderAlertCallPermissionUpdatedAt",
           "createdAt",
           "updatedAt"
         ]
@@ -9258,6 +11189,31 @@
             "type": "string",
             "nullable": true
           },
+          "appealResponse": {
+            "type": "string",
+            "nullable": true,
+            "description": "An admin's answer to a declined appeal; the owner may appeal again."
+          },
+          "appealRespondedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "firstApprovedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "Null until an admin first approves: a SUSPENDED row with null is a declined application, not a ban."
+          },
+          "ownerName": {
+            "type": "string",
+            "nullable": true,
+            "description": "The owner's display name (shared by the business's kitchen and store)."
+          },
+          "requiresCac": {
+            "type": "boolean",
+            "description": "Approval needs the CAC certificate on file."
+          },
           "reviewedAt": {
             "format": "date-time",
             "type": "string",
@@ -9302,6 +11258,11 @@
           "rejectionNote",
           "appealNote",
           "appealedAt",
+          "appealResponse",
+          "appealRespondedAt",
+          "firstApprovedAt",
+          "ownerName",
+          "requiresCac",
           "reviewedAt",
           "payoutBankCode",
           "payoutAccountNumber",
@@ -9405,6 +11366,31 @@
             "type": "string",
             "nullable": true
           },
+          "appealResponse": {
+            "type": "string",
+            "nullable": true,
+            "description": "An admin's answer to a declined appeal; the owner may appeal again."
+          },
+          "appealRespondedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "firstApprovedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "Null until an admin first approves: a SUSPENDED row with null is a declined application, not a ban."
+          },
+          "ownerName": {
+            "type": "string",
+            "nullable": true,
+            "description": "The owner's display name (shared by the business's kitchen and store)."
+          },
+          "requiresCac": {
+            "type": "boolean",
+            "description": "Approval needs the CAC certificate on file."
+          },
           "reviewedAt": {
             "format": "date-time",
             "type": "string",
@@ -9444,6 +11430,28 @@
           "verificationPhotoCount": {
             "type": "number",
             "description": "Verification photos uploaded so far; the store needs exactly STORE_PHOTOS_REQUIRED."
+          },
+          "onboardingMissing": {
+            "type": "array",
+            "description": "What an admin still needs before approving: location, photos, owner photo. Empty = onboarding done.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "LOCATION",
+                "VERIFICATION_PHOTOS",
+                "OWNER_PHOTO"
+              ]
+            }
+          },
+          "ownerPhotoUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short-lived signed URL of the owner's photo, if uploaded. Only on the store's own profile read."
+          },
+          "cacDocumentUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short-lived signed URL of the optional CAC certificate, if uploaded."
           }
         },
         "required": [
@@ -9464,6 +11472,11 @@
           "rejectionNote",
           "appealNote",
           "appealedAt",
+          "appealResponse",
+          "appealRespondedAt",
+          "firstApprovedAt",
+          "ownerName",
+          "requiresCac",
           "reviewedAt",
           "payoutBankCode",
           "payoutAccountNumber",
@@ -9471,7 +11484,8 @@
           "createdAt",
           "updatedAt",
           "missing",
-          "verificationPhotoCount"
+          "verificationPhotoCount",
+          "onboardingMissing"
         ]
       },
       "GeocodeResultResponseDto": {
@@ -9508,7 +11522,15 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "ownerName": {
+            "type": "string",
+            "description": "The owner's display name; stored on the Business, shared by its kitchen and store.",
+            "minLength": 2,
+            "maxLength": 80
           },
           "area": {
             "type": "string"
@@ -9520,14 +11542,17 @@
             "type": "number"
           },
           "landmarkNote": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200
           },
           "heroImageUrl": {
             "type": "string",
+            "maxLength": 2048,
             "format": "uri"
           },
           "noticeText": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 300
           },
           "riderBaseFeeNaira": {
             "type": "number",
@@ -9550,6 +11575,90 @@
         },
         "required": [
           "message"
+        ]
+      },
+      "StoreReportProblemDto": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 200
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject"
+        ]
+      },
+      "SupportTicketResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string",
+            "nullable": true
+          },
+          "kitchenStaffId": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "channel": {
+            "enum": [
+              "WHATSAPP",
+              "IN_APP"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "OPEN",
+              "IN_PROGRESS",
+              "RESOLVED",
+              "CLOSED"
+            ],
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string",
+            "nullable": true
+          },
+          "attachmentPath": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "kitchenStaffId",
+          "orderId",
+          "channel",
+          "status",
+          "subject",
+          "body",
+          "attachmentPath",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "RegisterBusinessKitchenDto": {
@@ -9603,6 +11712,938 @@
           "url"
         ]
       },
+      "StorePhotoUpdateRequestDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 1000,
+            "description": "Why the vendor needs to change the locked photos (e.g. new shopfront paint).",
+            "example": "We repainted the shopfront sign and need to retake the photos."
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "StoreProductResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "storeId": {
+            "type": "string"
+          },
+          "sectionId": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "priceNaira": {
+            "type": "number"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "isSoldOut": {
+            "type": "boolean"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "tone": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "tone"
+              ]
+            }
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "flaggedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "flagNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "flagAppealNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "flagAppealedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "flagAppealResponse": {
+            "type": "string",
+            "nullable": true,
+            "description": "An admin's answer to a declined appeal; the owner may appeal again."
+          },
+          "flagAppealRespondedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "storeId",
+          "sectionId",
+          "slug",
+          "name",
+          "description",
+          "priceNaira",
+          "imageUrl",
+          "unit",
+          "isSoldOut",
+          "tags",
+          "sortOrder",
+          "flaggedAt",
+          "flagNote",
+          "flagAppealNote",
+          "flagAppealedAt",
+          "flagAppealResponse",
+          "flagAppealRespondedAt"
+        ]
+      },
+      "StoreSectionWithProductsResponseDto": {
+        "type": "object",
+        "properties": {
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoreProductResponseDto"
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "storeId": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "products",
+          "id",
+          "storeId",
+          "label",
+          "note",
+          "sortOrder"
+        ]
+      },
+      "CreateStoreSectionDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "label"
+        ]
+      },
+      "StoreSectionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "storeId": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "storeId",
+          "label",
+          "note",
+          "sortOrder"
+        ]
+      },
+      "UpdateStoreSectionDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        }
+      },
+      "CreateStoreProductDto": {
+        "type": "object",
+        "properties": {
+          "sectionId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "priceNaira": {
+            "type": "number",
+            "minimum": 0
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "tone": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "tone"
+              ]
+            }
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "sectionId",
+          "name",
+          "priceNaira"
+        ]
+      },
+      "UpdateStoreProductDto": {
+        "type": "object",
+        "properties": {
+          "sectionId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "priceNaira": {
+            "type": "number",
+            "minimum": 0
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "tone": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "label",
+                "tone"
+              ]
+            }
+          },
+          "unit": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "isSoldOut": {
+            "type": "boolean"
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        }
+      },
+      "StoreOrderItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "storeOrderId": {
+            "type": "string"
+          },
+          "storeProductId": {
+            "type": "string"
+          },
+          "nameSnapshot": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "number"
+          },
+          "unitPriceNaira": {
+            "type": "number"
+          },
+          "unavailable": {
+            "type": "boolean",
+            "description": "True when the store couldn't supply this line; it isn't charged."
+          }
+        },
+        "required": [
+          "id",
+          "storeOrderId",
+          "storeProductId",
+          "nameSnapshot",
+          "qty",
+          "unitPriceNaira",
+          "unavailable"
+        ]
+      },
+      "StoreRiderSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          },
+          "vehicleType": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phone",
+          "vehicleType"
+        ]
+      },
+      "StoreOrderParentAddressDto": {
+        "type": "object",
+        "properties": {
+          "area": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "area"
+        ]
+      },
+      "StoreOrderParentSummaryDto": {
+        "type": "object",
+        "properties": {
+          "rider": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoreRiderSummaryDto"
+              }
+            ]
+          },
+          "currentAssignmentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "currentAssignmentAcceptedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "code": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "description": "AWAITING_PAYMENT = accepted, but don't start yet; ACCEPTED or later = paid.",
+            "enum": [
+              "PLACED",
+              "AWAITING_PAYMENT",
+              "ACCEPTED",
+              "PREPARING",
+              "READY",
+              "PICKED_UP",
+              "DELIVERING",
+              "DELIVERED",
+              "CANCELLED",
+              "REFUNDED"
+            ]
+          },
+          "placedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "acceptedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "paymentDueAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "While AWAITING_PAYMENT: when the customer's payment window closes."
+          },
+          "paidAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "Set once the customer has paid — the store may start packing."
+          },
+          "cancelReason": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "CUSTOMER",
+              "KITCHENS_DECLINED",
+              "STORE_DECLINED",
+              "PAYMENT_EXPIRED",
+              "KITCHEN_TIMEOUT"
+            ]
+          },
+          "address": {
+            "$ref": "#/components/schemas/StoreOrderParentAddressDto"
+          }
+        },
+        "required": [
+          "rider",
+          "currentAssignmentId",
+          "currentAssignmentAcceptedAt",
+          "code",
+          "status",
+          "placedAt",
+          "acceptedAt",
+          "paymentDueAt",
+          "paidAt",
+          "cancelReason",
+          "address"
+        ]
+      },
+      "StoreOrderWithDetailsResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "PLACED",
+              "ACCEPTED",
+              "PREPARING",
+              "READY",
+              "PICKED_UP",
+              "CANCELLED"
+            ],
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoreOrderItemResponseDto"
+            }
+          },
+          "order": {
+            "$ref": "#/components/schemas/StoreOrderParentSummaryDto"
+          },
+          "id": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "storeId": {
+            "type": "string"
+          },
+          "subtotalNaira": {
+            "type": "number"
+          },
+          "deliveryFeeNaira": {
+            "type": "number"
+          },
+          "payoutId": {
+            "type": "string",
+            "nullable": true
+          },
+          "readyAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "When the store marked its part READY; null until then."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "items",
+          "order",
+          "id",
+          "orderId",
+          "storeId",
+          "subtotalNaira",
+          "deliveryFeeNaira",
+          "payoutId",
+          "readyAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateStoreOrderStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "PLACED",
+              "ACCEPTED",
+              "PREPARING",
+              "READY",
+              "PICKED_UP",
+              "CANCELLED"
+            ]
+          },
+          "unavailableItemIds": {
+            "description": "StoreOrderItem ids the store can't supply. Only valid when accepting.",
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "StoreOrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "PLACED",
+              "ACCEPTED",
+              "PREPARING",
+              "READY",
+              "PICKED_UP",
+              "CANCELLED"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "storeId": {
+            "type": "string"
+          },
+          "subtotalNaira": {
+            "type": "number"
+          },
+          "deliveryFeeNaira": {
+            "type": "number"
+          },
+          "payoutId": {
+            "type": "string",
+            "nullable": true
+          },
+          "readyAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "When the store marked its part READY; null until then."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "id",
+          "orderId",
+          "storeId",
+          "subtotalNaira",
+          "deliveryFeeNaira",
+          "payoutId",
+          "readyAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "StorePayoutOrderLineDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "subtotalNaira": {
+            "type": "number"
+          },
+          "deliveryFeeNaira": {
+            "type": "number"
+          },
+          "order": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "address": {
+                "type": "object",
+                "properties": {
+                  "area": {
+                    "type": "string"
+                  }
+                },
+                "selfRequired": true
+              }
+            },
+            "required": [
+              "code",
+              "address"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "subtotalNaira",
+          "deliveryFeeNaira",
+          "order"
+        ]
+      },
+      "StorePayoutResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "amountNaira": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "FAILED",
+              "SETTLED"
+            ]
+          },
+          "settledAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "storeOrdersPaidOut": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorePayoutOrderLineDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "amountNaira",
+          "status",
+          "settledAt",
+          "createdAt",
+          "storeOrdersPaidOut"
+        ]
+      },
+      "StoreEarningsSummaryResponseDto": {
+        "type": "object",
+        "properties": {
+          "groceryCommissionRate": {
+            "type": "number",
+            "nullable": true
+          },
+          "commissionRate": {
+            "type": "number",
+            "description": "The GROCERY rate stores pay out at."
+          },
+          "salesNaira": {
+            "type": "number"
+          },
+          "commissionNaira": {
+            "type": "number"
+          },
+          "nextPayoutNaira": {
+            "type": "number"
+          },
+          "nextPayoutOrders": {
+            "type": "number"
+          },
+          "nextPayoutDaysAway": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "groceryCommissionRate",
+          "commissionRate",
+          "salesNaira",
+          "commissionNaira",
+          "nextPayoutNaira",
+          "nextPayoutOrders",
+          "nextPayoutDaysAway"
+        ]
+      },
+      "StorePublicResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string",
+            "nullable": true
+          },
+          "heroImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isOpen": {
+            "type": "boolean"
+          },
+          "noticeText": {
+            "type": "string",
+            "nullable": true
+          },
+          "minOrderNaira": {
+            "type": "number",
+            "nullable": true
+          },
+          "maxItemsPerOrder": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "area",
+          "heroImageUrl",
+          "isOpen",
+          "noticeText",
+          "minOrderNaira",
+          "maxItemsPerOrder"
+        ]
+      },
+      "StorePublicProductDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "priceNaira": {
+            "type": "number"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "isSoldOut": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "description",
+          "priceNaira",
+          "imageUrl",
+          "unit",
+          "isSoldOut"
+        ]
+      },
+      "StorePublicSectionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string",
+            "nullable": true
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorePublicProductDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "note",
+          "products"
+        ]
+      },
+      "StorePublicWithCatalogResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "area": {
+            "type": "string",
+            "nullable": true
+          },
+          "heroImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "isOpen": {
+            "type": "boolean"
+          },
+          "noticeText": {
+            "type": "string",
+            "nullable": true
+          },
+          "minOrderNaira": {
+            "type": "number",
+            "nullable": true
+          },
+          "maxItemsPerOrder": {
+            "type": "number",
+            "nullable": true
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorePublicSectionDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "area",
+          "heroImageUrl",
+          "isOpen",
+          "noticeText",
+          "minOrderNaira",
+          "maxItemsPerOrder",
+          "sections"
+        ]
+      },
       "BankResponseDto": {
         "type": "object",
         "properties": {
@@ -9646,6 +12687,30 @@
         "required": [
           "authorizationUrl",
           "reference"
+        ]
+      },
+      "CreateSupportTicketDto": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "WHATSAPP",
+              "IN_APP"
+            ]
+          },
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject"
         ]
       },
       "AdminLoginDto": {
@@ -9931,6 +12996,7 @@
               "ORDER_CHARGE",
               "REFUND",
               "KITCHEN_PAYOUT",
+              "STORE_PAYOUT",
               "RIDER_PAYOUT",
               "CASH_SETTLEMENT",
               "CREDIT_ISSUED",
@@ -10120,6 +13186,31 @@
             "type": "string",
             "nullable": true
           },
+          "appealResponse": {
+            "type": "string",
+            "nullable": true,
+            "description": "An admin's answer to a declined appeal; the owner may appeal again."
+          },
+          "appealRespondedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "firstApprovedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "Null until an admin first approves: a SUSPENDED row with null is a declined application, not a ban."
+          },
+          "ownerName": {
+            "type": "string",
+            "nullable": true,
+            "description": "The owner's display name (shared by the business's kitchen and store)."
+          },
+          "requiresCac": {
+            "type": "boolean",
+            "description": "Approval needs the CAC certificate on file."
+          },
           "reviewedAt": {
             "format": "date-time",
             "type": "string",
@@ -10134,6 +13225,35 @@
             "nullable": true
           },
           "payoutAccountName": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderAlertPhone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Dedicated number fallback calls ring when a new order goes unacknowledged. Null until verified."
+          },
+          "orderAlertPhoneVerifiedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "orderAlertCallingReady": {
+            "type": "boolean",
+            "description": "True when a verified dedicated number exists — Task 8's call fallback is reachable."
+          },
+          "orderAlertCallPermissionStatus": {
+            "description": "WhatsApp call-permission state for the dedicated number — UI hint only.\nThe provider rechecks live Meta start_call permission before every dial;\nonly the signed reply webhook writes GRANTED or DENIED.",
+            "enum": [
+              "UNKNOWN",
+              "REQUESTED",
+              "GRANTED",
+              "DENIED"
+            ],
+            "type": "string"
+          },
+          "orderAlertCallPermissionUpdatedAt": {
+            "format": "date-time",
             "type": "string",
             "nullable": true
           },
@@ -10205,10 +13325,20 @@
           "rejectionNote",
           "appealNote",
           "appealedAt",
+          "appealResponse",
+          "appealRespondedAt",
+          "firstApprovedAt",
+          "ownerName",
+          "requiresCac",
           "reviewedAt",
           "payoutBankCode",
           "payoutAccountNumber",
           "payoutAccountName",
+          "orderAlertPhone",
+          "orderAlertPhoneVerifiedAt",
+          "orderAlertCallingReady",
+          "orderAlertCallPermissionStatus",
+          "orderAlertCallPermissionUpdatedAt",
           "createdAt",
           "updatedAt",
           "verificationPhotos",
@@ -10236,6 +13366,30 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "DeclineAppealDto": {
+        "type": "object",
+        "properties": {
+          "response": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "response"
+        ]
+      },
+      "UpdateRequiresCacDto": {
+        "type": "object",
+        "properties": {
+          "requiresCac": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "requiresCac"
         ]
       },
       "FlagItemDto": {
@@ -10284,6 +13438,16 @@
             "nullable": true
           },
           "flagAppealedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "flagAppealResponse": {
+            "type": "string",
+            "nullable": true,
+            "description": "An admin's answer to a declined appeal; the owner may appeal again."
+          },
+          "flagAppealRespondedAt": {
             "type": "string",
             "nullable": true,
             "format": "date-time"
@@ -10345,6 +13509,8 @@
           "flagNote",
           "flagAppealNote",
           "flagAppealedAt",
+          "flagAppealResponse",
+          "flagAppealRespondedAt",
           "id",
           "kitchenId",
           "sectionId",
@@ -10403,6 +13569,65 @@
           "itemName",
           "kitchenId",
           "kitchenName"
+        ]
+      },
+      "FlaggedProductResponseDto": {
+        "type": "object",
+        "properties": {
+          "flaggedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "flagNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "flagAppealNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "flagAppealedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "productId": {
+            "type": "string"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "storeId": {
+            "type": "string"
+          },
+          "storeName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "flaggedAt",
+          "flagNote",
+          "flagAppealNote",
+          "flagAppealedAt",
+          "productId",
+          "productName",
+          "storeId",
+          "storeName"
+        ]
+      },
+      "DecidePhotoUpdateRequestDto": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "APPROVED",
+              "REJECTED"
+            ]
+          }
+        },
+        "required": [
+          "decision"
         ]
       },
       "AdminRiderListUserDto": {
@@ -10685,6 +13910,7 @@
               "ORDER_CHARGE",
               "REFUND",
               "KITCHEN_PAYOUT",
+              "STORE_PAYOUT",
               "RIDER_PAYOUT",
               "CASH_SETTLEMENT",
               "CREDIT_ISSUED",
@@ -11420,6 +14646,7 @@
             "enum": [
               "CUSTOMER",
               "KITCHENS_DECLINED",
+              "STORE_DECLINED",
               "PAYMENT_EXPIRED",
               "KITCHEN_TIMEOUT"
             ]
@@ -12007,6 +15234,7 @@
             "enum": [
               "CUSTOMER",
               "KITCHENS_DECLINED",
+              "STORE_DECLINED",
               "PAYMENT_EXPIRED",
               "KITCHEN_TIMEOUT"
             ]
@@ -12118,6 +15346,7 @@
               "ORDER_CHARGE",
               "REFUND",
               "KITCHEN_PAYOUT",
+              "STORE_PAYOUT",
               "RIDER_PAYOUT",
               "CASH_SETTLEMENT",
               "CREDIT_ISSUED",
@@ -12505,6 +15734,7 @@
             "enum": [
               "CUSTOMER",
               "KITCHENS_DECLINED",
+              "STORE_DECLINED",
               "PAYMENT_EXPIRED",
               "KITCHEN_TIMEOUT"
             ],
@@ -12588,6 +15818,88 @@
               "ORDER_CHARGE",
               "REFUND",
               "KITCHEN_PAYOUT",
+              "STORE_PAYOUT",
+              "RIDER_PAYOUT",
+              "CASH_SETTLEMENT",
+              "CREDIT_ISSUED",
+              "CREDIT_REDEEMED"
+            ],
+            "type": "string"
+          },
+          "amountNaira": {
+            "type": "number"
+          },
+          "partyUserId": {
+            "type": "string",
+            "nullable": true
+          },
+          "partyKitchenId": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderId": {
+            "type": "string",
+            "nullable": true
+          },
+          "paymentId": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "FAILED",
+              "SETTLED"
+            ],
+            "type": "string"
+          },
+          "settledAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "paystackStatus": {
+            "type": "string"
+          },
+          "orderCount": {
+            "type": "number"
+          },
+          "grossNaira": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "amountNaira",
+          "partyUserId",
+          "partyKitchenId",
+          "orderId",
+          "paymentId",
+          "status",
+          "settledAt",
+          "createdAt",
+          "paystackStatus",
+          "orderCount",
+          "grossNaira"
+        ]
+      },
+      "StorePayoutResultResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "ORDER_CHARGE",
+              "REFUND",
+              "KITCHEN_PAYOUT",
+              "STORE_PAYOUT",
               "RIDER_PAYOUT",
               "CASH_SETTLEMENT",
               "CREDIT_ISSUED",
@@ -12668,6 +15980,7 @@
               "ORDER_CHARGE",
               "REFUND",
               "KITCHEN_PAYOUT",
+              "STORE_PAYOUT",
               "RIDER_PAYOUT",
               "CASH_SETTLEMENT",
               "CREDIT_ISSUED",
@@ -14983,6 +18296,31 @@
             "type": "string",
             "nullable": true
           },
+          "appealResponse": {
+            "type": "string",
+            "nullable": true,
+            "description": "An admin's answer to a declined appeal; the owner may appeal again."
+          },
+          "appealRespondedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "firstApprovedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "Null until an admin first approves: a SUSPENDED row with null is a declined application, not a ban."
+          },
+          "ownerName": {
+            "type": "string",
+            "nullable": true,
+            "description": "The owner's display name (shared by the business's kitchen and store)."
+          },
+          "requiresCac": {
+            "type": "boolean",
+            "description": "Approval needs the CAC certificate on file."
+          },
           "reviewedAt": {
             "format": "date-time",
             "type": "string",
@@ -15059,6 +18397,11 @@
           "rejectionNote",
           "appealNote",
           "appealedAt",
+          "appealResponse",
+          "appealRespondedAt",
+          "firstApprovedAt",
+          "ownerName",
+          "requiresCac",
           "reviewedAt",
           "payoutBankCode",
           "payoutAccountNumber",
@@ -15351,6 +18694,31 @@
             "type": "string",
             "nullable": true
           },
+          "appealResponse": {
+            "type": "string",
+            "nullable": true,
+            "description": "An admin's answer to a declined appeal; the owner may appeal again."
+          },
+          "appealRespondedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "firstApprovedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "Null until an admin first approves: a SUSPENDED row with null is a declined application, not a ban."
+          },
+          "ownerName": {
+            "type": "string",
+            "nullable": true,
+            "description": "The owner's display name (shared by the business's kitchen and store)."
+          },
+          "requiresCac": {
+            "type": "boolean",
+            "description": "Approval needs the CAC certificate on file."
+          },
           "reviewedAt": {
             "format": "date-time",
             "type": "string",
@@ -15365,6 +18733,35 @@
             "nullable": true
           },
           "payoutAccountName": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderAlertPhone": {
+            "type": "string",
+            "nullable": true,
+            "description": "Dedicated number fallback calls ring when a new order goes unacknowledged. Null until verified."
+          },
+          "orderAlertPhoneVerifiedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "orderAlertCallingReady": {
+            "type": "boolean",
+            "description": "True when a verified dedicated number exists — Task 8's call fallback is reachable."
+          },
+          "orderAlertCallPermissionStatus": {
+            "description": "WhatsApp call-permission state for the dedicated number — UI hint only.\nThe provider rechecks live Meta start_call permission before every dial;\nonly the signed reply webhook writes GRANTED or DENIED.",
+            "enum": [
+              "UNKNOWN",
+              "REQUESTED",
+              "GRANTED",
+              "DENIED"
+            ],
+            "type": "string"
+          },
+          "orderAlertCallPermissionUpdatedAt": {
+            "format": "date-time",
             "type": "string",
             "nullable": true
           },
@@ -15411,10 +18808,20 @@
           "rejectionNote",
           "appealNote",
           "appealedAt",
+          "appealResponse",
+          "appealRespondedAt",
+          "firstApprovedAt",
+          "ownerName",
+          "requiresCac",
           "reviewedAt",
           "payoutBankCode",
           "payoutAccountNumber",
           "payoutAccountName",
+          "orderAlertPhone",
+          "orderAlertPhoneVerifiedAt",
+          "orderAlertCallingReady",
+          "orderAlertCallPermissionStatus",
+          "orderAlertCallPermissionUpdatedAt",
           "createdAt",
           "updatedAt",
           "sections"
@@ -15424,7 +18831,15 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 80
+          },
+          "ownerName": {
+            "type": "string",
+            "description": "The owner's display name; stored on the Business, shared by its kitchen and store.",
+            "minLength": 2,
+            "maxLength": 80
           },
           "cuisine": {
             "type": "string"
@@ -15439,17 +18854,20 @@
             "type": "number"
           },
           "landmarkNote": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 200
           },
           "emoji": {
             "type": "string"
           },
           "heroImageUrl": {
             "type": "string",
+            "maxLength": 2048,
             "format": "uri"
           },
           "noticeText": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 300
           },
           "riderBaseFeeNaira": {
             "type": "number",
@@ -15692,74 +19110,6 @@
           "subject"
         ]
       },
-      "SupportTicketResponseDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "userId": {
-            "type": "string",
-            "nullable": true
-          },
-          "kitchenStaffId": {
-            "type": "string",
-            "nullable": true
-          },
-          "orderId": {
-            "type": "string",
-            "nullable": true
-          },
-          "channel": {
-            "enum": [
-              "WHATSAPP",
-              "IN_APP"
-            ],
-            "type": "string"
-          },
-          "status": {
-            "enum": [
-              "OPEN",
-              "IN_PROGRESS",
-              "RESOLVED",
-              "CLOSED"
-            ],
-            "type": "string"
-          },
-          "subject": {
-            "type": "string"
-          },
-          "body": {
-            "type": "string",
-            "nullable": true
-          },
-          "attachmentPath": {
-            "type": "string",
-            "nullable": true
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "userId",
-          "kitchenStaffId",
-          "orderId",
-          "channel",
-          "status",
-          "subject",
-          "body",
-          "attachmentPath",
-          "createdAt",
-          "updatedAt"
-        ]
-      },
       "VerificationPhotoResponseDto": {
         "type": "object",
         "properties": {
@@ -15774,6 +19124,19 @@
         "required": [
           "id",
           "url"
+        ]
+      },
+      "KitchenPhotoUpdateRequestDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "reason"
         ]
       },
       "CreateMenuSectionDto": {
@@ -16056,6 +19419,7 @@
             "enum": [
               "CUSTOMER",
               "KITCHENS_DECLINED",
+              "STORE_DECLINED",
               "PAYMENT_EXPIRED",
               "KITCHEN_TIMEOUT"
             ]
@@ -16256,28 +19620,32 @@
           "updatedAt"
         ]
       },
-      "CreateSupportTicketDto": {
+      "RequestOrderAlertPhoneOtpDto": {
         "type": "object",
         "properties": {
-          "orderId": {
-            "type": "string"
-          },
-          "channel": {
-            "type": "string",
-            "enum": [
-              "WHATSAPP",
-              "IN_APP"
-            ]
-          },
-          "subject": {
-            "type": "string"
-          },
-          "body": {
+          "phone": {
             "type": "string"
           }
         },
         "required": [
-          "subject"
+          "phone"
+        ]
+      },
+      "VerifyOrderAlertPhoneOtpDto": {
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 6
+          }
+        },
+        "required": [
+          "phone",
+          "code"
         ]
       },
       "AddressResponseDto": {
@@ -16586,7 +19954,12 @@
         "type": "object",
         "properties": {
           "menuItemId": {
-            "type": "string"
+            "type": "string",
+            "description": "Kitchen line. Exactly one of menuItemId/storeProductId must be set."
+          },
+          "storeProductId": {
+            "type": "string",
+            "description": "Store line. Exactly one of menuItemId/storeProductId must be set."
           },
           "qty": {
             "type": "number",
@@ -16594,7 +19967,6 @@
           }
         },
         "required": [
-          "menuItemId",
           "qty"
         ]
       },
@@ -16927,6 +20299,7 @@
             "enum": [
               "CUSTOMER",
               "KITCHENS_DECLINED",
+              "STORE_DECLINED",
               "PAYMENT_EXPIRED",
               "KITCHEN_TIMEOUT"
             ],
@@ -17712,6 +21085,7 @@
             "enum": [
               "CUSTOMER",
               "KITCHENS_DECLINED",
+              "STORE_DECLINED",
               "PAYMENT_EXPIRED",
               "KITCHEN_TIMEOUT"
             ],

@@ -21,7 +21,7 @@ import { formatKobo } from "@/lib/money";
 import { storeSetupProgress } from "@/lib/partners/store-setup";
 import type { Bank, StoreApplication } from "@/lib/partners/types";
 import { photoLockState, type PhotoUpdateRequest } from "@/lib/photo-lock";
-import { BankForm, FormError, StatusBanner, Step, SubmitButton, field, fieldLabel } from "./parts";
+import { AppealAnswer, BankForm, FormError, StatusBanner, Step, SubmitButton, field, fieldLabel } from "./parts";
 
 export function StoreSetup({
   store,
@@ -64,12 +64,16 @@ export function StoreSetup({
         <>
           <StatusBanner
             tone="stopped"
-            title={`${store.name} isn't approved`}
-            text="Karrigo has suspended this store. Review the note below, fix what needs attention, then send one appeal."
+            title={store.neverApproved ? `${store.name} wasn't approved` : `${store.name} has been suspended`}
+            text={
+              store.neverApproved
+                ? "Karrigo didn't approve this store. Review the note below, fix what needs attention, then send an appeal."
+                : "Karrigo has suspended this store. Review the note below, fix what needs attention, then send an appeal."
+            }
             note={store.note}
           />
           {store.isOwner ? (
-            <StoreAppeal sent={store.appealNote} sentAt={store.appealedAt} />
+            <StoreAppeal sent={store.appealNote} sentAt={store.appealedAt} response={store.appealResponse} />
           ) : (
             <OwnerMessage action="send an appeal" />
           )}
@@ -377,7 +381,7 @@ function StoreFeeForm({ riderBaseFeeKobo }: { riderBaseFeeKobo: number | null })
   );
 }
 
-function StoreAppeal({ sent, sentAt }: { sent: string | null; sentAt: string | null }) {
+function StoreAppeal({ sent, sentAt, response }: { sent: string | null; sentAt: string | null; response: string | null }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, startTransition] = useTransition();
@@ -396,6 +400,8 @@ function StoreAppeal({ sent, sentAt }: { sent: string | null; sentAt: string | n
   }
 
   return (
+    <>
+    {response && <AppealAnswer response={response} />}
     <form
       className="bg-bg rounded-panel-sm p-xl gap-md flex flex-col"
       onSubmit={(event) => {
@@ -421,10 +427,11 @@ function StoreAppeal({ sent, sentAt }: { sent: string | null; sentAt: string | n
         />
       </label>
       <p className="text-site-chip text-text-secondary font-medium">
-        You can send one appeal for this suspension · {500 - message.trim().length} characters left
+        If we decline, you can appeal again · {500 - message.trim().length} characters left
       </p>
       <FormError>{error}</FormError>
-      <SubmitButton busy={busy} idle="Send appeal" working="Sending…" />
+      <SubmitButton busy={busy} idle={response ? "Appeal again" : "Send appeal"} working="Sending…" />
     </form>
+    </>
   );
 }
