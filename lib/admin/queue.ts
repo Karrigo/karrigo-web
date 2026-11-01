@@ -33,8 +33,14 @@ export type QueueItem = {
   createdAt: string;
   /** Why they were rejected or suspended. They see this. */
   note: string | null;
-  /** A suspended kitchen's one appeal to ops, if it has sent one. */
+  /** A suspended kitchen's or store's open appeal to ops, if it has one. */
   appeal: { note: string; at: string } | null;
+  /** Ops' answer to an earlier appeal that was declined; the owner may appeal again. */
+  appealResponse: { note: string; at: string } | null;
+  /** Kitchen or store that no admin has ever approved: SUSPENDED then means "rejected", not "banned". */
+  neverApproved: boolean;
+  /** Ops has asked for the CAC certificate before approval. Kitchens and stores only. */
+  requiresCac: boolean;
   fields: { key: string; value: string }[];
   checks: QueueCheck[];
   /** Owed to them, before anything is netted off. */
@@ -76,6 +82,11 @@ export const QUEUE_TABS: Record<QueueKind, { status: QueueStatus; label: string 
     ],
   };
 
+/** What to call a status for this item. A SUSPENDED application nobody ever approved was rejected, not banned. */
+export function queueStatusLabel(item: Pick<QueueItem, "status" | "neverApproved">): string {
+  return item.status === "SUSPENDED" && item.neverApproved ? "Rejected" : QUEUE_STATUS_LABEL[item.status];
+}
+
 export const QUEUE_STATUS_LABEL: Record<QueueStatus, string> = {
   PENDING: "Pending",
   ACTIVE: "Live",
@@ -102,6 +113,11 @@ export function kitchenItem(
     appeal: kitchen.appealedAt
       ? { note: kitchen.appealNote ?? "", at: whenLabel(String(kitchen.appealedAt)) }
       : null,
+    appealResponse: kitchen.appealResponse
+      ? { note: kitchen.appealResponse, at: kitchen.appealRespondedAt ? whenLabel(String(kitchen.appealRespondedAt)) : "" }
+      : null,
+    neverApproved: !kitchen.firstApprovedAt,
+    requiresCac: kitchen.requiresCac,
     fields: [
       { key: "Area", value: area },
       { key: "Cuisine", value: cuisine },
@@ -124,6 +140,7 @@ export function kitchenItem(
     ],
     checks: [
       { label: "Location pinned on the map", ok: kitchen.lat != null && kitchen.lng != null },
+      { label: "Rider fee set", ok: kitchen.riderBaseFeeNaira != null },
       { label: "Payout bank account confirmed", ok: !!kitchen.payoutAccountName },
     ],
     unpaidKobo: netKobo,
@@ -148,6 +165,9 @@ export function riderItem(
     createdAt: rider.documentsSubmittedAt ?? rider.createdAt,
     note: rider.rejectionNote ?? null,
     appeal: null,
+    appealResponse: null,
+    neverApproved: false,
+    requiresCac: false,
     fields: [
       { key: "Phone", value: rider.user.phone },
       { key: "Vehicle", value: vehicle },
@@ -197,6 +217,11 @@ export function storeItem(
     appeal: store.appealedAt
       ? { note: store.appealNote ?? "", at: whenLabel(store.appealedAt) }
       : null,
+    appealResponse: store.appealResponse
+      ? { note: store.appealResponse, at: store.appealRespondedAt ? whenLabel(store.appealRespondedAt) : "" }
+      : null,
+    neverApproved: !store.firstApprovedAt,
+    requiresCac: store.requiresCac,
     fields: [
       { key: "Area", value: area },
       { key: "Owner", value: ownerNames },

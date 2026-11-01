@@ -78,6 +78,40 @@ export async function clearProductFlag(id: string): Promise<ActionResult> {
   });
 }
 
+/** Answers an appeal against a flag without clearing it. The owner sees the answer and may appeal again. */
+export async function declineProductAppeal(id: string, response: string): Promise<ActionResult> {
+  return attempt(async () => {
+    if (!response.trim()) throw new Error("Write an answer — the owner reads it.");
+    await api(`/admin/menu-items/${encodeURIComponent(id)}/appeal/decline`, {
+      method: "POST",
+      scope: "admin",
+      body: { response: response.trim() },
+    });
+    return "Answer sent · the owner can appeal again";
+  });
+}
+
+/* ------------------------------------------------------- store products */
+
+export async function clearStoreProductFlag(id: string): Promise<ActionResult> {
+  return attempt(async () => {
+    await api(`/admin/store-products/${encodeURIComponent(id)}/flag`, { method: "DELETE", scope: "admin" });
+    return "Flag cleared · product is back on sale";
+  });
+}
+
+export async function declineStoreProductAppeal(id: string, response: string): Promise<ActionResult> {
+  return attempt(async () => {
+    if (!response.trim()) throw new Error("Write an answer — the owner reads it.");
+    await api(`/admin/store-products/${encodeURIComponent(id)}/appeal/decline`, {
+      method: "POST",
+      scope: "admin",
+      body: { response: response.trim() },
+    });
+    return "Answer sent · the owner can appeal again";
+  });
+}
+
 /* ----------------------------------------------------------------- areas */
 
 export async function createArea(input: { name: string }): Promise<ActionResult> {

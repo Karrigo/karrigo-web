@@ -14,8 +14,15 @@ export type Dish = {
   /** "kg", "pack" — how a grocery product is sold. Empty for most dishes. */
   unit: string;
   soldOut: boolean;
-  /** Hidden from customers by Karrigo. The owner can appeal once per flag. */
-  flag: { at: string; note: string; appealNote: string | null; appealedAt: string | null } | null;
+  /** Hidden from customers by Karrigo. The owner can appeal; if ops declines, the answer shows and they can appeal again. */
+  flag: {
+    at: string;
+    note: string;
+    appealNote: string | null;
+    appealedAt: string | null;
+    /** Ops' answer to an earlier appeal they declined. */
+    appealResponse: string | null;
+  } | null;
 };
 
 /** Which side of the kitchen a section — and every product in it — belongs

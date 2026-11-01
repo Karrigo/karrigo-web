@@ -25,7 +25,7 @@ import type { Bank, KitchenApplication } from "@/lib/partners/types";
 import { photoLockState, type PhotoUpdateRequest } from "@/lib/photo-lock";
 import { ButtonLink } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
-import { BankForm, FormError, PhotoUpload, StatusBanner, Step, SubmitButton, field, fieldLabel } from "./parts";
+import { AppealAnswer, BankForm, FormError, PhotoUpload, StatusBanner, Step, SubmitButton, field, fieldLabel } from "./parts";
 
 /**
  * A kitchen's application after sign-up: four things ops checks before
@@ -91,11 +91,15 @@ export function KitchenSetup({
         <>
           <StatusBanner
             tone="stopped"
-            title={`${kitchen.name} isn't live`}
-            text="Karrigo has suspended this kitchen, so customers can't see it. If you think that's wrong, or you've fixed the problem, send us one appeal."
+            title={kitchen.neverApproved ? `${kitchen.name} wasn't approved` : `${kitchen.name} isn't live`}
+            text={
+              kitchen.neverApproved
+                ? "Karrigo didn't approve this kitchen, so customers can't see it. If you think that's wrong, or you've fixed the problem, send us an appeal."
+                : "Karrigo has suspended this kitchen, so customers can't see it. If you think that's wrong, or you've fixed the problem, send us an appeal."
+            }
             note={kitchen.note}
           />
-          <Appeal sent={kitchen.appealNote} sentAt={kitchen.appealedAt} />
+          <Appeal sent={kitchen.appealNote} sentAt={kitchen.appealedAt} response={kitchen.appealResponse} />
         </>
       ) : left > 0 ? (
         <StatusBanner
@@ -407,9 +411,10 @@ function Dishes({ dishes, canAdd }: { dishes: KitchenApplication["dishes"]; canA
   );
 }
 
-/** One appeal per suspension. Once sent it is shown back, read-only, until
- *  ops lifts the ban (which clears it) or bans again (which allows another). */
-function Appeal({ sent, sentAt }: { sent: string | null; sentAt: string | null }) {
+/** One appeal is open at a time. Once sent it is shown back, read-only, until
+ *  ops lifts the ban (which clears it) or declines it with an answer (which
+ *  shows the answer and lets the owner appeal again). */
+function Appeal({ sent, sentAt, response }: { sent: string | null; sentAt: string | null; response: string | null }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, startTransition] = useTransition();
@@ -428,6 +433,8 @@ function Appeal({ sent, sentAt }: { sent: string | null; sentAt: string | null }
   }
 
   return (
+    <>
+    {response && <AppealAnswer response={response} />}
     <form
       className="bg-bg rounded-panel-sm p-xl gap-md flex flex-col"
       onSubmit={(e) => {
@@ -450,10 +457,11 @@ function Appeal({ sent, sentAt }: { sent: string | null; sentAt: string | null }
         />
       </label>
       <p className="text-site-chip text-text-secondary font-medium">
-        You can send one appeal for this suspension · {500 - message.trim().length} characters left
+        If we decline, you can appeal again · {500 - message.trim().length} characters left
       </p>
       <FormError>{error}</FormError>
-      <SubmitButton busy={busy} idle="Send appeal" working="Sending…" />
+      <SubmitButton busy={busy} idle={response ? "Appeal again" : "Send appeal"} working="Sending…" />
     </form>
+    </>
   );
 }

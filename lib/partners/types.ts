@@ -8,9 +8,13 @@ export type KitchenApplication = {
   status: "PENDING" | "ACTIVE" | "SUSPENDED";
   /** Why ops sent it back. Shown to the kitchen, word for word. */
   note: string | null;
-  /** The owner's one appeal against a suspension, and when it was sent. */
+  /** The owner's open appeal against a suspension, and when it was sent. */
   appealNote: string | null;
   appealedAt: string | null;
+  /** Ops' answer to an earlier appeal they declined; the owner may appeal again. */
+  appealResponse: string | null;
+  /** True when no admin has ever approved this kitchen: a SUSPENDED one was turned down, not banned. */
+  neverApproved: boolean;
   area: string | null;
   landmarkNote: string | null;
   hasLocation: boolean;
@@ -37,6 +41,8 @@ export type StoreApplication = {
   note: string | null;
   appealNote: string | null;
   appealedAt: string | null;
+  appealResponse: string | null;
+  neverApproved: boolean;
   area: string | null;
   landmarkNote: string | null;
   hasLocation: boolean;

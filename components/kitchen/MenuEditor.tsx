@@ -393,7 +393,7 @@ function SectionForm({
   );
 }
 
-/** Why Karrigo hid a product, and the one appeal the owner gets against it. */
+/** Why Karrigo hid a product, and the owner's appeal against it. If ops declines an appeal the answer shows here and the owner can appeal again. */
 function FlagNotice({ dish }: { dish: Dish }) {
   const flag = dish.flag!;
   const [message, setMessage] = useState("");
@@ -422,8 +422,13 @@ function FlagNotice({ dish }: { dish: Dish }) {
             });
           }}
         >
+          {flag.appealResponse && (
+            <p className="bg-surface-raised rounded-field text-site-label px-lg py-md">
+              <span className="font-bold">We reviewed your appeal.</span> “{flag.appealResponse}” You can appeal again.
+            </p>
+          )}
           <label className={fieldLabel}>
-            Appeal this flag (once)
+            {flag.appealResponse ? "Appeal again" : "Appeal this flag"}
             <textarea
               value={message}
               onChange={(e) => { setMessage(e.target.value); setError(""); }}
@@ -434,7 +439,7 @@ function FlagNotice({ dish }: { dish: Dish }) {
             />
           </label>
           <FormError>{error}</FormError>
-          <SubmitButton busy={busy} idle="Send appeal" working="Sending…" />
+          <SubmitButton busy={busy} idle={flag.appealResponse ? "Appeal again" : "Send appeal"} working="Sending…" />
         </form>
       )}
     </div>

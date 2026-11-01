@@ -37,6 +37,7 @@ const payLabel = { card: "Paid by card", transfer: "Paid by bank transfer", onli
 const cancelReasonLabel = (place: string): Record<NonNullable<TrackedOrder["cancelReason"]>, string> => ({
   CUSTOMER: "You cancelled this order.",
   KITCHENS_DECLINED: `The ${place} couldn't take your order this time. You weren't charged.`,
+  STORE_DECLINED: `The ${place} couldn't take your order this time. You weren't charged.`,
   PAYMENT_EXPIRED: "Payment wasn't completed in time, so the order was released. You weren't charged.",
   KITCHEN_TIMEOUT: `The ${place} didn't respond in time. You weren't charged.`,
 });

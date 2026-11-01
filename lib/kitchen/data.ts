@@ -75,6 +75,7 @@ export const getKitchen = cache(async (): Promise<Kitchen | null> => {
                     note: i.flagNote ?? "",
                     appealNote: i.flagAppealNote,
                     appealedAt: i.flagAppealedAt,
+                    appealResponse: i.flagAppealResponse ?? null,
                   }
                 : null,
             })),

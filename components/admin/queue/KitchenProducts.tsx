@@ -77,7 +77,7 @@ export function KitchenProducts({ kitchenId }: { kitchenId: string }) {
                       tone="bad"
                       label="Flag"
                       title={`Flag ${p.name}?`}
-                      text="It's hidden from customers and can't be ordered until you clear the flag. The owner sees your note and can appeal once."
+                      text="It's hidden from customers and can't be ordered until you clear the flag. The owner sees your note and can appeal."
                       confirm="Flag product"
                       note={{ placeholder: "Why? (required) · the owner sees this", required: true }}
                       run={async (note) => {
