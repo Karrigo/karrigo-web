@@ -22,6 +22,7 @@ import type { Schemas } from "@/lib/api/types";
 import { VERIFICATION_PHOTOS_REQUIRED } from "@/lib/kitchen/types";
 import { formatKobo } from "@/lib/money";
 import type { Bank, KitchenApplication } from "@/lib/partners/types";
+import { photoLockState, type PhotoUpdateRequest } from "@/lib/photo-lock";
 import { ButtonLink } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { BankForm, FormError, PhotoUpload, StatusBanner, Step, SubmitButton, field, fieldLabel } from "./parts";
@@ -37,6 +38,7 @@ export function KitchenSetup({
   areas,
   photos,
   photosFailed = false,
+  updateRequest = null,
 }: {
   kitchen: KitchenApplication;
   banks: Bank[];
@@ -44,6 +46,8 @@ export function KitchenSetup({
   photos: Schemas["VerificationPhotoResponseDto"][];
   /** The owner's photo list could not be read; fall back to the count. */
   photosFailed?: boolean;
+  /** The latest photo-update request; drives the locked-photos banner. */
+  updateRequest?: PhotoUpdateRequest;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -167,7 +171,14 @@ export function KitchenSetup({
           hint="Our team looks at these before approving your kitchen."
         >
           {kitchen.isOwner ? (
-            <VerificationPhotos side="kitchen" photos={photos} failed={photosFailed} canEdit />
+            <VerificationPhotos
+              side="kitchen"
+              photos={photos}
+              failed={photosFailed}
+              canEdit
+              lock={photoLockState(kitchen.status, updateRequest)}
+              unlockedUntil={updateRequest?.unlockedUntil ?? null}
+            />
           ) : (
             <p className="text-site-label text-text-secondary">
               {photoCount} of {VERIFICATION_PHOTOS_REQUIRED} added. Only the kitchen&rsquo;s owner can add or remove photos.

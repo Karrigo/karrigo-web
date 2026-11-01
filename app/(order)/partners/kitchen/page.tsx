@@ -4,7 +4,7 @@ import { AddOtherSide } from "@/components/partners/AddOtherSide";
 import { Eyebrow } from "@/components/site/Eyebrow";
 import { KitchenApply } from "@/components/partners/KitchenApply";
 import { KitchenSetup } from "@/components/partners/KitchenSetup";
-import { listVerificationPhotos } from "@/lib/kitchen/data";
+import { getKitchenPhotoUpdateRequest, listVerificationPhotos } from "@/lib/kitchen/data";
 import { getKitchenApplication, getPartner, listBanks } from "@/lib/partners/data";
 import { listAreaNames, listAreas } from "@/lib/shop/areas";
 
@@ -21,6 +21,7 @@ export default async function KitchenPartnerPage() {
 
   // Signed URLs expire, so the photos are read on every load.
   const photos = kitchen?.isOwner ? await listVerificationPhotos() : { photos: [], failed: false };
+  const updateRequest = kitchen?.isOwner ? await getKitchenPhotoUpdateRequest() : null;
   const addingKitchen = partner !== null && partner.kitchenId === null;
 
   return (
@@ -30,7 +31,14 @@ export default async function KitchenPartnerPage() {
         {addingKitchen ? "Register your business as a kitchen" : kitchen ? kitchen.name : "List your kitchen"}
       </h1>
       {kitchen ? (
-        <KitchenSetup kitchen={kitchen} banks={await listBanks()} areas={areaNames} photos={photos.photos} photosFailed={photos.failed} />
+        <KitchenSetup
+          kitchen={kitchen}
+          banks={await listBanks()}
+          areas={areaNames}
+          photos={photos.photos}
+          photosFailed={photos.failed}
+          updateRequest={updateRequest}
+        />
       ) : addingKitchen ? (
         <AddOtherSide side="kitchen" areas={areas} isOwner={partner?.isOwner ?? false} />
       ) : (

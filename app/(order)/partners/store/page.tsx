@@ -5,7 +5,7 @@ import { StoreApply } from "@/components/partners/StoreApply";
 import { StoreSetup } from "@/components/partners/StoreSetup";
 import { Eyebrow } from "@/components/site/Eyebrow";
 import { getPartner, getStoreApplication, listBanks } from "@/lib/partners/data";
-import { listStoreVerificationPhotos } from "@/lib/partners/store-data";
+import { getStorePhotoUpdateRequest, listStoreVerificationPhotos } from "@/lib/partners/store-data";
 import { listAreaNames, listAreas } from "@/lib/shop/areas";
 
 export const metadata: Metadata = { title: "Sell on Karrigo" };
@@ -20,6 +20,7 @@ export default async function StorePartnerPage() {
         listBanks(),
         listAreaNames(),
         store.isOwner ? listStoreVerificationPhotos() : Promise.resolve({ photos: [], failed: false }),
+        store.isOwner ? getStorePhotoUpdateRequest() : Promise.resolve(null),
       ])
     : null;
   const addingStore = partner !== null && partner.storeId === null;
@@ -44,6 +45,7 @@ export default async function StorePartnerPage() {
           areas={setup?.[1] ?? []}
           photos={setup?.[2].photos ?? []}
           photosFailed={setup?.[2].failed ?? false}
+          updateRequest={setup?.[3] ?? null}
         />
       ) : storeUnavailable ? (
         <div className="bg-bg rounded-panel-sm p-xl md:p-xxl">

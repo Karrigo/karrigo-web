@@ -446,6 +446,32 @@ export async function deleteStorePhoto(id: string): Promise<Done> {
   }
 }
 
+/** Ask support to unlock the approved photo set: the reason goes on a ticket
+ * and an approval re-opens edits for 7 days. Owner only. */
+export async function requestStorePhotoUpdate(reason: string): Promise<Done> {
+  const text = reason.trim();
+  if (text.length < 10) return { ok: false, error: "Please tell us why you need to update your photos." };
+  if (text.length > 1000) return { ok: false, error: "Keep it under 1000 characters." };
+  try {
+    await api("/store-console/store/photos/update-request", {
+      method: "POST",
+      scope: "kitchen",
+      body: { reason: text },
+    });
+    revalidatePath(STORE_PAGE);
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 403) {
+      return { ok: false, error: "Only the business owner can request a photo update. Ask them to log in." };
+    }
+    if (error instanceof ApiError && error.status === 409) {
+      revalidatePath(STORE_PAGE);
+      return { ok: false, error: "You already have a photo update request pending review." };
+    }
+    return failure(error);
+  }
+}
+
 export async function appealStore(message: string): Promise<Done> {
   const text = message.trim();
   if (!text) return { ok: false, error: "Tell us what has changed." };

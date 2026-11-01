@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 
 import { cn } from "@/lib/cn";
 import type { Bank } from "@/lib/partners/types";
+import { planPhotoBatch } from "@/lib/photo-batch";
 import { shrinkImage } from "@/lib/shrink-image";
 
 export const field =
@@ -187,6 +188,8 @@ export function PhotoUpload({
   idleText = "Not added yet",
   buttonLabel,
   disabled = false,
+  multiple = false,
+  maxFiles,
 }: {
   label: string;
   done: boolean;
@@ -200,17 +203,23 @@ export function PhotoUpload({
   /** Overrides the button text, for a control that adds rather than replaces. */
   buttonLabel?: string;
   disabled?: boolean;
+  /** Let one pick carry several photos (verification sets). Single-photo slots leave this off. */
+  multiple?: boolean;
+  /** Cap for one pick; extras are left out with a note. Defaults to 1 for single picks, unlimited for multiple. */
+  maxFiles?: number;
 }) {
   const input = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const [busy, startTransition] = useTransition();
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 
   return (
     <div className="border-surface-raised gap-md flex flex-wrap items-center justify-between border-b py-md last:border-b-0">
       <div className="min-w-0">
         <div className="text-site-question">{label}</div>
         <div className={cn("text-site-label mt-xs", error ? "text-danger-text font-semibold" : "text-text-secondary")}>
-          {error || (busy ? "Uploading…" : done ? `✓ ${doneLabel}` : idleText)}
+          {error ||
+            (progress ? `Uploading ${progress.done + 1} of ${progress.total}…` : busy ? "Uploading…" : done ? `✓ ${doneLabel}` : idleText)}
         </div>
       </div>
       <input
@@ -218,19 +227,37 @@ export function PhotoUpload({
         type="file"
         accept="image/jpeg,image/png,image/webp"
         {...(camera ? { capture: "environment" as const } : {})}
+        {...(multiple ? { multiple: true } : {})}
         className="sr-only"
         onChange={(e) => {
-          const picked = e.target.files?.[0];
+          const picked = Array.from(e.target.files ?? []);
           e.target.value = "";
-          if (!picked) return;
+          if (picked.length === 0) return;
+          // One at a time unless the caller opted into a batch; a cap
+          // keeps the pick within the set's remaining slots.
+          const limit = maxFiles ?? (multiple ? picked.length : 1);
+          const { take, skipped } = planPhotoBatch(picked.length, 0, limit);
+          const batch = picked.slice(0, take);
+          if (batch.length === 0) return;
           setError("");
+          setProgress({ done: 0, total: batch.length });
           startTransition(async () => {
-            const file = await shrinkImage(picked);
-            const form = new FormData();
-            for (const [k, v] of Object.entries(fields ?? {})) form.set(k, v);
-            form.set("file", file, file.name);
-            const result = await upload(form);
-            if (!result.ok) setError(result.error);
+            let failed = "";
+            for (const [index, raw] of batch.entries()) {
+              setProgress({ done: index, total: batch.length });
+              const file = await shrinkImage(raw);
+              const form = new FormData();
+              for (const [k, v] of Object.entries(fields ?? {})) form.set(k, v);
+              form.set("file", file, file.name);
+              const result = await upload(form);
+              if (!result.ok && !failed) failed = result.error;
+            }
+            setProgress(null);
+            if (failed) setError(failed);
+            else if (skipped > 0)
+              setError(
+                `Added ${batch.length} — ${skipped} extra ${skipped === 1 ? "photo wasn't" : "photos weren't"} needed.`,
+              );
           });
         }}
       />

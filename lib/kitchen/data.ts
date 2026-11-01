@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 
 import { ApiError, api, type Schemas } from "@/lib/api/client";
+import type { PhotoUpdateRequest } from "@/lib/photo-lock";
 import { SCOPES } from "@/lib/api/scopes";
 import { nairaToKobo } from "@/lib/money";
 import { getPartner } from "@/lib/partners/data";
@@ -127,6 +128,22 @@ export async function listVerificationPhotos(): Promise<{
     if (signedOut(error)) return { photos: [], failed: false };
     console.error("Couldn't load kitchen verification photos", error);
     return { photos: [], failed: true };
+  }
+}
+
+/**
+ * The latest photo-update request, or null when there is none (or it could
+ * not be read — the lock banner then falls back to the status-derived lock,
+ * and the request action surfaces the real state).
+ */
+export async function getKitchenPhotoUpdateRequest(): Promise<PhotoUpdateRequest> {
+  try {
+    return await api<PhotoUpdateRequest>("/kitchen-console/kitchen/photos/update-request", {
+      scope: "kitchen",
+    });
+  } catch (error) {
+    if (!signedOut(error)) console.error("Couldn't load kitchen photo update request", error);
+    return null;
   }
 }
 

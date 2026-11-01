@@ -20,6 +20,7 @@ import { DEFAULT_RIDER_BASE_FEE_NAIRA, VERIFICATION_PHOTOS_REQUIRED } from "@/li
 import { formatKobo } from "@/lib/money";
 import { storeSetupProgress } from "@/lib/partners/store-setup";
 import type { Bank, StoreApplication } from "@/lib/partners/types";
+import { photoLockState, type PhotoUpdateRequest } from "@/lib/photo-lock";
 import { BankForm, FormError, StatusBanner, Step, SubmitButton, field, fieldLabel } from "./parts";
 
 export function StoreSetup({
@@ -28,12 +29,15 @@ export function StoreSetup({
   areas,
   photos,
   photosFailed = false,
+  updateRequest = null,
 }: {
   store: StoreApplication;
   banks: Bank[];
   areas: string[];
   photos: Schemas["StoreVerificationPhotoResponseDto"][];
   photosFailed?: boolean;
+  /** The latest photo-update request; drives the locked-photos banner. */
+  updateRequest?: PhotoUpdateRequest;
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -143,7 +147,14 @@ export function StoreSetup({
           hint="Our team checks these before approving your store. Kitchen photos do not count here."
         >
           {store.isOwner ? (
-            <VerificationPhotos side="store" photos={photos} failed={photosFailed} canEdit />
+            <VerificationPhotos
+              side="store"
+              photos={photos}
+              failed={photosFailed}
+              canEdit
+              lock={photoLockState(store.status, updateRequest)}
+              unlockedUntil={updateRequest?.unlockedUntil ?? null}
+            />
           ) : (
             <p className="text-site-label text-text-secondary">
               {photoCount} of {VERIFICATION_PHOTOS_REQUIRED} added. Only the business owner can add or remove photos.

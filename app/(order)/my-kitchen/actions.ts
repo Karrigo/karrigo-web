@@ -296,6 +296,28 @@ export async function deleteVerificationPhoto(id: string): Promise<Done> {
   }
 }
 
+/** Ask support to unlock the approved photo set: the reason goes on a ticket
+ * and an approval re-opens edits for 7 days. Owner only. */
+export async function requestKitchenPhotoUpdate(reason: string): Promise<Done> {
+  const text = reason.trim();
+  if (text.length < 10) return { ok: false, error: "Please tell us why you need to update your photos." };
+  if (text.length > 1000) return { ok: false, error: "Keep it under 1000 characters." };
+  try {
+    await api("/kitchen-console/kitchen/photos/update-request", {
+      method: "POST",
+      scope: "kitchen",
+      body: { reason: text },
+    });
+    changed();
+    return { ok: true };
+  } catch (error) {
+    return failure(error, {
+      403: "Only the business owner can request a photo update. Ask them to log in.",
+      409: "You already have a photo update request pending review.",
+    });
+  }
+}
+
 /** One appeal per admin flag, against a product Karrigo has hidden. */
 export async function appealFlag(itemId: string, message: string): Promise<Done> {
   const text = appealSchema.safeParse(message);
