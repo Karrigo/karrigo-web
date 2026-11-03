@@ -400,8 +400,15 @@ function DishForm({
         </label>
       )}
       <label className={fieldLabel}>
-        {grocery ? "Details (optional)" : "What comes with it (optional)"}
-        <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder={grocery ? "400g tin" : "With assorted meat"} className={field} />
+        Describe it (optional)
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value.slice(0, 200))}
+          rows={3}
+          placeholder={grocery ? "Brand, size and anything a shopper should know. e.g. Peak milk, 400g tin" : "What's in it and the portion. e.g. Jollof rice, grilled chicken and plantain. Serves 1"}
+          className={cn(field, "resize-none")}
+        />
+        <span className="text-site-label text-text-secondary self-end">{description.length}/200</span>
       </label>
       {dish && options.length > 1 && (
         <label className={fieldLabel}>

@@ -9,7 +9,7 @@ const TABS = [
   { href: "/my-store", label: "Today", ownerOnly: false },
   { href: "/my-store/orders", label: "Orders", ownerOnly: false },
   { href: "/my-store/products", label: "Products", ownerOnly: true },
-  { href: "/my-store/settings", label: "Details & photos", ownerOnly: true },
+  { href: "/my-store/settings", label: "Details", ownerOnly: true },
   { href: "/my-store/money", label: "Money", ownerOnly: true },
 ];
 
