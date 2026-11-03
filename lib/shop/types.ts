@@ -23,8 +23,14 @@ export type ShopSection = {
   dishes: ShopDish[];
 };
 
+/** A kitchen, or a store (its own business with its own catalog). Both are
+ *  browsed, carted and ordered the same way; only the backend line differs. */
+export type Vendor = "kitchen" | "store";
+
 export type ShopKitchen = {
   id: string;
+  /** Which kind of place this is. A store sells groceries only. */
+  vendor: Vendor;
   slug: string;
   name: string;
   emoji: string | null;

@@ -1,3 +1,4 @@
+import { NewOrderToasts } from "@/components/order/NewOrderToasts";
 import { OrderNav } from "@/components/order/OrderNav";
 import { PathSwitch } from "@/components/ui/PathSwitch";
 import { Toast } from "@/components/order/Toast";
@@ -71,6 +72,7 @@ export default async function OrderLayout({ children }: LayoutProps<"/">) {
         {children}
       </main>
       <Toast />
+      <NewOrderToasts kitchen={kitchenSession !== null} store={storeSession !== null} />
     </div>
   );
 }

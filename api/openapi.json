@@ -1053,6 +1053,55 @@
         ]
       }
     },
+    "/v1/kitchen-auth/me/avatar": {
+      "post": {
+        "operationId": "KitchenAuthController_uploadAvatar",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitchenStaffResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing file, wrong MIME type, or over the size limit."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload the signed-in staff member's profile picture (jpeg/png/webp). Returns the updated profile.",
+        "tags": [
+          "Auth — Kitchen Staff"
+        ]
+      }
+    },
     "/v1/kitchen-auth/password/change": {
       "post": {
         "operationId": "KitchenAuthController_changePassword",
@@ -1083,6 +1132,160 @@
         "summary": "Change the signed-in staff member's password.",
         "tags": [
           "Auth — Kitchen Staff"
+        ]
+      }
+    },
+    "/v1/kitchen-auth/me/delete/request": {
+      "post": {
+        "operationId": "PartnerAccountController_requestCode[0]",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "resendCooldownSeconds": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller is not the owner."
+          },
+          "409": {
+            "description": "ORDERS_IN_PROGRESS or PAYOUT_OUTSTANDING."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Email the owner a code to confirm deleting the whole partner account (kitchen and store). Refused while orders are in progress or earnings are unpaid.",
+        "tags": [
+          "partner-account"
+        ]
+      }
+    },
+    "/v1/store-auth/me/delete/request": {
+      "post": {
+        "operationId": "PartnerAccountController_requestCode[1]",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "resendCooldownSeconds": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller is not the owner."
+          },
+          "409": {
+            "description": "ORDERS_IN_PROGRESS or PAYOUT_OUTSTANDING."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Email the owner a code to confirm deleting the whole partner account (kitchen and store). Refused while orders are in progress or earnings are unpaid.",
+        "tags": [
+          "partner-account"
+        ]
+      }
+    },
+    "/v1/kitchen-auth/me/delete": {
+      "post": {
+        "operationId": "PartnerAccountController_deleteAccount[0]",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletePartnerAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "Password is incorrect."
+          },
+          "403": {
+            "description": "Caller is not the owner."
+          },
+          "409": {
+            "description": "ORDERS_IN_PROGRESS or PAYOUT_OUTSTANDING."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete the partner account — anonymizes the owner, kitchen and store, removes their photos and documents, and signs out every device. Needs the password and the emailed code.",
+        "tags": [
+          "partner-account"
+        ]
+      }
+    },
+    "/v1/store-auth/me/delete": {
+      "post": {
+        "operationId": "PartnerAccountController_deleteAccount[1]",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletePartnerAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "401": {
+            "description": "Password is incorrect."
+          },
+          "403": {
+            "description": "Caller is not the owner."
+          },
+          "409": {
+            "description": "ORDERS_IN_PROGRESS or PAYOUT_OUTSTANDING."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete the partner account — anonymizes the owner, kitchen and store, removes their photos and documents, and signs out every device. Needs the password and the emailed code.",
+        "tags": [
+          "partner-account"
         ]
       }
     },
@@ -1442,6 +1645,55 @@
           }
         ],
         "summary": "Update the signed-in staff member's contact phone.",
+        "tags": [
+          "Auth — Store onboarding (shared partner login)"
+        ]
+      }
+    },
+    "/v1/store-auth/me/avatar": {
+      "post": {
+        "operationId": "StoreAuthController_uploadAvatar",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitchenStaffResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing file, wrong MIME type, or over the size limit."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Upload the signed-in staff member's profile picture (jpeg/png/webp). Returns the updated profile.",
         "tags": [
           "Auth — Store onboarding (shared partner login)"
         ]
@@ -10907,6 +11159,11 @@
             "type": "string",
             "nullable": true
           },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Profile picture URL; null until the person uploads one."
+          },
           "emailVerifiedAt": {
             "format": "date-time",
             "type": "string",
@@ -10948,6 +11205,7 @@
           "email",
           "name",
           "phone",
+          "avatarUrl",
           "emailVerifiedAt",
           "staffRole",
           "status",
@@ -11074,6 +11332,24 @@
         },
         "required": [
           "phone"
+        ]
+      },
+      "DeletePartnerAccountDto": {
+        "type": "object",
+        "properties": {
+          "currentPassword": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "description": "The code emailed by POST …/me/delete/request.",
+            "minLength": 4,
+            "maxLength": 10
+          }
+        },
+        "required": [
+          "currentPassword",
+          "code"
         ]
       },
       "RegisterStoreDto": {
@@ -20156,6 +20432,78 @@
           "items"
         ]
       },
+      "OrderDetailStoreOrderDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "PLACED",
+              "ACCEPTED",
+              "PREPARING",
+              "READY",
+              "PICKED_UP",
+              "CANCELLED"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "storeId": {
+            "type": "string"
+          },
+          "subtotalNaira": {
+            "type": "number"
+          },
+          "deliveryFeeNaira": {
+            "type": "number"
+          },
+          "payoutId": {
+            "type": "string",
+            "nullable": true
+          },
+          "readyAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true,
+            "description": "When the store marked its part READY; null until then."
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "store": {
+            "$ref": "#/components/schemas/StorePublicResponseDto"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoreOrderItemResponseDto"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "id",
+          "orderId",
+          "storeId",
+          "subtotalNaira",
+          "deliveryFeeNaira",
+          "payoutId",
+          "readyAt",
+          "createdAt",
+          "updatedAt",
+          "store",
+          "items"
+        ]
+      },
       "OrderDetailRiderDto": {
         "type": "object",
         "properties": {
@@ -20354,6 +20702,13 @@
               "$ref": "#/components/schemas/OrderDetailKitchenOrderDto"
             }
           },
+          "storeOrders": {
+            "description": "One slice per store in the order; empty for an all-kitchen order.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderDetailStoreOrderDto"
+            }
+          },
           "rider": {
             "nullable": true,
             "type": "object",
@@ -20397,6 +20752,7 @@
           "address",
           "payments",
           "kitchenOrders",
+          "storeOrders",
           "rider"
         ]
       },

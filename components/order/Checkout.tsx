@@ -56,12 +56,12 @@ export function Checkout({
   const [pricingError, setPricingError] = useState("");
   const latest = useRef(0);
 
-  const cartKey = cart ? `${cart.kitchenSlug}:${cart.side}:${JSON.stringify(cart.lines)}` : "";
+  const cartKey = cart ? `${cart.vendor ?? "kitchen"}:${cart.kitchenSlug}:${cart.side}:${JSON.stringify(cart.lines)}` : "";
   const checking = hydrated && Boolean(cart) && pricedFor !== cartKey;
   useEffect(() => {
     if (!hydrated || !cart) return;
     const ticket = ++latest.current;
-    priceCartAction(cart.kitchenSlug, cart.lines, cart.side).then((result) => {
+    priceCartAction(cart.kitchenSlug, cart.lines, cart.side, cart.vendor ?? "kitchen").then((result) => {
       if (ticket !== latest.current) return;
       setPricedFor(cartKey);
       if (!result.ok) return setPricingError(result.error);
@@ -175,6 +175,7 @@ export function Checkout({
     startTransition(async () => {
       const result = await placeOrder({
         kitchenSlug: kitchen.slug,
+        vendor: kitchen.vendor,
         side,
         lines: cart!.lines,
         landmark: parsed.data.landmark,
@@ -271,7 +272,7 @@ export function Checkout({
         <aside className="bg-bg rounded-panel-sm p-xl sticky top-[96px] min-w-0 flex-[1_1_320px]">
           <div className="gap-sm flex items-baseline justify-between">
             <h2 className="text-h1 font-extrabold">{kitchen.name}</h2>
-            <Link href={placeHref(kitchen.slug, side)} className="text-accent-text text-site-label font-bold whitespace-nowrap">
+            <Link href={placeHref(kitchen.slug, side, kitchen.vendor)} className="text-accent-text text-site-label font-bold whitespace-nowrap">
               Add more
             </Link>
           </div>
@@ -298,7 +299,7 @@ export function Checkout({
                   tone="light"
                   qty={line.qty}
                   name={line.name}
-                  onAdd={() => addDish({ slug: kitchen.slug, name: kitchen.name, side }, line.dishId)}
+                  onAdd={() => addDish({ slug: kitchen.slug, name: kitchen.name, side, vendor: kitchen.vendor }, line.dishId)}
                   onRemove={() => removeDish(line.dishId)}
                 />
               </div>

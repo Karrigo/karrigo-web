@@ -56,7 +56,7 @@ export default async function OrdersPage() {
               >
                 <span className="min-w-0">
                   <span className="text-site-question block truncate">
-                    {o.kitchenOrders.map((k) => k.kitchen.name).join(" + ")}
+                    {[...o.kitchenOrders.map((k) => k.kitchen.name), ...o.storeOrders.map((s) => s.store.name)].join(" + ")}
                   </span>
                   <span className="text-site-label text-text-secondary mt-xs block">
                     {o.code} · {when.format(new Date(o.placedAt))} · {LABEL[o.status]}

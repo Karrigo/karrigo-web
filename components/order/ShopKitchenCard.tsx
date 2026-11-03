@@ -21,7 +21,7 @@ export function ShopKitchenCard({
 
   return (
     <Link
-      href={placeHref(kitchen.slug, side)}
+      href={placeHref(kitchen.slug, side, kitchen.vendor)}
       className={cn(
         "bg-bg rounded-panel-sm p-sm group block transition-[transform,box-shadow] duration-(--duration-normal)",
         shut ? "opacity-55" : "hover:-translate-y-1.5 hover:shadow-card",

@@ -12,7 +12,7 @@ import { priceLines } from "@/lib/shop/catalog";
 import { getCustomer } from "@/lib/shop/session";
 import { basketIssue } from "@/lib/shop/limits";
 import { listAreas } from "@/lib/shop/areas";
-import type { Customer, PricedCart, Side } from "@/lib/shop/types";
+import type { Customer, PricedCart, Side, Vendor } from "@/lib/shop/types";
 
 /**
  * Every customer mutation, as a Server Action. The backend does the real
@@ -129,9 +129,10 @@ export async function priceCartAction(
   slug: string,
   lines: Record<string, number>,
   side: Side = "FOOD",
+  vendor: Vendor = "kitchen",
 ): Promise<Done<{ cart: PricedCart | null }>> {
   try {
-    return { ok: true, cart: await priceLines(slug, lines, side) };
+    return { ok: true, cart: await priceLines(slug, lines, side, vendor) };
   } catch (error) {
     return failure(error, "We couldn't check the menu just now. Try again.");
   }
@@ -199,6 +200,8 @@ export type PayChoice = "card" | "transfer" | "online";
 
 export type PlaceInput = {
   kitchenSlug: string;
+  /** A store is ordered from by its own product ids. Kitchen when omitted. */
+  vendor?: Vendor;
   /** Which side of the place the cart is from. Food when omitted. */
   side?: Side;
   lines: Record<string, number>;
@@ -251,7 +254,7 @@ export async function placeOrder(
 
   try {
     // Re-check the cart against the live menu before anything is created.
-    const cart = await priceLines(input.kitchenSlug, input.lines, input.side ?? "FOOD");
+    const cart = await priceLines(input.kitchenSlug, input.lines, input.side ?? "FOOD", input.vendor ?? "kitchen");
     if (!cart) return { ok: false, error: "That place isn't taking orders right now." };
     if (!cart.kitchen.open) {
       return { ok: false, error: `${cart.kitchen.name} is closed right now${cart.kitchen.notice ? `: ${cart.kitchen.notice}` : "."}` };
@@ -309,7 +312,9 @@ export async function placeOrder(
       scope: "customer",
       body: {
         addressId,
-        items: cart.lines.map((l) => ({ menuItemId: l.dishId, qty: l.qty })),
+        items: cart.lines.map((l) =>
+          input.vendor === "store" ? { storeProductId: l.dishId, qty: l.qty } : { menuItemId: l.dishId, qty: l.qty },
+        ),
         // Paystack's own page offers every method, so there's no picker here
         // any more — this is a placeholder until payment succeeds.
         provider: "PAYSTACK",
@@ -426,7 +431,7 @@ export async function payForOrder(orderId: string): Promise<Done<{ payUrl: strin
     const order = await api<Schemas["OrderWithDetailsResponseDto"]>(`/orders/${encodeURIComponent(orderId)}`, {
       scope: "customer",
     });
-    const kitchen = order.kitchenOrders.map((k) => k.kitchen.name).join(" + ") || "The kitchen";
+    const kitchen = vendorNames(order) || "The kitchen";
     if (order.status === "PLACED") {
       return { ok: false, error: `${kitchen} hasn't accepted your order yet. You'll pay as soon as they do.` };
     }
@@ -505,6 +510,11 @@ export type TrackedOrder = {
   cancelRequested: boolean;
 };
 
+/** Every kitchen and store an order is split across, "A + B". */
+function vendorNames(order: Pick<Schemas["OrderWithDetailsResponseDto"], "kitchenOrders" | "storeOrders">): string {
+  return [...order.kitchenOrders.map((k) => k.kitchen.name), ...order.storeOrders.map((s) => s.store.name)].join(" + ");
+}
+
 /** `channel` is a real method only once Paystack confirms payment; before
  *  that, or for a method we don't map (e.g. mobile money), it's a
  *  placeholder — show a neutral "paid online" rather than a wrong label. */
@@ -520,7 +530,7 @@ export async function fetchOrder(id: string): Promise<Done<{ order: TrackedOrder
     });
     const p = o.payments[0];
     const riderUser = (o.rider?.user ?? null) as { name?: string | null; phone?: string | null } | null;
-    const kitchen = o.kitchenOrders[0]?.kitchen;
+    const place = o.kitchenOrders[0]?.kitchen ?? o.storeOrders[0]?.store;
 
     return {
       ok: true,
@@ -529,12 +539,13 @@ export async function fetchOrder(id: string): Promise<Done<{ order: TrackedOrder
         code: o.code,
         trackingToken: o.trackingToken,
         status: o.status,
-        kitchen: o.kitchenOrders.map((k) => k.kitchen.name).join(" + "),
-        kitchenSlug: kitchen?.slug ?? "",
-        side: o.kitchenOrders[0]?.type === "GROCERY" ? "GROCERY" : "FOOD",
+        kitchen: vendorNames(o),
+        kitchenSlug: place?.slug ?? "",
+        // A store sells groceries only; a kitchen's order says which side it was.
+        side: o.kitchenOrders[0] ? (o.kitchenOrders[0].type === "GROCERY" ? "GROCERY" : "FOOD") : "GROCERY",
         to: [o.address.line1, o.address.area].filter(Boolean).join(", "),
-        items: o.kitchenOrders.flatMap((k) =>
-          k.items.map((i) => ({
+        items: [...o.kitchenOrders, ...o.storeOrders].flatMap((slice) =>
+          slice.items.map((i) => ({
             name: i.nameSnapshot,
             qty: i.qty,
             lineKobo: nairaToKobo(i.unitPriceNaira) * i.qty,
@@ -612,7 +623,7 @@ export async function cancelOrder(id: string): Promise<Done<{ requested: boolean
 
     if (await cancelRequested(id)) return { ok: true, requested: true };
 
-    const kitchen = order.kitchenOrders.map((k) => k.kitchen.name).join(" + ");
+    const kitchen = vendorNames(order);
     const paid = order.payments.some((p) => p.provider === "PAYSTACK" && p.status === "SUCCEEDED");
     await api("/support-tickets", {
       method: "POST",
