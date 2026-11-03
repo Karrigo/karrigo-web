@@ -1,10 +1,12 @@
-import { AccountSwitch } from "@/components/partners/AccountSwitch";
 import { OrderNav } from "@/components/order/OrderNav";
+import { PathSwitch } from "@/components/ui/PathSwitch";
 import { Toast } from "@/components/order/Toast";
 import { APPLICATION, CONSOLE, getKitchen } from "@/lib/kitchen/data";
 import { getPartner } from "@/lib/partners/data";
 import { STORE_APPLICATION, STORE_CONSOLE, getStore } from "@/lib/store/data";
 import { getCustomer } from "@/lib/shop/session";
+
+type Option = { label: string; href: string; prefix: string };
 
 /** The ordering web app: kitchens, menus, checkout, sign-in and tracking.
  *  Who is signed in is read here, on the server, so the header is right on
@@ -38,16 +40,16 @@ export default async function OrderLayout({ children }: LayoutProps<"/">) {
   // The switch between the two consoles, drawn here so it survives the
   // change from one console to the other. A side that is not signed in reads
   // "+ Add …" and leads to registering it or signing in to it.
-  const sides = [
+  const accounts: [Option, Option] = [
     {
-      side: "kitchen" as const,
       label: kitchenSession ? "Kitchen" : "+ Add kitchen",
       href: kitchenSession ? (kitchen?.status === "ACTIVE" ? CONSOLE : APPLICATION) : "/partners/kitchen",
+      prefix: "/my-kitchen",
     },
     {
-      side: "store" as const,
       label: storeSession ? "Store" : "+ Add store",
       href: storeSession ? (store?.status === "ACTIVE" ? STORE_CONSOLE : STORE_APPLICATION) : "/partners/store",
+      prefix: "/my-store",
     },
   ];
   return (
@@ -57,7 +59,15 @@ export default async function OrderLayout({ children }: LayoutProps<"/">) {
         business={business.length > 0 ? business : null}
       />
       <main className="px-screen-x pt-lg pb-section-sm">
-        <AccountSwitch sides={sides} />
+        <PathSwitch label="Accounts" options={accounts} />
+        {/* Food and groceries are two lists, one tap apart. */}
+        <PathSwitch
+          label="Browse"
+          options={[
+            { label: "Kitchens", href: "/kitchens", prefix: "/kitchens" },
+            { label: "Stores", href: "/stores", prefix: "/stores" },
+          ]}
+        />
         {children}
       </main>
       <Toast />
