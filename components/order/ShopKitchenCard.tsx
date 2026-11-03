@@ -23,11 +23,11 @@ export function ShopKitchenCard({
     <Link
       href={placeHref(kitchen.slug, side, kitchen.vendor)}
       className={cn(
-        "bg-bg rounded-panel-sm p-sm group block transition-[transform,box-shadow] duration-(--duration-normal)",
+        "bg-bg rounded-panel-sm overflow-hidden group block transition-[transform,box-shadow] duration-(--duration-normal)",
         shut ? "opacity-55" : "hover:-translate-y-1.5 hover:shadow-card",
       )}
     >
-      <div className="bg-surface-raised relative grid aspect-[4/3] place-items-center overflow-hidden rounded-panel-xs">
+      <div className="bg-surface-raised relative grid aspect-[4/3] place-items-center overflow-hidden">
         {kitchen.imageUrl ? (
           <Image
             src={kitchen.imageUrl}
@@ -52,7 +52,7 @@ export function ShopKitchenCard({
         ) : null}
       </div>
 
-      <div className="px-sm pt-lg pb-sm">
+      <div className="px-lg pt-xl pb-lg">
         <div className="text-site-title">{kitchen.name}</div>
         <div className="text-site-label text-text-secondary mt-xs">
           {kitchen.cuisine} · {kitchen.area}
