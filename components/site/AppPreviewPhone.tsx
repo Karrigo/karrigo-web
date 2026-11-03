@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { LogoLockup } from "@/components/site/Logo";
 import { Screen } from "@/components/ui/Screen";
 import { kitchens } from "@/lib/fixtures";
 
@@ -20,13 +20,7 @@ export function AppPreviewPhone() {
         <span className="bg-bezel rounded-pill absolute top-[9px] left-1/2 h-[20px] w-[76px] -translate-x-1/2" />
 
         <div className="px-lg flex items-center justify-between pt-[40px]">
-          <Image
-            src="/brand/karrigo-logo.png"
-            alt=""
-            width={932}
-            height={288}
-            className="h-[22px] w-auto"
-          />
+          <LogoLockup className="[&_img]:h-[22px]" />
           <span className="text-micro text-text-secondary font-semibold">
             Wurukum
           </span>

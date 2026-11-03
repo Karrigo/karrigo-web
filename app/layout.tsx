@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     locale: "en_NG",
     title: "Karrigo — Food, groceries, delivered.",
     description: DESCRIPTION,
-    images: [{ url: "/brand/karrigo-logo.png", alt: "Karrigo" }],
+    images: [{ url: "/brand/karrigo-icon.png", alt: "Karrigo" }],
   },
   twitter: { card: "summary", title: "Karrigo — Food, groceries, delivered.", description: DESCRIPTION },
 };
