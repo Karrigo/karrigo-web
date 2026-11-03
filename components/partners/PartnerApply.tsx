@@ -341,7 +341,8 @@ const LOGIN_COPY = {
 /** One partner login serves both onboardings; only the words and where you
  *  land afterwards differ. */
 export function PartnerLogin({ side }: { side: PartnerSide }) {
-  const copy = LOGIN_COPY[side];
+  const [active, setActive] = useState<PartnerSide>(side);
+  const copy = LOGIN_COPY[active];
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -393,19 +394,31 @@ export function PartnerLogin({ side }: { side: PartnerSide }) {
           });
         }}
       >
-        <div className="bg-surface-raised rounded-pill p-xs text-site-label flex self-start font-bold">
+        {/* Same sliding switch as the customer log in. Both sides share one
+            login, so this swaps the words in place instead of loading a page. */}
+        <div className="bg-surface-raised rounded-pill relative flex p-xs">
+          <span
+            aria-hidden
+            className={cn(
+              "bg-bg rounded-pill absolute top-xs bottom-xs left-xs w-[calc(50%-4px)] shadow-[0_6px_14px_-8px_rgba(14,15,13,0.35)] transition-transform duration-(--duration-slow)",
+              active === "store" && "translate-x-full",
+            )}
+          />
           {(["kitchen", "store"] as const).map((s) => (
-            <Link
+            <button
               key={s}
-              href={`/partners/${s}/login`}
-              aria-current={s === side ? "page" : undefined}
-              className={cn(
-                "rounded-pill px-lg py-xs transition-colors",
-                s === side ? "bg-accent text-on-accent" : "text-text-secondary",
-              )}
+              type="button"
+              aria-pressed={active === s}
+              onClick={() => {
+                setActive(s);
+                setError("");
+                // Keeps the address honest for a refresh or a shared link.
+                window.history.replaceState(null, "", `/partners/${s}/login`);
+              }}
+              className="text-site-button relative flex-1 py-md text-center"
             >
               {s === "kitchen" ? "Kitchen" : "Store"}
-            </Link>
+            </button>
           ))}
         </div>
         <div className="mb-xs">
