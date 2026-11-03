@@ -18,12 +18,12 @@ import { cn } from "@/lib/cn";
  */
 export function OrderNav({
   user,
-  kitchen,
+  business,
 }: {
   user: { name: string } | null;
-  /** Set when kitchen staff are signed in — a separate login from the
-   *  customer's, so both can be true at once. */
-  kitchen: { href: string } | null;
+  /** Set when a kitchen or store owner is signed in — a separate login from
+   *  the customer's, so both can be true at once. */
+  business: { href: string; label: string } | null;
 }) {
   const router = useRouter();
   const { cart, landmark, address, area } = useOrderState();
@@ -65,12 +65,12 @@ export function OrderNav({
 
         <div className="gap-xs ml-auto flex shrink-0 items-center">
           <SiteThemeToggle />
-          {kitchen && (
+          {business && (
             <Link
-              href={kitchen.href}
+              href={business.href}
               className="text-accent-text hover:bg-accent/12 rounded-pill text-nav-link px-lg py-sm font-bold transition-colors duration-(--duration-fast)"
             >
-              My kitchen
+              {business.label}
             </Link>
           )}
           {user && (
@@ -98,10 +98,9 @@ export function OrderNav({
             >
               {loggingOut ? "Logging out…" : `${user.name.split(" ")[0] || "Account"} · Log out`}
             </button>
-          ) : kitchen ? (
-            // Signed in as a kitchen only: the customer "Log in" would read as
-            // if they weren't signed in at all. Ordering still asks for a
-            // customer login at checkout.
+          ) : business ? (
+            // Signed in as a business only: the customer "Log in" would read as
+            // if they weren't signed in at all.
             <button
               type="button"
               onClick={() =>
@@ -116,7 +115,7 @@ export function OrderNav({
               aria-busy={loggingOut}
               className="text-text/75 hover:bg-text/10 hover:text-text rounded-pill text-nav-link hidden px-lg py-sm transition-colors duration-(--duration-fast) disabled:opacity-50 sm:block"
             >
-              {loggingOut ? "Logging out…" : "Kitchen · Log out"}
+              {loggingOut ? "Logging out…" : "Business · Log out"}
             </button>
           ) : (
             <Link
@@ -126,19 +125,23 @@ export function OrderNav({
               Log in
             </Link>
           )}
-          <Link
-            href="/checkout"
-            className="bg-accent text-on-accent rounded-pill text-site-button gap-sm flex items-center py-sm pr-sm pl-lg transition-transform duration-(--duration-fast) hover:-translate-y-0.5"
-          >
-            Cart
-            <span
-              key={count}
-              data-theme="dark"
-              className="bg-bg text-accent-text rounded-pill text-label pop grid h-[22px] min-w-[22px] place-items-center px-xs font-bold"
+          {/* Checkout needs a customer login, so for a business-only session
+              the cart is a dead end. Someone who is both keeps it. */}
+          {(user || !business) && (
+            <Link
+              href="/checkout"
+              className="bg-accent text-on-accent rounded-pill text-site-button gap-sm flex items-center py-sm pr-sm pl-lg transition-transform duration-(--duration-fast) hover:-translate-y-0.5"
             >
-              {count}
-            </span>
-          </Link>
+              Cart
+              <span
+                key={count}
+                data-theme="dark"
+                className="bg-bg text-accent-text rounded-pill text-label pop grid h-[22px] min-w-[22px] place-items-center px-xs font-bold"
+              >
+                {count}
+              </span>
+            </Link>
+          )}
         </div>
       </Screen>
     </div>
