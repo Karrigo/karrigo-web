@@ -3,7 +3,13 @@
  * `ONBOARDING_INCOMPLETE` whose `details` lists what is still missing. Photos
  * have their own code (VERIFICATION_PHOTOS_REQUIRED) and are handled apart.
  */
-export type ApprovalBlocker = "LOCATION" | "RIDER_FEE" | "OWNER_PHOTO" | "PAYOUT_ACCOUNT" | "CAC_DOCUMENT";
+export type ApprovalBlocker =
+  | "LOCATION"
+  | "RIDER_FEE"
+  | "OWNER_PHOTO"
+  | "PAYOUT_ACCOUNT"
+  | "CAC_DOCUMENT"
+  | "STOREFRONT_IMAGE";
 
 const BLOCKER_LABEL: Record<ApprovalBlocker, string> = {
   LOCATION: "a pinned location",
@@ -11,6 +17,7 @@ const BLOCKER_LABEL: Record<ApprovalBlocker, string> = {
   OWNER_PHOTO: "the owner's photo",
   PAYOUT_ACCOUNT: "a confirmed payout bank account",
   CAC_DOCUMENT: "the CAC certificate",
+  STOREFRONT_IMAGE: "a storefront image",
 };
 
 function isBlocker(value: unknown): value is ApprovalBlocker {

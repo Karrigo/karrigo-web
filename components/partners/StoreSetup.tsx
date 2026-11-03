@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
@@ -8,6 +9,9 @@ import {
   storeLogOut,
   saveStoreBank,
   saveStoreFee,
+  uploadStoreCac,
+  uploadStoreHero,
+  uploadStoreOwnerPhoto,
   saveStoreLocation,
   searchStorePlaces,
   type Place,
@@ -22,7 +26,7 @@ import { formatKobo } from "@/lib/money";
 import { storeSetupProgress } from "@/lib/partners/store-setup";
 import type { Bank, StoreApplication } from "@/lib/partners/types";
 import { photoLockState, type PhotoUpdateRequest } from "@/lib/photo-lock";
-import { AppealAnswer, BankForm, FormError, StatusBanner, Step, SubmitButton, field, fieldLabel } from "./parts";
+import { AppealAnswer, BankForm, FormError, PhotoUpload, StatusBanner, Step, SubmitButton, field, fieldLabel } from "./parts";
 
 export function StoreSetup({
   store,
@@ -169,6 +173,69 @@ export function StoreSetup({
             <p className="text-site-label text-text-secondary">
               {photoCount} of {VERIFICATION_PHOTOS_REQUIRED} added. Only the business owner can add or remove photos.
             </p>
+          )}
+        </Step>
+      </div>
+
+      <div id="owner-photo" className="scroll-mt-xl">
+        <Step
+          number={5}
+          title="The owner's photo"
+          done={store.hasOwnerPhoto}
+          summary="On file. Only our team sees it."
+          hint="A clear photo of you, the owner. Our team needs it before approving your store."
+        >
+          {store.isOwner ? (
+            <PhotoUpload
+              label="Owner's photo"
+              done={store.hasOwnerPhoto}
+              doneLabel="Photo added"
+              camera
+              upload={uploadStoreOwnerPhoto}
+            />
+          ) : (
+            <OwnerMessage action="add the owner's photo" />
+          )}
+        </Step>
+      </div>
+
+      <div id="storefront" className="scroll-mt-xl">
+        <Step
+          number={6}
+          title="A storefront image"
+          done={Boolean(store.imageUrl)}
+          summary="This is what customers see first."
+          hint="A clear photo of your shop front or shelves. Daylight works best."
+        >
+          {store.imageUrl && (
+            <div className="bg-surface-raised relative mb-md aspect-[16/9] max-w-[360px] overflow-hidden rounded-panel-xs">
+              <Image src={store.imageUrl} alt={`${store.name}'s storefront`} fill sizes="360px" className="object-cover" />
+            </div>
+          )}
+          {store.isOwner ? (
+            <PhotoUpload label="Storefront image" done={Boolean(store.imageUrl)} doneLabel="Image added" upload={uploadStoreHero} />
+          ) : (
+            <OwnerMessage action="add the storefront image" />
+          )}
+        </Step>
+      </div>
+
+      <div id="cac" className="scroll-mt-xl">
+        <Step
+          number={7}
+          title={store.requiresCac ? "The CAC certificate (required)" : "The CAC certificate (optional)"}
+          done={store.hasCacDocument}
+          summary="On file. Only our team sees it."
+          hint={
+            store.requiresCac
+              ? "Karrigo needs your registered business's CAC certificate before approving your store."
+              : "Only needed if your business is registered. Our team may ask for it."
+          }
+        >
+          {store.isOwner ? (
+            <PhotoUpload label="CAC certificate" done={store.hasCacDocument} doneLabel="Certificate added" upload={uploadStoreCac} />
+          ) : (
+            <OwnerMessage action="add the CAC certificate" />
           )}
         </Step>
       </div>

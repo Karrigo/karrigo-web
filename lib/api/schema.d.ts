@@ -3714,7 +3714,7 @@ export interface components {
             /** @description Verification photos uploaded so far; the kitchen needs exactly KITCHEN_PHOTOS_REQUIRED. */
             verificationPhotoCount: number;
             /** @description What an admin still needs before approving: location, photos, owner photo. Empty = onboarding done. */
-            onboardingMissing: ("LOCATION" | "VERIFICATION_PHOTOS" | "OWNER_PHOTO")[];
+            onboardingMissing: ("LOCATION" | "VERIFICATION_PHOTOS" | "OWNER_PHOTO" | "STOREFRONT_IMAGE")[];
             /** @description Short-lived signed URL of the owner's photo, if uploaded. Only on the kitchen's own profile read. */
             ownerPhotoUrl?: string | null;
             /** @description Short-lived signed URL of the optional CAC certificate, if uploaded. */
@@ -3936,7 +3936,7 @@ export interface components {
             /** @description Verification photos uploaded so far; the store needs exactly STORE_PHOTOS_REQUIRED. */
             verificationPhotoCount: number;
             /** @description What an admin still needs before approving: location, photos, owner photo. Empty = onboarding done. */
-            onboardingMissing: ("LOCATION" | "VERIFICATION_PHOTOS" | "OWNER_PHOTO")[];
+            onboardingMissing: ("LOCATION" | "VERIFICATION_PHOTOS" | "OWNER_PHOTO" | "STOREFRONT_IMAGE")[];
             /** @description Short-lived signed URL of the owner's photo, if uploaded. Only on the store's own profile read. */
             ownerPhotoUrl?: string | null;
             /** @description Short-lived signed URL of the optional CAC certificate, if uploaded. */
@@ -4389,7 +4389,7 @@ export interface components {
             /** @description Verification photos uploaded so far; the kitchen needs exactly KITCHEN_PHOTOS_REQUIRED. */
             verificationPhotoCount: number;
             /** @description What an admin still needs before approving: location, photos, owner photo. Empty = onboarding done. */
-            onboardingMissing: ("LOCATION" | "VERIFICATION_PHOTOS" | "OWNER_PHOTO")[];
+            onboardingMissing: ("LOCATION" | "VERIFICATION_PHOTOS" | "OWNER_PHOTO" | "STOREFRONT_IMAGE")[];
             /** @description Short-lived signed URL of the owner's photo, if uploaded. Only on the kitchen's own profile read. */
             ownerPhotoUrl?: string | null;
             /** @description Short-lived signed URL of the optional CAC certificate, if uploaded. */
@@ -5790,6 +5790,10 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt: string;
+            /** @description Short-lived signed URL of the owner's photo, or null if none is on file. */
+            ownerPhotoUrl: string | null;
+            /** @description Short-lived signed URL of the CAC certificate, or null if none is on file. */
+            cacDocumentUrl: string | null;
             business: components["schemas"]["AdminStoreBusinessDto"];
             /** @description The kitchen on the same business, or null if the business has none. */
             kitchen: components["schemas"]["AdminStoreKitchenDto"] | null;
@@ -5857,7 +5861,7 @@ export interface components {
             /** @description Verification photos uploaded so far; the kitchen needs exactly KITCHEN_PHOTOS_REQUIRED. */
             verificationPhotoCount: number;
             /** @description What an admin still needs before approving: location, photos, owner photo. Empty = onboarding done. */
-            onboardingMissing: ("LOCATION" | "VERIFICATION_PHOTOS" | "OWNER_PHOTO")[];
+            onboardingMissing: ("LOCATION" | "VERIFICATION_PHOTOS" | "OWNER_PHOTO" | "STOREFRONT_IMAGE")[];
             /** @description Short-lived signed URL of the owner's photo, if uploaded. Only on the kitchen's own profile read. */
             ownerPhotoUrl?: string | null;
             /** @description Short-lived signed URL of the optional CAC certificate, if uploaded. */

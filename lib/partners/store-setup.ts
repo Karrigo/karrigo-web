@@ -11,7 +11,11 @@ export function storeSetupProgress(
   const feeDone = !store.missing.includes("RIDER_FEE");
   const payoutDone = Boolean(store.bankAccountName);
   const photosDone = photoCount >= VERIFICATION_PHOTOS_REQUIRED;
-  const steps = [locationDone, feeDone, payoutDone, photosDone];
+  const ownerPhotoDone = store.hasOwnerPhoto;
+  const storefrontDone = Boolean(store.imageUrl);
+  // The CAC certificate only counts for a store ops has marked as registered.
+  const cacDone = !store.requiresCac || store.hasCacDocument;
+  const steps = [locationDone, feeDone, payoutDone, photosDone, ownerPhotoDone, storefrontDone, cacDone];
 
   return {
     left: steps.filter((done) => !done).length,
@@ -23,6 +27,9 @@ export function storeSetupProgress(
       ...(photosDone
         ? []
         : [{ label: `Store photos: ${photoCount} of ${VERIFICATION_PHOTOS_REQUIRED}`, href: "#photos" }]),
+      ...(ownerPhotoDone ? [] : [{ label: "Add the owner's photo", href: "#owner-photo" }]),
+      ...(storefrontDone ? [] : [{ label: "Add a storefront image", href: "#storefront" }]),
+      ...(cacDone ? [] : [{ label: "Upload the CAC certificate", href: "#cac" }]),
     ],
   };
 }
