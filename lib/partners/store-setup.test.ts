@@ -17,6 +17,9 @@ const store = (overrides: Partial<StoreApplication> = {}): StoreApplication => (
   bankAccountName: null,
   bankAccountLast4: null,
   imageUrl: null,
+  hasOwnerPhoto: false,
+  requiresCac: false,
+  hasCacDocument: false,
   isOwner: true,
   riderBaseFeeKobo: null,
   verificationPhotoCount: 0,
@@ -25,17 +28,36 @@ const store = (overrides: Partial<StoreApplication> = {}): StoreApplication => (
 });
 
 describe("storeSetupProgress", () => {
-  test("lists all four store-specific setup gaps", () => {
+  test("lists every store setup gap, owner photo and storefront image included", () => {
     expect(storeSetupProgress(store(), 2)).toEqual({
-      left: 4,
+      left: 6,
       photosDone: false,
       items: [
         { label: "Set your store's location", href: "#location" },
         { label: "Set the rider base delivery fee", href: "#rider-fee" },
         { label: "Add the business payout account", href: "#payout" },
         { label: "Store photos: 2 of 6", href: "#photos" },
+        { label: "Add the owner's photo", href: "#owner-photo" },
+        { label: "Add a storefront image", href: "#storefront" },
       ],
     });
+  });
+
+  test("asks for the CAC certificate only when ops requires it", () => {
+    const done = {
+      hasLocation: true,
+      bankAccountName: "NGOZI OKAFOR",
+      bankAccountLast4: "1234",
+      riderBaseFeeKobo: 150_000,
+      missing: [],
+      hasOwnerPhoto: true,
+      imageUrl: "https://img/store.jpg",
+    } satisfies Partial<StoreApplication>;
+    expect(storeSetupProgress(store(done), 6).items).toEqual([]);
+    expect(storeSetupProgress(store({ ...done, requiresCac: true }), 6).items).toEqual([
+      { label: "Upload the CAC certificate", href: "#cac" },
+    ]);
+    expect(storeSetupProgress(store({ ...done, requiresCac: true, hasCacDocument: true }), 6).items).toEqual([]);
   });
 
   test("treats an existing business payout account as complete", () => {
@@ -47,6 +69,8 @@ describe("storeSetupProgress", () => {
           bankAccountLast4: "1234",
           riderBaseFeeKobo: 150_000,
           missing: [],
+          hasOwnerPhoto: true,
+          imageUrl: "https://img/store.jpg",
         }),
         6,
       ),
@@ -57,6 +81,6 @@ describe("storeSetupProgress", () => {
     const result = storeSetupProgress(store({ verificationPhotoCount: 6 }), 1);
 
     expect(result.photosDone).toBe(false);
-    expect(result.items.at(-1)?.label).toBe("Store photos: 1 of 6");
+    expect(result.items.find((item) => item.href === "#photos")?.label).toBe("Store photos: 1 of 6");
   });
 });

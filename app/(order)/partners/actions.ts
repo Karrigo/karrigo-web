@@ -545,6 +545,53 @@ export async function uploadKitchenPhoto(form: FormData): Promise<Done> {
   }
 }
 
+/* ---------------------------------------------- owner photo, storefront, CAC */
+
+/** One private document or image for a side's owner. The backend replaces any earlier one. */
+async function uploadOwnerFile(
+  path: string,
+  scope: "kitchen" | "store",
+  page: string,
+  form: FormData,
+  fallbackName: string,
+  maxBytes?: number,
+): Promise<Done> {
+  const file = photoFrom(form, maxBytes);
+  if (!(file instanceof File)) return file;
+  try {
+    const body = new FormData();
+    body.set("file", file, file.name || fallbackName);
+    await api(path, { method: "POST", scope, body });
+    revalidatePath(page);
+    return { ok: true };
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+/** The owner's photo, which an admin needs on file before approving. */
+export async function uploadStoreOwnerPhoto(form: FormData): Promise<Done> {
+  return uploadOwnerFile("/store-console/store/owner-photo", "store", STORE_PAGE, form, "owner.jpg", VERIFICATION_PHOTO_MAX_BYTES);
+}
+
+export async function uploadKitchenOwnerPhoto(form: FormData): Promise<Done> {
+  return uploadOwnerFile("/kitchen-console/kitchen/owner-photo", "kitchen", KITCHEN_PAGE, form, "owner.jpg", VERIFICATION_PHOTO_MAX_BYTES);
+}
+
+/** The storefront image customers see on the store's card and page. */
+export async function uploadStoreHero(form: FormData): Promise<Done> {
+  return uploadOwnerFile("/store-console/store/hero-image", "store", STORE_PAGE, form, "storefront.jpg");
+}
+
+/** The CAC certificate, needed only when ops has marked the business as registered. */
+export async function uploadStoreCac(form: FormData): Promise<Done> {
+  return uploadOwnerFile("/store-console/store/cac", "store", STORE_PAGE, form, "cac.jpg", VERIFICATION_PHOTO_MAX_BYTES);
+}
+
+export async function uploadKitchenCac(form: FormData): Promise<Done> {
+  return uploadOwnerFile("/kitchen-console/kitchen/cac", "kitchen", KITCHEN_PAGE, form, "cac.jpg", VERIFICATION_PHOTO_MAX_BYTES);
+}
+
 /** One dish. The first one also creates the section it sits in, so a new
  *  kitchen never has to learn what a "section" is before it can list food. */
 export async function addDish(input: { name: string; description: string; priceNaira: number }): Promise<Done> {

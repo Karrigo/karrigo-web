@@ -12,6 +12,8 @@ import {
   saveKitchenBank,
   saveKitchenLocation,
   searchPlaces,
+  uploadKitchenCac,
+  uploadKitchenOwnerPhoto,
   uploadKitchenPhoto,
   type Place,
 } from "@/app/(order)/partners/actions";
@@ -57,13 +59,17 @@ export function KitchenSetup({
   const photosDone = photoCount >= VERIFICATION_PHOTOS_REQUIRED;
   const feeDone = kitchen.riderBaseFeeKobo != null;
 
-  const steps = [kitchen.hasLocation, !!kitchen.bankAccountName, !!kitchen.imageUrl, feeDone, photosDone, kitchen.dishes.length > 0];
+  const cacDone = !kitchen.requiresCac || kitchen.hasCacDocument;
+  const steps = [kitchen.hasLocation, !!kitchen.bankAccountName, !!kitchen.imageUrl, feeDone, photosDone, kitchen.dishes.length > 0, kitchen.hasOwnerPhoto, cacDone];
   const left = steps.filter((done) => !done).length;
 
   const todo = [
     ...(kitchen.hasLocation ? [] : [{ label: "Set your kitchen's location", href: "#location" }]),
     ...(feeDone ? [] : [{ label: "Set the rider base delivery fee", href: "#rider-fee" }]),
     ...(photosDone ? [] : [{ label: `Kitchen photos: ${photoCount} of ${VERIFICATION_PHOTOS_REQUIRED}`, href: "#photos" }]),
+    ...(kitchen.imageUrl ? [] : [{ label: "Add a storefront image", href: "#storefront" }]),
+    ...(kitchen.hasOwnerPhoto ? [] : [{ label: "Add the owner's photo", href: "#owner-photo" }]),
+    ...(cacDone ? [] : [{ label: "Upload the CAC certificate", href: "#cac" }]),
   ];
 
   // A kitchen under review clears by itself the moment ops approves it.
@@ -139,20 +145,22 @@ export function KitchenSetup({
         <BankForm banks={banks} save={saveKitchenBank} />
       </Step>
 
+      <div id="storefront" className="scroll-mt-xl">
       <Step
         number={3}
-        title="A photo of your food"
+        title="A storefront image (required)"
         done={!!kitchen.imageUrl}
         summary="This is what customers see first."
-        hint="One clear photo of a dish you're proud of. Daylight, no filter."
+        hint="One clear photo of your kitchen or a dish you're proud of. Daylight, no filter. Our team needs it before approving your kitchen."
       >
         {kitchen.imageUrl && (
           <div className="bg-surface-raised relative mb-md aspect-[16/9] max-w-[360px] overflow-hidden rounded-panel-xs">
             <Image src={kitchen.imageUrl} alt={`${kitchen.name}'s photo`} fill sizes="360px" className="object-cover" />
           </div>
         )}
-        <PhotoUpload label="Kitchen photo" done={!!kitchen.imageUrl} doneLabel="Photo added" upload={uploadKitchenPhoto} />
+        <PhotoUpload label="Storefront image" done={!!kitchen.imageUrl} doneLabel="Image added" upload={uploadKitchenPhoto} />
       </Step>
+      </div>
 
       <div id="rider-fee" className="scroll-mt-xl">
         <Step
@@ -203,6 +211,48 @@ export function KitchenSetup({
       >
         <Dishes dishes={kitchen.dishes} canAdd={kitchen.hasLocation} />
       </Step>
+
+      <div id="owner-photo" className="scroll-mt-xl">
+        <Step
+          number={7}
+          title="The owner's photo"
+          done={kitchen.hasOwnerPhoto}
+          summary="On file. Only our team sees it."
+          hint="A clear photo of you, the owner. Our team needs it before approving your kitchen."
+        >
+          {kitchen.isOwner ? (
+            <PhotoUpload
+              label="Owner's photo"
+              done={kitchen.hasOwnerPhoto}
+              doneLabel="Photo added"
+              camera
+              upload={uploadKitchenOwnerPhoto}
+            />
+          ) : (
+            <p className="text-site-label text-text-secondary">Only the kitchen&rsquo;s owner can add the owner&rsquo;s photo.</p>
+          )}
+        </Step>
+      </div>
+
+      <div id="cac" className="scroll-mt-xl">
+        <Step
+          number={8}
+          title={kitchen.requiresCac ? "The CAC certificate (required)" : "The CAC certificate (optional)"}
+          done={kitchen.hasCacDocument}
+          summary="On file. Only our team sees it."
+          hint={
+            kitchen.requiresCac
+              ? "Karrigo needs your registered business's CAC certificate before approving your kitchen."
+              : "Only needed if your business is registered. Our team may ask for it."
+          }
+        >
+          {kitchen.isOwner ? (
+            <PhotoUpload label="CAC certificate" done={kitchen.hasCacDocument} doneLabel="Certificate added" upload={uploadKitchenCac} />
+          ) : (
+            <p className="text-site-label text-text-secondary">Only the kitchen&rsquo;s owner can add the CAC certificate.</p>
+          )}
+        </Step>
+      </div>
 
       <button
         type="button"

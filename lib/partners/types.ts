@@ -23,6 +23,10 @@ export type KitchenApplication = {
   bankAccountName: string | null;
   bankAccountLast4: string | null;
   imageUrl: string | null;
+  /** The owner's photo (required for approval) and the CAC certificate, which only some kitchens must give. */
+  hasOwnerPhoto: boolean;
+  requiresCac: boolean;
+  hasCacDocument: boolean;
   /** Whether the signed-in staff member owns the kitchen; only owners can
    *  add or remove the verification photos. */
   isOwner: boolean;
@@ -48,7 +52,12 @@ export type StoreApplication = {
   hasLocation: boolean;
   bankAccountName: string | null;
   bankAccountLast4: string | null;
+  /** The storefront image customers see; required for approval. */
   imageUrl: string | null;
+  /** The owner's photo (required for approval) and the CAC certificate, which only some stores must give. */
+  hasOwnerPhoto: boolean;
+  requiresCac: boolean;
+  hasCacDocument: boolean;
   isOwner: boolean;
   riderBaseFeeKobo: number | null;
   verificationPhotoCount: number;

@@ -10959,7 +10959,8 @@
               "enum": [
                 "LOCATION",
                 "VERIFICATION_PHOTOS",
-                "OWNER_PHOTO"
+                "OWNER_PHOTO",
+                "STOREFRONT_IMAGE"
               ]
             }
           },
@@ -11715,7 +11716,8 @@
               "enum": [
                 "LOCATION",
                 "VERIFICATION_PHOTOS",
-                "OWNER_PHOTO"
+                "OWNER_PHOTO",
+                "STOREFRONT_IMAGE"
               ]
             }
           },
@@ -13407,7 +13409,8 @@
               "enum": [
                 "LOCATION",
                 "VERIFICATION_PHOTOS",
-                "OWNER_PHOTO"
+                "OWNER_PHOTO",
+                "STOREFRONT_IMAGE"
               ]
             }
           },
@@ -18622,6 +18625,16 @@
             "format": "date-time",
             "type": "string"
           },
+          "ownerPhotoUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short-lived signed URL of the owner's photo, or null if none is on file."
+          },
+          "cacDocumentUrl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Short-lived signed URL of the CAC certificate, or null if none is on file."
+          },
           "business": {
             "$ref": "#/components/schemas/AdminStoreBusinessDto"
           },
@@ -18684,6 +18697,8 @@
           "payoutAccountName",
           "createdAt",
           "updatedAt",
+          "ownerPhotoUrl",
+          "cacDocumentUrl",
           "business",
           "kitchen",
           "staff",
@@ -18915,7 +18930,8 @@
               "enum": [
                 "LOCATION",
                 "VERIFICATION_PHOTOS",
-                "OWNER_PHOTO"
+                "OWNER_PHOTO",
+                "STOREFRONT_IMAGE"
               ]
             }
           },
