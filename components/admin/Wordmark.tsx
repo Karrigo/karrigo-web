@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import { cn } from "@/lib/cn";
 
 /** The lockup in the sidebar and on the sign-in screen. "Operations" under
@@ -6,26 +8,14 @@ import { cn } from "@/lib/cn";
 export function Wordmark({ size = 30 }: { size?: number }) {
   return (
     <span className="flex items-center gap-2.5">
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 56 56"
-        aria-hidden
+      <Image
+        src="/brand/karrigo-admin-icon.png"
+        alt=""
+        width={512}
+        height={512}
+        style={{ width: size, height: size }}
         className="flex-none"
-      >
-        <rect width="56" height="56" rx="16" fill="#C6F432" />
-        <path
-          d="M15 22h26l-2.6 20.5a2.5 2.5 0 0 1-2.5 2.2H20.1a2.5 2.5 0 0 1-2.5-2.2Z"
-          fill="#0E0F0D"
-        />
-        <path
-          d="M22 24v-4a6 6 0 0 1 12 0v4"
-          stroke="#0E0F0D"
-          strokeWidth="4"
-          fill="none"
-          strokeLinecap="round"
-        />
-      </svg>
+      />
       <span className="flex flex-col gap-[3px]">
         <span
           className={cn(
