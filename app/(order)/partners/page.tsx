@@ -50,6 +50,17 @@ export default function PartnersPage() {
           </Link>
         ))}
       </div>
+      <p className="text-site-body text-text-secondary mt-xxl">
+        Already have a business account? Log in to your{" "}
+        <Link href="/partners/kitchen/login" className="text-accent-text font-bold">
+          kitchen
+        </Link>{" "}
+        or{" "}
+        <Link href="/partners/store/login" className="text-accent-text font-bold">
+          store
+        </Link>
+        .
+      </p>
     </div>
   );
 }

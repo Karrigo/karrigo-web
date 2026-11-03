@@ -262,14 +262,35 @@ function AuthCard({ mode: initialMode, next }: { mode: Mode; next?: string }) {
             className="size-[18px] shrink-0 bg-current mask-[url(/icons/serve.png)] mask-contain mask-center mask-no-repeat"
           />
         </Link>
-        {/* Kitchens have their own login. Someone who cooks for Karrigo and
-            lands here would otherwise sign in as a customer and find no kitchen. */}
-        <p className="text-text-secondary text-site-label mt-md">
-          Cook with Karrigo?{" "}
-          <Link href="/partners/kitchen/login" className="text-accent-text font-bold">
-            Log in to your kitchen
-          </Link>
-        </p>
+        {/* Kitchens and stores sign in through the partner login, not here.
+            Someone who runs one and lands on this page would otherwise sign in
+            as a customer and find no business. */}
+        <div className="border-surface-raised rounded-step mt-xl p-lg border">
+          <p className="text-site-label font-bold">Run a kitchen or a store?</p>
+          <p className="text-text-secondary text-site-label mt-xs">
+            One business login covers both. Orders, menus and payouts live there.
+          </p>
+          <div className="gap-sm mt-md flex flex-wrap">
+            <Link
+              href="/partners/kitchen/login"
+              className="bg-surface-raised rounded-pill text-site-label px-lg py-sm font-bold"
+            >
+              Kitchen log in
+            </Link>
+            <Link
+              href="/partners/store/login"
+              className="bg-surface-raised rounded-pill text-site-label px-lg py-sm font-bold"
+            >
+              Store log in
+            </Link>
+          </div>
+          <p className="text-text-secondary text-site-label mt-md">
+            New to Karrigo?{" "}
+            <Link href="/partners" className="text-accent-text font-bold">
+              Start selling with us
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

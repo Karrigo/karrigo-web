@@ -320,7 +320,7 @@ export function PartnerApply({ side, areas }: { side: PartnerSide; areas: { id: 
 const LOGIN_COPY = {
   kitchen: {
     title: "Log in to your kitchen",
-    lead: "Use the email and password you set up your kitchen with.",
+    lead: "Use your business email and password. One login covers your kitchen and your store.",
     placeholder: "you@yourkitchen.com",
     // A live kitchen lands on its console; one still applying is sent on from
     // there to its application.
@@ -330,7 +330,7 @@ const LOGIN_COPY = {
   },
   store: {
     title: "Log in to your store",
-    lead: "Use the email and password you set up your account with.",
+    lead: "Use your business email and password. One login covers your kitchen and your store.",
     placeholder: "you@yourstore.com",
     after: "/partners/store",
     newText: "Register your store",
@@ -393,6 +393,21 @@ export function PartnerLogin({ side }: { side: PartnerSide }) {
           });
         }}
       >
+        <div className="bg-surface-raised rounded-pill p-xs text-site-label flex self-start font-bold">
+          {(["kitchen", "store"] as const).map((s) => (
+            <Link
+              key={s}
+              href={`/partners/${s}/login`}
+              aria-current={s === side ? "page" : undefined}
+              className={cn(
+                "rounded-pill px-lg py-xs transition-colors",
+                s === side ? "bg-accent text-on-accent" : "text-text-secondary",
+              )}
+            >
+              {s === "kitchen" ? "Kitchen" : "Store"}
+            </Link>
+          ))}
+        </div>
         <div className="mb-xs">
           <h2 className="text-h1 font-extrabold">{copy.title}</h2>
           <p className="text-site-label text-text-secondary mt-xs">

@@ -18,6 +18,7 @@ const columns = [
       { href: "/partners/kitchen", label: "List your kitchen" },
       { href: "/partners/store", label: "Register your store" },
       { href: "/partners/rider", label: "Ride with us" },
+      { href: "/partners/kitchen/login", label: "Business log in" },
     ],
   },
   {
