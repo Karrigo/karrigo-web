@@ -9,6 +9,7 @@ import {
   applyKitchen,
   applyStore,
   kitchenLogIn,
+  storeLogIn,
   requestPartnerEmailOtp,
   requestPartnerOtp,
 } from "@/app/(order)/partners/actions";
@@ -332,7 +333,9 @@ const LOGIN_COPY = {
     title: "Log in to your store",
     lead: "Use your business email and password. One login covers your kitchen and your store.",
     placeholder: "you@yourstore.com",
-    after: "/partners/store",
+    // An approved store opens its console; one still applying is sent on
+    // from there to its application.
+    after: "/my-store",
     newText: "Register your store",
     newHref: "/partners/store",
   },
@@ -387,7 +390,7 @@ export function PartnerLogin({ side }: { side: PartnerSide }) {
           e.preventDefault();
           if (!email.trim() || !password) return setError("Enter your email and password.");
           startTransition(async () => {
-            const result = await kitchenLogIn(email, password);
+            const result = await (active === "store" ? storeLogIn : kitchenLogIn)(email, password);
             if (!result.ok) return setError(result.error);
             router.push(copy.after);
             router.refresh();

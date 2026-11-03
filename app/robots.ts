@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { SITE_URL } from "@/lib/app-links";
 
 /** Everything behind a login, or that only means something to one person. */
-const PRIVATE = ["/checkout", "/orders", "/track", "/login", "/signup", "/my-kitchen", "/partners/", "/go/", "/api/"];
+const PRIVATE = ["/checkout", "/orders", "/track", "/login", "/signup", "/my-kitchen", "/my-store", "/partners/", "/go/", "/api/"];
 
 /** The ops and link hosts serve no public pages. Tell crawlers to stay out. */
 export default async function robots(): Promise<MetadataRoute.Robots> {

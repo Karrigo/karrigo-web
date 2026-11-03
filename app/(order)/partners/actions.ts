@@ -1,9 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { z } from "zod";
 
 import { ApiError, api, type Schemas } from "@/lib/api/client";
+import { SCOPES } from "@/lib/api/scopes";
 import { clearTokens, readRefreshToken, storeTokens } from "@/lib/api/session";
 import { registrationFailureMessage, registrationRequest } from "@/lib/partners/register-side";
 import type { DocumentKind } from "@/lib/partners/types";
@@ -171,15 +173,15 @@ export async function applyKitchen(input: PartnerFields & { kitchenName: string;
   }
 }
 
-/** Store sign-up. It signs the owner in with the same partner session as a
- *  kitchen: it is one login for a business. */
+/** Store sign-up. It signs the owner in to the store only: a kitchen session
+ *  is a separate, explicit sign-in. */
 export async function applyStore(input: PartnerFields & { storeName: string }): Promise<Done> {
   try {
     const result = await api<{ accessToken: string; refreshToken: string }>("/store-auth/register", {
       method: "POST",
       body: { ...partnerBody(input), storeName: input.storeName.trim() },
     });
-    await storeTokens("kitchen", result);
+    await storeTokens("store", result);
     return { ok: true };
   } catch (error) {
     return applyFailure(error, "store");
@@ -201,6 +203,14 @@ function inputFailure(result: z.ZodSafeParseError<unknown>): Failure {
   return { ok: false, error: result.error.issues[0]?.message ?? "Check what you entered and try again." };
 }
 
+/** The session to add a side with: the one the owner is signed in with (the
+ *  backend accepts either token), preferring the side they are on. */
+async function heldPartnerScope(preferred: "kitchen" | "store"): Promise<"kitchen" | "store"> {
+  const jar = await cookies();
+  if (jar.get(SCOPES[preferred].access)?.value) return preferred;
+  return preferred === "kitchen" ? "store" : "kitchen";
+}
+
 /** Add a store to the business behind the current partner session. */
 export async function registerStoreForBusiness(input: { storeName: string; areaId: string }): Promise<Done> {
   const parsed = storeRegistrationSchema.safeParse(input);
@@ -208,7 +218,7 @@ export async function registerStoreForBusiness(input: { storeName: string; areaI
   const request = registrationRequest("store", parsed.data);
 
   try {
-    await api(request.path, { method: "POST", scope: "kitchen", body: request.body });
+    await api(request.path, { method: "POST", scope: await heldPartnerScope("kitchen"), body: request.body });
     revalidatePath(STORE_PAGE);
     return { ok: true };
   } catch (error) {
@@ -228,7 +238,7 @@ export async function registerKitchenForBusiness(input: {
   const request = registrationRequest("kitchen", parsed.data);
 
   try {
-    await api(request.path, { method: "POST", scope: "kitchen", body: request.body });
+    await api(request.path, { method: "POST", scope: await heldPartnerScope("store"), body: request.body });
     revalidatePath(KITCHEN_PAGE);
     return { ok: true };
   } catch (error) {
@@ -261,14 +271,43 @@ export async function kitchenLogOut(): Promise<void> {
   await clearTokens("kitchen");
 }
 
+export async function storeLogIn(email: string, password: string): Promise<Done> {
+  try {
+    const tokens = await api<Schemas["TokenPairResponseDto"]>("/store-auth/login", {
+      method: "POST",
+      body: { email: email.trim().toLowerCase(), password },
+    });
+    await storeTokens("store", tokens);
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      return { ok: false, error: "That email and password don't match. Check both and try again." };
+    }
+    return failure(error);
+  }
+}
+
+export async function storeLogOut(): Promise<void> {
+  const refreshToken = await readRefreshToken("store");
+  if (refreshToken) {
+    await api("/store-auth/logout", { method: "POST", body: { refreshToken } }).catch(() => {});
+  }
+  await clearTokens("store");
+}
+
+/** Ends every partner session this browser holds, kitchen and store. */
+export async function partnerLogOut(): Promise<void> {
+  await Promise.all([kitchenLogOut(), storeLogOut()]);
+}
+
 export type Place = { label: string; lat: number; lng: number };
 
-async function searchPartnerPlaces(path: string, query: string): Promise<Done<{ places: Place[] }>> {
+async function searchPartnerPlaces(path: string, scope: "kitchen" | "store", query: string): Promise<Done<{ places: Place[] }>> {
   const q = query.trim();
   if (q.length < 3) return { ok: true, places: [] };
   try {
     const places = await api<Schemas["GeocodeResultResponseDto"][]>(path, {
-      scope: "kitchen",
+      scope,
       // Bias the search to the city: "Wadata market" means the one in Makurdi.
       query: { query: /makurdi/i.test(q) ? q : `${q}, Makurdi` },
     });
@@ -279,11 +318,11 @@ async function searchPartnerPlaces(path: string, query: string): Promise<Done<{ 
 }
 
 export async function searchPlaces(query: string): Promise<Done<{ places: Place[] }>> {
-  return searchPartnerPlaces("/kitchen-console/geocode", query);
+  return searchPartnerPlaces("/kitchen-console/geocode", "kitchen", query);
 }
 
 export async function searchStorePlaces(query: string): Promise<Done<{ places: Place[] }>> {
-  return searchPartnerPlaces("/store-console/geocode", query);
+  return searchPartnerPlaces("/store-console/geocode", "store", query);
 }
 
 /** Where the kitchen is. The point is what a customer's distance and the
@@ -318,7 +357,7 @@ export async function saveKitchenLocation(input: {
 
 async function saveBank(
   path: string,
-  scope: "kitchen" | "customer",
+  scope: "kitchen" | "store" | "customer",
   page: string,
   bankCode: string,
   accountNumber: string,
@@ -354,7 +393,7 @@ export async function saveStoreLocation(input: {
   try {
     await api("/store-console/store", {
       method: "PATCH",
-      scope: "kitchen",
+      scope: "store",
       body: {
         lat: input.lat,
         lng: input.lng,
@@ -377,7 +416,7 @@ export async function saveStoreFee(riderBaseFeeNaira: number): Promise<Done> {
   try {
     await api("/store-console/store", {
       method: "PATCH",
-      scope: "kitchen",
+      scope: "store",
       body: { riderBaseFeeNaira: fee.data },
     });
     revalidatePath(STORE_PAGE);
@@ -396,12 +435,12 @@ export async function saveStoreBank(
   try {
     const resolved = await api<{ accountName?: string | null }>("/store-console/store/payout-account/resolve", {
       method: "POST",
-      scope: "kitchen",
+      scope: "store",
       body: { bankCode, accountNumber },
     });
     const saved = await api<{ payoutAccountName?: string | null }>("/store-console/store/payout-account", {
       method: "PATCH",
-      scope: "kitchen",
+      scope: "store",
       body: { bankCode, accountNumber },
     });
     revalidatePath(STORE_PAGE);
@@ -417,7 +456,7 @@ export async function uploadStorePhoto(form: FormData): Promise<Done> {
   try {
     const body = new FormData();
     body.set("file", file, file.name || "store.jpg");
-    await api("/store-console/store/photos", { method: "POST", scope: "kitchen", body });
+    await api("/store-console/store/photos", { method: "POST", scope: "store", body });
     revalidatePath(STORE_PAGE);
     return { ok: true };
   } catch (error) {
@@ -433,7 +472,7 @@ export async function deleteStorePhoto(id: string): Promise<Done> {
   try {
     await api(`/store-console/store/photos/${encodeURIComponent(id)}`, {
       method: "DELETE",
-      scope: "kitchen",
+      scope: "store",
     });
     revalidatePath(STORE_PAGE);
     return { ok: true };
@@ -455,7 +494,7 @@ export async function requestStorePhotoUpdate(reason: string): Promise<Done> {
   try {
     await api("/store-console/store/photos/update-request", {
       method: "POST",
-      scope: "kitchen",
+      scope: "store",
       body: { reason: text },
     });
     revalidatePath(STORE_PAGE);
@@ -479,7 +518,7 @@ export async function appealStore(message: string): Promise<Done> {
   try {
     await api("/store-console/store/appeal", {
       method: "POST",
-      scope: "kitchen",
+      scope: "store",
       body: { message: text },
     });
     revalidatePath(STORE_PAGE);

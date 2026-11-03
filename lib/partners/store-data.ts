@@ -17,7 +17,7 @@ const unavailable = (error: unknown) =>
 export async function getStorePhotoUpdateRequest(): Promise<PhotoUpdateRequest> {
   try {
     return await api<PhotoUpdateRequest>("/store-console/store/photos/update-request", {
-      scope: "kitchen",
+      scope: "store",
     });
   } catch (error) {
     if (!unavailable(error)) console.error("Couldn't load store photo update request", error);
@@ -34,7 +34,7 @@ export async function listStoreVerificationPhotos(): Promise<{
 }> {
   try {
     const photos = await api<Schemas["StoreVerificationPhotoResponseDto"][]>("/store-console/store/photos", {
-      scope: "kitchen",
+      scope: "store",
     });
     return { photos, failed: false };
   } catch (error) {

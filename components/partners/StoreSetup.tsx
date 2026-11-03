@@ -5,13 +5,14 @@ import { useEffect, useState, useTransition } from "react";
 
 import {
   appealStore,
-  kitchenLogOut,
+  storeLogOut,
   saveStoreBank,
   saveStoreFee,
   saveStoreLocation,
   searchStorePlaces,
   type Place,
 } from "@/app/(order)/partners/actions";
+import { ButtonLink } from "@/components/ui/Button";
 import { SetupChecklist } from "@/components/kitchen/SetupChecklist";
 import { VerificationPhotos } from "@/components/kitchen/VerificationPhotos";
 import type { Schemas } from "@/lib/api/types";
@@ -55,11 +56,16 @@ export function StoreSetup({
   return (
     <div className="gap-lg flex flex-col">
       {store.status === "ACTIVE" ? (
-        <StatusBanner
-          tone="live"
-          title={`${store.name} is approved`}
-          text="Your store setup is approved. Product listings and store orders are coming next."
-        />
+        <>
+          <StatusBanner
+            tone="live"
+            title={`${store.name} is live`}
+            text="Customers can order from you. Open and close, take orders and run your products from your store page — it works on your phone."
+          />
+          <ButtonLink href="/my-store" variant="accent" size="site" className="self-start">
+            Run {store.name}
+          </ButtonLink>
+        </>
       ) : store.status === "SUSPENDED" ? (
         <>
           <StatusBanner
@@ -171,7 +177,7 @@ export function StoreSetup({
         type="button"
         onClick={() =>
           startTransition(async () => {
-            await kitchenLogOut();
+            await storeLogOut();
             router.push("/partners");
             router.refresh();
           })

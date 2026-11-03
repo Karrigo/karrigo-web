@@ -7,7 +7,7 @@
  * (which reads them), so it imports nothing from Next.
  */
 
-export type Scope = "admin" | "customer" | "kitchen";
+export type Scope = "admin" | "customer" | "kitchen" | "store";
 
 export const SCOPES: Record<
   Scope,
@@ -27,6 +27,14 @@ export const SCOPES: Record<
     access: "karrigo_kt",
     refresh: "karrigo_krt",
     refreshPath: "/kitchen-auth/refresh",
+  },
+  // A store owner signs in to the store on its own. The backend would accept
+  // either token for either console, so keeping the sessions apart is what
+  // stops a store login from opening the kitchen (and the reverse).
+  store: {
+    access: "karrigo_st",
+    refresh: "karrigo_srt",
+    refreshPath: "/store-auth/refresh",
   },
 };
 

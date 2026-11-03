@@ -36,7 +36,7 @@ const NEXT_GROCERY: typeof NEXT = {
 
 const GROUPS: { title: string; statuses: OrderStatus[]; hint: string }[] = [
   { title: "New", statuses: ["PLACED"], hint: "Accept these first — the customer is waiting to hear from you." },
-  { title: "In the kitchen", statuses: ["ACCEPTED", "PREPARING"], hint: "" },
+  { title: "Being prepared", statuses: ["ACCEPTED", "PREPARING"], hint: "" },
   { title: "Waiting for the rider", statuses: ["READY"], hint: "" },
 ];
 
@@ -44,10 +44,10 @@ const DONE_LABEL: Partial<Record<OrderStatus, string>> = { PICKED_UP: "Handed to
 
 /** An order can arrive, get paid or be cancelled while the page sits open.
  *  The socket says so at once; the slow poll covers a dropped socket. */
-function useFreshOrders() {
+function useFreshOrders(scope: "kitchen" | "store") {
   const router = useRouter();
   useLiveUpdates({
-    scope: "kitchen",
+    scope,
     events: ["order:new", "order:paid", "order:cancelled"],
     onChange: () => router.refresh(),
   });
@@ -62,8 +62,19 @@ function useFreshOrders() {
   }, [router]);
 }
 
-export function OrdersBoard({ orders, isOpen }: { orders: KitchenOrder[]; isOpen: boolean }) {
-  useFreshOrders();
+export function OrdersBoard({
+  orders,
+  isOpen,
+  onStatus = setOrderStatus,
+  place = "kitchen",
+}: {
+  orders: KitchenOrder[];
+  isOpen: boolean;
+  /** Moves an order along. A store has its own endpoint. */
+  onStatus?: typeof setOrderStatus;
+  place?: "kitchen" | "store";
+}) {
+  useFreshOrders(place);
   const active = orders.filter((o) => o.status !== "PICKED_UP" && o.status !== "CANCELLED");
   // Newest first, and only the recent ones: this is a shift's record, not a ledger.
   const done = orders
@@ -79,7 +90,7 @@ export function OrdersBoard({ orders, isOpen }: { orders: KitchenOrder[]; isOpen
           text={
             isOpen
               ? "New orders show up here on their own. Keep this page open and turn on the order sound so you hear them."
-              : "You're closed, so nobody can order. Open your kitchen from the Today tab when you're ready."
+              : `You're closed, so nobody can order. Open your ${place} from the Today tab when you're ready.`
           }
         />
       )}
@@ -96,7 +107,7 @@ export function OrdersBoard({ orders, isOpen }: { orders: KitchenOrder[]; isOpen
             <ul className="gap-md mt-md grid md:grid-cols-2">
               {list.map((o) => (
                 <li key={o.id}>
-                  <OrderCard order={o} />
+                  <OrderCard order={o} onStatus={onStatus} />
                 </li>
               ))}
             </ul>
@@ -128,7 +139,7 @@ export function OrdersBoard({ orders, isOpen }: { orders: KitchenOrder[]; isOpen
   );
 }
 
-function OrderCard({ order }: { order: KitchenOrder }) {
+function OrderCard({ order, onStatus }: { order: KitchenOrder; onStatus: typeof setOrderStatus }) {
   const [error, setError] = useState("");
   const [confirming, setConfirming] = useState(false);
   const [moving, setMoving] = useState<OrderStatus | null>(null);
@@ -151,7 +162,7 @@ function OrderCard({ order }: { order: KitchenOrder }) {
     setError("");
     setMoving(to);
     startTransition(async () => {
-      const result = await setOrderStatus(order.id, to, to === "ACCEPTED" ? unavailable : []);
+      const result = await onStatus(order.id, to, to === "ACCEPTED" ? unavailable : []);
       if (!result.ok) setError(result.error);
       setConfirming(false);
       setMoving(null);

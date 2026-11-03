@@ -20,7 +20,7 @@ export function useLiveUpdates({
   orderId,
   enabled = true,
 }: {
-  scope: "customer" | "kitchen";
+  scope: "customer" | "kitchen" | "store";
   events: string[];
   onChange: () => void;
   /** Customers subscribe to one order; kitchens join their room by token. */

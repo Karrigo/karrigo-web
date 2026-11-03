@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { KitchenMenu } from "@/components/order/KitchenMenu";
-import { getPartner } from "@/lib/partners/data";
+import { hasPartnerSession } from "@/lib/partners/data";
 import { getKitchenMenu } from "@/lib/shop/catalog";
 import { SITE_URL } from "@/lib/app-links";
 import type { Side } from "@/lib/shop/types";
@@ -24,7 +24,7 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/k/[
 export default async function KitchenPage({ params, searchParams }: PageProps<"/k/[slug]">) {
   const [menu, partner] = await Promise.all([
     getKitchenMenu((await params).slug, sideOf((await searchParams).type)),
-    getPartner().catch(() => null),
+    hasPartnerSession(),
   ]);
   if (!menu) notFound();
   const ld = {
@@ -42,7 +42,7 @@ export default async function KitchenPage({ params, searchParams }: PageProps<"/
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, "\\u003c") }} />
-      <KitchenMenu menu={menu} browseOnly={partner !== null} />
+      <KitchenMenu menu={menu} browseOnly={partner} />
     </>
   );
 }

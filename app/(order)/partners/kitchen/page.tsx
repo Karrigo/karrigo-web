@@ -4,6 +4,7 @@ import { AddOtherSide } from "@/components/partners/AddOtherSide";
 import { Eyebrow } from "@/components/site/Eyebrow";
 import { KitchenApply } from "@/components/partners/KitchenApply";
 import { KitchenSetup } from "@/components/partners/KitchenSetup";
+import { SignInToOtherSide } from "@/components/partners/SignInToOtherSide";
 import { getKitchenPhotoUpdateRequest, listVerificationPhotos } from "@/lib/kitchen/data";
 import { getKitchenApplication, getPartner, listBanks } from "@/lib/partners/data";
 import { listAreaNames, listAreas } from "@/lib/shop/areas";
@@ -14,21 +15,39 @@ export const metadata: Metadata = {
 };
 
 /** One address for kitchen sign-up, adding a kitchen to an existing partner
- * business, and finishing that kitchen's setup. */
+ * business, and finishing that kitchen's setup. The kitchen and the store are
+ * separate sign-ins: being signed in to the store does not open the kitchen.
+ * An owner adds the kitchen to their session on purpose, here. */
 export default async function KitchenPartnerPage() {
-  const [partner, areas, areaNames] = await Promise.all([getPartner(), listAreas(), listAreaNames()]);
-  const kitchen = partner?.kitchenId ? await getKitchenApplication() : null;
+  const [kitchenSession, storeSession, areas, areaNames] = await Promise.all([
+    getPartner("kitchen"),
+    getPartner("store"),
+    listAreas(),
+    listAreaNames(),
+  ]);
+  const kitchen = kitchenSession?.kitchenId ? await getKitchenApplication() : null;
 
   // Signed URLs expire, so the photos are read on every load.
   const photos = kitchen?.isOwner ? await listVerificationPhotos() : { photos: [], failed: false };
   const updateRequest = kitchen?.isOwner ? await getKitchenPhotoUpdateRequest() : null;
-  const addingKitchen = partner !== null && partner.kitchenId === null;
+
+  // The owner is signed in to the store only: they either register the
+  // business's kitchen now, or (it already exists) sign in to it.
+  const fromStore = !kitchenSession && storeSession !== null;
+  const registeringKitchen = (kitchenSession !== null && kitchenSession.kitchenId === null) || (fromStore && storeSession.kitchenId === null);
+  const owner = (kitchenSession ?? storeSession)?.isOwner ?? false;
 
   return (
     <div className="mx-auto max-w-[760px]">
       <Eyebrow className="rise">Cook with Karrigo</Eyebrow>
       <h1 className="text-section-small md:text-section rise rise-1 mt-md mb-xl text-balance">
-        {addingKitchen ? "Register your business as a kitchen" : kitchen ? kitchen.name : "List your kitchen"}
+        {registeringKitchen
+          ? "Register your business as a kitchen"
+          : fromStore
+            ? "Your kitchen"
+            : kitchen
+              ? kitchen.name
+              : "List your kitchen"}
       </h1>
       {kitchen ? (
         <KitchenSetup
@@ -39,8 +58,10 @@ export default async function KitchenPartnerPage() {
           photosFailed={photos.failed}
           updateRequest={updateRequest}
         />
-      ) : addingKitchen ? (
-        <AddOtherSide side="kitchen" areas={areas} isOwner={partner?.isOwner ?? false} />
+      ) : registeringKitchen ? (
+        <AddOtherSide side="kitchen" areas={areas} isOwner={owner} />
+      ) : fromStore ? (
+        <SignInToOtherSide side="kitchen" />
       ) : (
         <>
           <p className="text-site-body text-text-secondary mb-xl max-w-[52ch]">

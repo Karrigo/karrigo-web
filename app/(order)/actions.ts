@@ -7,7 +7,7 @@ import { clearTokens, readRefreshToken, storeTokens } from "@/lib/api/session";
 import { nairaToKobo } from "@/lib/money";
 import { cleanAddressLabel } from "@/lib/order/address";
 import { e164 } from "@/lib/phone";
-import { getPartner } from "@/lib/partners/data";
+import { hasPartnerSession } from "@/lib/partners/data";
 import { priceLines } from "@/lib/shop/catalog";
 import { getCustomer } from "@/lib/shop/session";
 import { basketIssue } from "@/lib/shop/limits";
@@ -245,7 +245,7 @@ export async function placeOrder(
   // A kitchen or store owner can look around as a customer would, but not
   // order: the check lives here because the page's disabled button is only
   // a courtesy.
-  if (await getPartner().catch(() => null)) {
+  if (await hasPartnerSession()) {
     return { ok: false, error: "You're signed in to your business. Log out of it to place an order." };
   }
 

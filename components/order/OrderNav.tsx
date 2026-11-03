@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Logo } from "@/components/site/Logo";
 import { SiteThemeToggle } from "@/components/site/SiteThemeToggle";
 import { Screen } from "@/components/ui/Screen";
 import { logOut } from "@/app/(order)/actions";
-import { kitchenLogOut } from "@/app/(order)/partners/actions";
+import { partnerLogOut } from "@/app/(order)/partners/actions";
 import { cartCount, say, useOrderState } from "@/lib/order/store";
 import { cn } from "@/lib/cn";
 
@@ -23,9 +23,12 @@ export function OrderNav({
   user: { name: string } | null;
   /** Set when a kitchen or store owner is signed in — a separate login from
    *  the customer's, so both can be true at once. */
-  business: { href: string; label: string } | null;
+  business: { href: string; label: string }[] | null;
 }) {
   const router = useRouter();
+  // Inside a console the accounts bar already switches between kitchen and
+  // store, so the header's links to them would only repeat it.
+  const inConsole = /^\/my-(kitchen|store)(\/|$)/.test(usePathname());
   const { cart, landmark, address, area } = useOrderState();
   const [scrolled, setScrolled] = useState(false);
   const [loggingOut, startTransition] = useTransition();
@@ -65,14 +68,15 @@ export function OrderNav({
 
         <div className="gap-xs ml-auto flex shrink-0 items-center">
           <SiteThemeToggle />
-          {business && (
+          {!inConsole && business?.map((b) => (
             <Link
-              href={business.href}
+              key={b.href}
+              href={b.href}
               className="text-accent-text hover:bg-accent/12 rounded-pill text-nav-link px-lg py-sm font-bold transition-colors duration-(--duration-fast)"
             >
-              {business.label}
+              {b.label}
             </Link>
-          )}
+          ))}
           {user && (
             <Link
               href="/orders"
@@ -105,7 +109,7 @@ export function OrderNav({
               type="button"
               onClick={() =>
                 startTransition(async () => {
-                  await kitchenLogOut();
+                  await partnerLogOut();
                   say("Logged out");
                   router.push("/kitchens");
                   router.refresh();
@@ -115,7 +119,7 @@ export function OrderNav({
               aria-busy={loggingOut}
               className="text-text/75 hover:bg-text/10 hover:text-text rounded-pill text-nav-link hidden px-lg py-sm transition-colors duration-(--duration-fast) disabled:opacity-50 sm:block"
             >
-              {loggingOut ? "Logging out…" : "Business · Log out"}
+              {loggingOut ? "Logging out…" : business.length > 1 ? "Business · Log out everywhere" : "Business · Log out"}
             </button>
           ) : (
             <Link
