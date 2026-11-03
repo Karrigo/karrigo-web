@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { LogoLockup } from "@/components/site/Logo";
 import { Screen } from "@/components/ui/Screen";
 import { kitchens } from "@/lib/fixtures";
