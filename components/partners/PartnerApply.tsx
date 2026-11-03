@@ -9,6 +9,7 @@ import {
   applyKitchen,
   applyStore,
   kitchenLogIn,
+  storeLogIn,
   requestPartnerEmailOtp,
   requestPartnerOtp,
 } from "@/app/(order)/partners/actions";
@@ -320,7 +321,7 @@ export function PartnerApply({ side, areas }: { side: PartnerSide; areas: { id: 
 const LOGIN_COPY = {
   kitchen: {
     title: "Log in to your kitchen",
-    lead: "Use the email and password you set up your kitchen with.",
+    lead: "Use your business email and password. One login covers your kitchen and your store.",
     placeholder: "you@yourkitchen.com",
     // A live kitchen lands on its console; one still applying is sent on from
     // there to its application.
@@ -330,9 +331,11 @@ const LOGIN_COPY = {
   },
   store: {
     title: "Log in to your store",
-    lead: "Use the email and password you set up your account with.",
+    lead: "Use your business email and password. One login covers your kitchen and your store.",
     placeholder: "you@yourstore.com",
-    after: "/partners/store",
+    // An approved store opens its console; one still applying is sent on
+    // from there to its application.
+    after: "/my-store",
     newText: "Register your store",
     newHref: "/partners/store",
   },
@@ -341,7 +344,8 @@ const LOGIN_COPY = {
 /** One partner login serves both onboardings; only the words and where you
  *  land afterwards differ. */
 export function PartnerLogin({ side }: { side: PartnerSide }) {
-  const copy = LOGIN_COPY[side];
+  const [active, setActive] = useState<PartnerSide>(side);
+  const copy = LOGIN_COPY[active];
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -386,13 +390,40 @@ export function PartnerLogin({ side }: { side: PartnerSide }) {
           e.preventDefault();
           if (!email.trim() || !password) return setError("Enter your email and password.");
           startTransition(async () => {
-            const result = await kitchenLogIn(email, password);
+            const result = await (active === "store" ? storeLogIn : kitchenLogIn)(email, password);
             if (!result.ok) return setError(result.error);
             router.push(copy.after);
             router.refresh();
           });
         }}
       >
+        {/* Same sliding switch as the customer log in. Both sides share one
+            login, so this swaps the words in place instead of loading a page. */}
+        <div className="bg-surface-raised rounded-pill relative flex p-xs">
+          <span
+            aria-hidden
+            className={cn(
+              "bg-bg rounded-pill absolute top-xs bottom-xs left-xs w-[calc(50%-4px)] shadow-[0_6px_14px_-8px_rgba(14,15,13,0.35)] transition-transform duration-(--duration-slow)",
+              active === "store" && "translate-x-full",
+            )}
+          />
+          {(["kitchen", "store"] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              aria-pressed={active === s}
+              onClick={() => {
+                setActive(s);
+                setError("");
+                // Keeps the address honest for a refresh or a shared link.
+                window.history.replaceState(null, "", `/partners/${s}/login`);
+              }}
+              className="text-site-button relative flex-1 py-md text-center"
+            >
+              {s === "kitchen" ? "Kitchen" : "Store"}
+            </button>
+          ))}
+        </div>
         <div className="mb-xs">
           <h2 className="text-h1 font-extrabold">{copy.title}</h2>
           <p className="text-site-label text-text-secondary mt-xs">

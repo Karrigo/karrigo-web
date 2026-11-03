@@ -28,7 +28,16 @@ const field =
   "border-field-border focus:border-field-border-active rounded-field text-site-body bg-bg border-[1.5px] px-lg py-md font-medium outline-none transition-colors duration-(--duration-fast)";
 const fieldLabel = "text-label flex flex-col gap-sm font-bold";
 
-export function Checkout({ customer, areas }: { customer: Customer | null; areas: string[] }) {
+export function Checkout({
+  customer,
+  areas,
+  businessSignedIn = false,
+}: {
+  customer: Customer | null;
+  areas: string[];
+  /** A kitchen or store owner is signed in: they can't place orders. */
+  businessSignedIn?: boolean;
+}) {
   const router = useRouter();
   const hydrated = useHydrated();
   const { cart, landmark, address, area } = useOrderState();
@@ -154,6 +163,7 @@ export function Checkout({ customer, areas }: { customer: Customer | null; areas
   }
 
   function place() {
+    if (businessSignedIn) return;
     if (!customer) {
       router.push("/login?next=/checkout");
       return;
@@ -358,10 +368,12 @@ export function Checkout({ customer, areas }: { customer: Customer | null; areas
             size="site"
             full
             className="mt-lg"
-            disabled={busy || checking || !kitchen.open || issue !== null}
+            disabled={busy || checking || !kitchen.open || issue !== null || businessSignedIn}
           >
             {busy
               ? "Placing your order…"
+              : businessSignedIn
+                ? "Ordering is off for business logins"
               : issue?.kind === "BELOW_MINIMUM"
                 ? `Add ${formatKobo(issue.shortfallKobo)} more to check out`
               : customer

@@ -11,7 +11,15 @@ import type { ShopMenu } from "@/lib/shop/types";
 import { cn } from "@/lib/cn";
 import { QtyStepper } from "./QtyStepper";
 
-export function KitchenMenu({ menu }: { menu: ShopMenu }) {
+export function KitchenMenu({
+  menu,
+  browseOnly = false,
+}: {
+  menu: ShopMenu;
+  /** A kitchen or store owner is signed in. They can look around, as a
+   *  customer would see it, but not order. */
+  browseOnly?: boolean;
+}) {
   const { cart } = useOrderState();
   const grocery = menu.side === "GROCERY";
   const inThisKitchen = cart?.kitchenSlug === menu.slug && cart.side === menu.side;
@@ -138,7 +146,7 @@ export function KitchenMenu({ menu }: { menu: ShopMenu }) {
                         <span className="text-site-label text-text-secondary max-w-[16ch] text-right font-semibold">
                           {menu.name} has run out of this today
                         </span>
-                      ) : closed ? null : qty === 0 ? (
+                      ) : closed || browseOnly ? null : qty === 0 ? (
                         <button
                           type="button"
                           onClick={() => addDish({ slug: menu.slug, name: menu.name, side: menu.side }, dish.id)}
@@ -163,9 +171,14 @@ export function KitchenMenu({ menu }: { menu: ShopMenu }) {
       </div>
 
       <aside className="bg-bg rounded-panel-sm p-xl sticky top-[96px] min-w-0 flex-[1_1_300px]">
-        <h2 className="text-h1 font-extrabold">Your order</h2>
+        <h2 className="text-h1 font-extrabold">{browseOnly ? "Customer view" : "Your order"}</h2>
 
-        {cart && !inThisKitchen ? (
+        {browseOnly ? (
+          <p className="text-site-label text-text-secondary mt-md">
+            This is how customers see {menu.name}. You&rsquo;re signed in to your business, so ordering is switched off.
+            Log out of it to order as a customer.
+          </p>
+        ) : cart && !inThisKitchen ? (
           <>
             <p className="bg-danger-bg text-danger-text rounded-field text-site-label mt-md px-md py-sm font-semibold">
               Your cart has {cartCount(cart)} item{cartCount(cart) === 1 ? "" : "s"} from {cart.kitchenName}

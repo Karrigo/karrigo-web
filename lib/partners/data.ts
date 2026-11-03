@@ -1,8 +1,10 @@
 import "server-only";
 
+import { cookies } from "next/headers";
 import { cache } from "react";
 
 import { ApiError, api, type Schemas } from "@/lib/api/client";
+import { SCOPES } from "@/lib/api/scopes";
 import { nairaToKobo } from "@/lib/money";
 import type { Bank, KitchenApplication, Partner, RiderApplication, StoreApplication } from "./types";
 
@@ -16,13 +18,16 @@ const missingSide = (error: unknown, code: "NO_KITCHEN" | "NO_STORE") =>
   error instanceof ApiError && error.status === 409 && error.body.code === code;
 
 /**
- * The signed-in partner: one login for a business that may have a kitchen, a
- * store, or both. Null when nobody is signed in as a partner. One lookup per
- * request, shared by every caller.
+ * The partner signed in on one side. The kitchen and the store are separate
+ * sign-ins that share a business: `kitchenId` / `storeId` say which sides
+ * exist, but only the side signed in here is open. Null when that side has no
+ * session. One lookup per request, shared by every caller, and none at all
+ * without a cookie, which is nearly every visit.
  */
-export const getPartner = cache(async (): Promise<Partner | null> => {
+export const getPartner = cache(async (scope: "kitchen" | "store" = "kitchen"): Promise<Partner | null> => {
+  if (!(await cookies()).get(SCOPES[scope].access)?.value) return null;
   try {
-    const me = await api<Schemas["AuthenticatedKitchenStaffResponseDto"]>("/kitchen-auth/me", { scope: "kitchen" });
+    const me = await api<Schemas["AuthenticatedKitchenStaffResponseDto"]>("/kitchen-auth/me", { scope });
     return {
       businessId: me.businessId,
       kitchenId: me.kitchenId,
@@ -34,6 +39,13 @@ export const getPartner = cache(async (): Promise<Partner | null> => {
     throw error;
   }
 });
+
+/** Whether this browser is signed in to a kitchen or a store. Either one makes
+ *  it a business visit, which can look around as a customer but not order. */
+export async function hasPartnerSession(): Promise<boolean> {
+  const [kitchen, store] = await Promise.all([getPartner("kitchen").catch(() => null), getPartner("store").catch(() => null)]);
+  return kitchen !== null || store !== null;
+}
 
 /** The signed-in kitchen's own application, or null when nobody is signed in
  *  as a partner or the business has no kitchen yet. */
@@ -76,8 +88,8 @@ export async function getKitchenApplication(): Promise<KitchenApplication | null
 export async function getStoreApplication(): Promise<StoreApplication | null> {
   try {
     const [s, partner] = await Promise.all([
-      api<Schemas["StoreConsoleResponseDto"]>("/store-console/store", { scope: "kitchen" }),
-      getPartner(),
+      api<Schemas["StoreConsoleResponseDto"]>("/store-console/store", { scope: "store" }),
+      getPartner("store"),
     ]);
     return {
       name: s.name,

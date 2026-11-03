@@ -12,13 +12,33 @@ import { Saved, Switch, panel } from "./parts";
  * means the kitchen stays listed but takes nothing. It is the first thing on
  * the console because it is the first thing done every morning.
  */
-export function Door({ name, isOpen, canSwitch }: { name: string; isOpen: boolean; canSwitch: boolean }) {
+export function Door({
+  name,
+  isOpen,
+  canSwitch,
+  onSetOpen = setOpen,
+  place = "kitchen",
+}: {
+  name: string;
+  isOpen: boolean;
+  canSwitch: boolean;
+  /** Opens or closes. A store has its own endpoint. */
+  onSetOpen?: typeof setOpen;
+  place?: "kitchen" | "store";
+}) {
   const [open, setOptimistic] = useOptimistic(isOpen);
   const [error, setError] = useState("");
   const [busy, startTransition] = useTransition();
 
   return (
-    <section className={cn(panel, "transition-colors duration-(--duration-normal)", open && "bg-accent text-on-accent")}>
+    <section
+      className={cn(
+        // Not `panel`: it carries bg-bg, and with both backgrounds on one
+        // element bg-bg won, leaving the open state's dark text on a dark card.
+        "rounded-panel-sm p-xl md:p-xxl transition-colors duration-(--duration-normal)",
+        open ? "bg-accent text-on-accent" : "bg-bg",
+      )}
+    >
       <div className="gap-lg flex items-center justify-between">
         <div className="min-w-0">
           <h2 className="text-panel-small">{open ? "You're open" : "You're closed"}</h2>
@@ -40,7 +60,7 @@ export function Door({ name, isOpen, canSwitch }: { name: string; isOpen: boolea
                 setError("");
                 startTransition(async () => {
                   setOptimistic(next);
-                  const result = await setOpen(next);
+                  const result = await onSetOpen(next);
                   if (!result.ok) setError(result.error);
                 });
               }}
@@ -50,7 +70,7 @@ export function Door({ name, isOpen, canSwitch }: { name: string; isOpen: boolea
       </div>
       {!canSwitch && (
         <p className={cn("text-site-label mt-md", open ? "text-on-accent/75" : "text-text-secondary")}>
-          Only the kitchen&rsquo;s owner can open or close it.
+          Only the {place}&rsquo;s owner can open or close it.
         </p>
       )}
       {error && (
@@ -63,7 +83,7 @@ export function Door({ name, isOpen, canSwitch }: { name: string; isOpen: boolea
 }
 
 /** One line customers see on the kitchen's page — "Egusi finishes by 3pm". */
-export function Notice({ notice }: { notice: string }) {
+export function Notice({ notice, onSave = saveNotice }: { notice: string; onSave?: typeof saveNotice }) {
   const [text, setText] = useState(notice);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState("");
@@ -75,7 +95,7 @@ export function Notice({ notice }: { notice: string }) {
       onSubmit={(e) => {
         e.preventDefault();
         startTransition(async () => {
-          const result = await saveNotice(text);
+          const result = await onSave(text);
           if (!result.ok) return setError(result.error);
           setError("");
           setSaved(text.trim() ? "Customers will see this on your page." : "Notice removed.");

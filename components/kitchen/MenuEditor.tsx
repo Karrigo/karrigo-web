@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useOptimistic, useState, useTransition } from "react";
+import { createContext, useContext, useOptimistic, useState, useTransition } from "react";
 
 import {
   addDish,
@@ -20,6 +20,34 @@ import { formatKobo } from "@/lib/money";
 import type { Dish, MenuSection } from "@/lib/kitchen/types";
 import { Switch, panel, type Result } from "./parts";
 
+/** What the editor does to the backend. A kitchen's menu and a store's catalog
+ *  are the same screen over different endpoints, so the actions come from here. */
+export type MenuActions = {
+  addDish: typeof addDish;
+  addSection: typeof addSection;
+  appealFlag: typeof appealFlag;
+  removeDish: typeof removeDish;
+  removeSection: typeof removeSection;
+  saveDish: typeof saveDish;
+  saveSection: typeof saveSection;
+  setSoldOut: typeof setSoldOut;
+  uploadDishPhoto: typeof uploadDishPhoto;
+};
+
+const KITCHEN_ACTIONS: MenuActions = {
+  addDish,
+  addSection,
+  appealFlag,
+  removeDish,
+  removeSection,
+  saveDish,
+  saveSection,
+  setSoldOut,
+  uploadDishPhoto,
+};
+
+const ActionsContext = createContext<MenuActions>(KITCHEN_ACTIONS);
+
 const quiet = "text-accent-text text-site-label font-bold disabled:opacity-50";
 
 /**
@@ -32,16 +60,19 @@ export function MenuEditor({
   sections,
   servesFood,
   servesGrocery,
+  actions = KITCHEN_ACTIONS,
 }: {
   kitchenName: string;
   sections: MenuSection[];
   servesFood: boolean;
   servesGrocery: boolean;
+  actions?: MenuActions;
 }) {
   const options = sections.map((s) => ({ id: s.id, label: s.label, type: s.type }));
   const both = servesFood && servesGrocery;
 
   return (
+    <ActionsContext.Provider value={actions}>
     <div className="gap-lg flex flex-col">
       {sections.length === 0 && (
         <div className={panel}>
@@ -60,10 +91,12 @@ export function MenuEditor({
 
       <NewSection first={sections.length === 0} servesFood={servesFood} servesGrocery={servesGrocery} />
     </div>
+    </ActionsContext.Provider>
   );
 }
 
 function Section({ section, options, showSide }: { section: MenuSection; options: { id: string; label: string; type: MenuSection["type"] }[]; showSide: boolean }) {
+  const actions = useContext(ActionsContext);
   const grocery = section.type === "GROCERY";
   const noun = grocery ? "product" : "dish";
   // A dish can only move to a section on its own side.
@@ -93,7 +126,7 @@ function Section({ section, options, showSide }: { section: MenuSection; options
               disabled={busy}
               onClick={() =>
                 startTransition(async () => {
-                  const result = await removeSection(section.id);
+                  const result = await actions.removeSection(section.id);
                   if (!result.ok) setError(result.error);
                 })
               }
@@ -111,7 +144,7 @@ function Section({ section, options, showSide }: { section: MenuSection; options
           label={section.label}
           note={section.note}
           idle="Save section"
-          save={(input) => saveSection(section.id, input)}
+          save={(input) => actions.saveSection(section.id, input)}
           done={() => setRenaming(false)}
         />
       )}
@@ -132,7 +165,7 @@ function Section({ section, options, showSide }: { section: MenuSection; options
             idle={`Add ${noun}`}
             working="Adding…"
             grocery={grocery}
-            save={addDish}
+            save={actions.addDish}
             // Stay open: a kitchen setting up its menu adds dishes in a run.
             done={() => {}}
             clearOnSave
@@ -153,6 +186,7 @@ function Section({ section, options, showSide }: { section: MenuSection; options
 }
 
 function DishRow({ dish, options, grocery }: { dish: Dish; options: { id: string; label: string }[]; grocery: boolean }) {
+  const actions = useContext(ActionsContext);
   const noun = grocery ? "product" : "dish";
   const [editing, setEditing] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -191,7 +225,7 @@ function DishRow({ dish, options, grocery }: { dish: Dish; options: { id: string
               setError("");
               startTransition(async () => {
                 setOptimistic(!available);
-                const result = await setSoldOut(dish.id, !available);
+                const result = await actions.setSoldOut(dish.id, !available);
                 if (!result.ok) setError(result.error);
               });
             }}
@@ -212,7 +246,7 @@ function DishRow({ dish, options, grocery }: { dish: Dish; options: { id: string
             idle={`Save ${noun}`}
             working="Saving…"
             grocery={grocery}
-            save={(input) => saveDish(dish.id, input)}
+            save={(input) => actions.saveDish(dish.id, input)}
             done={() => setEditing(false)}
           />
           <PhotoUpload
@@ -220,7 +254,7 @@ function DishRow({ dish, options, grocery }: { dish: Dish; options: { id: string
             done={!!dish.imageUrl}
             doneLabel="Photo added"
             fields={{ id: dish.id }}
-            upload={uploadDishPhoto}
+            upload={actions.uploadDishPhoto}
           />
           {confirming ? (
             <div className="gap-md flex flex-wrap items-center">
@@ -230,7 +264,7 @@ function DishRow({ dish, options, grocery }: { dish: Dish; options: { id: string
                 disabled={busy}
                 onClick={() =>
                   startTransition(async () => {
-                    const result = await removeDish(dish.id);
+                    const result = await actions.removeDish(dish.id);
                     if (!result.ok) {
                       setError(result.error);
                       setConfirming(false);
@@ -395,6 +429,7 @@ function SectionForm({
 
 /** Why Karrigo hid a product, and the owner's appeal against it. If ops declines an appeal the answer shows here and the owner can appeal again. */
 function FlagNotice({ dish }: { dish: Dish }) {
+  const actions = useContext(ActionsContext);
   const flag = dish.flag!;
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -416,7 +451,7 @@ function FlagNotice({ dish }: { dish: Dish }) {
           onSubmit={(e) => {
             e.preventDefault();
             startTransition(async () => {
-              const result = await appealFlag(dish.id, message);
+              const result = await actions.appealFlag(dish.id, message);
               if (!result.ok) return setError(result.error);
               setError("");
             });
@@ -447,6 +482,7 @@ function FlagNotice({ dish }: { dish: Dish }) {
 }
 
 function NewSection({ first, servesFood, servesGrocery }: { first: boolean; servesFood: boolean; servesGrocery: boolean }) {
+  const actions = useContext(ActionsContext);
   const [open, setOpen] = useState(first);
   const both = servesFood && servesGrocery;
   const [type, setType] = useState<"FOOD" | "GROCERY" | "">(both ? "" : servesGrocery ? "GROCERY" : "FOOD");
@@ -489,7 +525,7 @@ function NewSection({ first, servesFood, servesGrocery }: { first: boolean; serv
         save={(input) =>
           both && !type
             ? Promise.resolve({ ok: false as const, error: "Choose whether this section is for food or groceries." })
-            : addSection({ ...input, ...(type ? { type } : {}) })
+            : actions.addSection({ ...input, ...(type ? { type } : {}) })
         }
         done={() => setOpen(false)}
       />
