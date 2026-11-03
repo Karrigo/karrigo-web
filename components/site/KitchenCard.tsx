@@ -17,9 +17,9 @@ export function KitchenCard({
 
   return (
     <div
-      className={cn("bg-bg rounded-panel-sm p-sm block", shut && "opacity-45")}
+      className={cn("bg-bg rounded-panel-sm overflow-hidden block", shut && "opacity-45")}
     >
-      <div className="bg-surface-raised relative aspect-[4/3] overflow-hidden rounded-panel-xs">
+      <div className="bg-surface-raised relative aspect-[4/3] overflow-hidden">
         <Image
           src={kitchen.image}
           alt={`${kitchen.cuisine} from ${kitchen.name}`}
@@ -43,7 +43,7 @@ export function KitchenCard({
         ) : null}
       </div>
 
-      <div className="px-sm pt-lg pb-sm">
+      <div className="px-lg pt-xl pb-lg">
         <div className="text-site-title">{kitchen.name}</div>
         <div className="text-site-label text-text-secondary mt-xs">
           {kitchen.cuisine} · {kitchen.area}

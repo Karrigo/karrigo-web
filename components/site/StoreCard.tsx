@@ -10,8 +10,8 @@ export function StoreCard({
   priority?: boolean;
 }) {
   return (
-    <div className="bg-bg rounded-panel-sm p-sm block">
-      <div className="bg-surface-raised relative aspect-[4/3] overflow-hidden rounded-panel-xs">
+    <div className="bg-bg rounded-panel-sm overflow-hidden block">
+      <div className="bg-surface-raised relative aspect-[4/3] overflow-hidden">
         <Image
           src={store.image}
           alt={`${store.category} at ${store.name}`}
@@ -22,7 +22,7 @@ export function StoreCard({
         />
       </div>
 
-      <div className="px-sm pt-lg pb-sm">
+      <div className="px-lg pt-xl pb-lg">
         <div className="text-site-title">{store.name}</div>
         <div className="text-site-label text-text-secondary mt-xs">
           {store.category} · {store.area}
