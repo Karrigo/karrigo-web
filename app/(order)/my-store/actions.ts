@@ -119,18 +119,19 @@ export async function removeStoreSection(id: string): Promise<Done> {
 
 type ProductInput = { sectionId: string; name: string; description: string; priceNaira: number; unit: string };
 
-export async function addStoreProduct(input: ProductInput): Promise<Done> {
+/** Returns the new product's id, so its photo can be attached straight after. */
+export async function addStoreProduct(input: ProductInput): Promise<Failure | { ok: true; id: string }> {
   const parsed = dishSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
   const { description, unit, ...rest } = parsed.data;
   try {
-    await api("/store-console/catalog/products", {
+    const created = await api<{ id: string }>("/store-console/catalog/products", {
       method: "POST",
       scope: "store",
       body: { ...rest, ...(description ? { description } : {}), ...(unit ? { unit } : {}) },
     });
     changed();
-    return { ok: true };
+    return { ok: true, id: created.id };
   } catch (error) {
     return failure(error);
   }

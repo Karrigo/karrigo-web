@@ -196,18 +196,19 @@ export async function removeSection(id: string): Promise<Done> {
 
 type DishInput = { sectionId: string; name: string; description: string; priceNaira: number; unit: string };
 
-export async function addDish(input: DishInput): Promise<Done> {
+/** Returns the new dish's id, so its photo can be attached straight after. */
+export async function addDish(input: DishInput): Promise<Failure | { ok: true; id: string }> {
   const dish = dishSchema.safeParse(input);
   if (!dish.success) return { ok: false, error: firstIssue(dish.error) };
   const { description, unit, ...rest } = dish.data;
   try {
-    await api("/kitchen-console/menu/items", {
+    const created = await api<{ id: string }>("/kitchen-console/menu/items", {
       method: "POST",
       scope: "kitchen",
       body: { ...rest, ...(description ? { description } : {}), ...(unit ? { unit } : {}) },
     });
     changed();
-    return { ok: true };
+    return { ok: true, id: created.id };
   } catch (error) {
     return failure(error);
   }

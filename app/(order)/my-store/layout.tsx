@@ -28,7 +28,7 @@ export default async function StoreConsoleLayout({ children }: { children: React
       </div>
       <div className="gap-md mt-md flex flex-wrap items-end justify-between">
         <h1 className="text-section-small md:text-section text-balance">{store.name}</h1>
-        <Link href={`/k/${store.slug}?type=GROCERY`} className="text-accent-text text-site-label pb-sm font-bold">
+        <Link href={`/stores/${store.slug}`} className="text-accent-text text-site-label pb-sm font-bold">
           See your page as a customer
         </Link>
       </div>

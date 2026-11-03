@@ -14,7 +14,14 @@ import { useSyncExternalStore } from "react";
 
 type State = {
   /** One kitchen per order: the cart belongs to exactly one kitchen. */
-  cart: { kitchenSlug: string; kitchenName: string; side: "FOOD" | "GROCERY"; lines: Record<string, number> } | null;
+  cart: {
+    kitchenSlug: string;
+    kitchenName: string;
+    side: "FOOD" | "GROCERY";
+    /** A store's slug is its own, so the cart says which kind of place it is. A cart saved before stores existed was a kitchen's. */
+    vendor?: "kitchen" | "store";
+    lines: Record<string, number>;
+  } | null;
   landmark: string;
   address: string;
   area: string;
@@ -82,15 +89,19 @@ export function say(toast: string) {
   toastTimer = setTimeout(() => set({ toast: "" }), 2600);
 }
 
-export function addDish(kitchen: { slug: string; name: string; side?: "FOOD" | "GROCERY" }, dishId: string) {
+export function addDish(
+  kitchen: { slug: string; name: string; side?: "FOOD" | "GROCERY"; vendor?: "kitchen" | "store" },
+  dishId: string,
+) {
   load();
   const side = kitchen.side ?? "FOOD";
+  const vendor = kitchen.vendor ?? "kitchen";
   const current = state.cart;
   // One place, one side per order: food and groceries are never in one cart,
   // and a place serving both has a separate cart for each.
-  if (current && (current.kitchenSlug !== kitchen.slug || current.side !== side)) {
+  if (current && (current.kitchenSlug !== kitchen.slug || current.side !== side || (current.vendor ?? "kitchen") !== vendor)) {
     say(`New cart started at ${kitchen.name}`);
-    set({ cart: { kitchenSlug: kitchen.slug, kitchenName: kitchen.name, side, lines: { [dishId]: 1 } } });
+    set({ cart: { kitchenSlug: kitchen.slug, kitchenName: kitchen.name, side, vendor, lines: { [dishId]: 1 } } });
     return;
   }
   const lines = current?.lines ?? {};
@@ -99,6 +110,7 @@ export function addDish(kitchen: { slug: string; name: string; side?: "FOOD" | "
       kitchenSlug: kitchen.slug,
       kitchenName: kitchen.name,
       side,
+      vendor,
       lines: { ...lines, [dishId]: (lines[dishId] ?? 0) + 1 },
     },
   });

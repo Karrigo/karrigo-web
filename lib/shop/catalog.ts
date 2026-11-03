@@ -3,7 +3,7 @@ import "server-only";
 import { api, ApiError, type Schemas } from "@/lib/api/client";
 import { DEFAULT_RIDER_BASE_FEE_NAIRA } from "@/lib/kitchen/types";
 import { nairaToKobo } from "@/lib/money";
-import type { PricedCart, ShopKitchen, ShopMenu, Side } from "./types";
+import type { PricedCart, ShopKitchen, ShopMenu, Side, Vendor } from "./types";
 
 /** Delivery = rider pay = max(base fee, km x per-km rate), worked out by the
  *  backend when the order is placed. Before then the base fee is the honest
@@ -16,6 +16,7 @@ function deliveryFromKobo(k: Schemas["KitchenResponseDto"]): number {
 function kitchen(k: Schemas["KitchenResponseDto"], side: Side = "FOOD"): ShopKitchen {
   return {
     id: k.id,
+    vendor: "kitchen",
     slug: k.slug,
     name: k.name,
     emoji: k.emoji ?? null,
@@ -33,12 +34,71 @@ function kitchen(k: Schemas["KitchenResponseDto"], side: Side = "FOOD"): ShopKit
   };
 }
 
+/** A store, shown the way a kitchen is. It has no cuisine, rating or landmark
+ *  of its own, so those read as a plain grocery store. */
+function store(s: Schemas["StorePublicResponseDto"]): ShopKitchen {
+  return {
+    id: s.id,
+    vendor: "store",
+    slug: s.slug,
+    name: s.name,
+    emoji: null,
+    cuisine: "Groceries",
+    area: s.area ?? "Makurdi",
+    landmarkNote: null,
+    imageUrl: s.heroImageUrl ?? null,
+    open: s.isOpen,
+    notice: s.noticeText ?? null,
+    deliveryFromKobo: nairaToKobo(DEFAULT_RIDER_BASE_FEE_NAIRA),
+    rating: 0,
+    ratingsCount: 0,
+    minOrderKobo: s.minOrderNaira != null ? nairaToKobo(s.minOrderNaira) : null,
+    maxItems: s.maxItemsPerOrder ?? null,
+  };
+}
+
 /** Every request is live: a kitchen changes a price or sells out and the next
  *  page load shows it (CLAUDE.md rule 5). Nothing here is cached. */
 export async function listKitchens(side: Side = "FOOD"): Promise<ShopKitchen[]> {
-  const rows = await api<Schemas["KitchenResponseDto"][]>("/kitchens", { query: { type: side } });
-  // Open kitchens first; closed ones stay visible below, never hidden.
-  return rows.map((k) => kitchen(k, side)).sort((a, b) => Number(b.open) - Number(a.open) || a.name.localeCompare(b.name));
+  // Groceries come from kitchens that stock them and from stores, which are
+  // separate businesses with their own list. Food is kitchens only.
+  const [rows, stores] = await Promise.all([
+    api<Schemas["KitchenResponseDto"][]>("/kitchens", { query: { type: side } }),
+    side === "GROCERY" ? api<Schemas["StorePublicResponseDto"][]>("/stores") : Promise.resolve([]),
+  ]);
+  // Open places first; closed ones stay visible below, never hidden.
+  return [...rows.map((k) => kitchen(k, side)), ...stores.map(store)].sort(
+    (a, b) => Number(b.open) - Number(a.open) || a.name.localeCompare(b.name),
+  );
+}
+
+/** A store's page: its sections of products, flagged ones already left out. */
+export async function getStoreMenu(slug: string): Promise<ShopMenu | null> {
+  try {
+    const s = await api<Schemas["StorePublicWithCatalogResponseDto"]>(`/stores/${encodeURIComponent(slug)}`);
+    return {
+      ...store(s),
+      side: "GROCERY",
+      sections: s.sections.map((section) => ({
+        id: section.id,
+        label: section.label,
+        note: section.note ?? null,
+        dishes: section.products.map((p) => ({
+          id: p.id,
+          name: p.name,
+          description: p.description ?? "",
+          priceKobo: nairaToKobo(p.priceNaira),
+          soldOut: p.isSoldOut,
+          imageUrl: p.imageUrl ?? null,
+          tags: [],
+          unit: p.unit ?? "",
+        })),
+      })),
+    };
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) return null;
+    throw error;
+  }
 }
 
 export async function getKitchenMenu(slug: string, side: Side = "FOOD"): Promise<ShopMenu | null> {
@@ -81,8 +141,9 @@ export async function priceLines(
   slug: string,
   lines: Record<string, number>,
   side: Side = "FOOD",
+  vendor: Vendor = "kitchen",
 ): Promise<PricedCart | null> {
-  const menu = await getKitchenMenu(slug, side);
+  const menu = vendor === "store" ? await getStoreMenu(slug) : await getKitchenMenu(slug, side);
   if (!menu) return null;
 
   const dishes = new Map(menu.sections.flatMap((s) => s.dishes).map((d) => [d.id, d]));

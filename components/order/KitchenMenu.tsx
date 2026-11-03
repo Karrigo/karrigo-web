@@ -22,7 +22,8 @@ export function KitchenMenu({
 }) {
   const { cart } = useOrderState();
   const grocery = menu.side === "GROCERY";
-  const inThisKitchen = cart?.kitchenSlug === menu.slug && cart.side === menu.side;
+  const inThisKitchen =
+    cart?.kitchenSlug === menu.slug && cart.side === menu.side && (cart.vendor ?? "kitchen") === menu.vendor;
   const closed = !menu.open;
 
   // The menu on this page is fresh from the server, so the sidebar is priced
@@ -149,7 +150,7 @@ export function KitchenMenu({
                       ) : closed || browseOnly ? null : qty === 0 ? (
                         <button
                           type="button"
-                          onClick={() => addDish({ slug: menu.slug, name: menu.name, side: menu.side }, dish.id)}
+                          onClick={() => addDish({ slug: menu.slug, name: menu.name, side: menu.side, vendor: menu.vendor }, dish.id)}
                           className="bg-accent text-on-accent rounded-pill text-nav-link shrink-0 px-xl py-md font-bold transition-transform duration-(--duration-fast) hover:-translate-y-0.5 active:scale-95"
                         >
                           Add
@@ -158,7 +159,7 @@ export function KitchenMenu({
                         <QtyStepper
                           qty={qty}
                           name={dish.name}
-                          onAdd={() => addDish({ slug: menu.slug, name: menu.name, side: menu.side }, dish.id)}
+                          onAdd={() => addDish({ slug: menu.slug, name: menu.name, side: menu.side, vendor: menu.vendor }, dish.id)}
                           onRemove={() => removeDish(dish.id)}
                         />
                       )}

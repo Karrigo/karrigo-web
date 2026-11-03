@@ -465,6 +465,23 @@ export interface paths {
         patch: operations["KitchenAuthController_updateProfile"];
         trace?: never;
     };
+    "/v1/kitchen-auth/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload the signed-in staff member's profile picture (jpeg/png/webp). Returns the updated profile. */
+        post: operations["KitchenAuthController_uploadAvatar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/kitchen-auth/password/change": {
         parameters: {
             query?: never;
@@ -476,6 +493,74 @@ export interface paths {
         put?: never;
         /** Change the signed-in staff member's password. */
         post: operations["KitchenAuthController_changePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/kitchen-auth/me/delete/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Email the owner a code to confirm deleting the whole partner account (kitchen and store). Refused while orders are in progress or earnings are unpaid. */
+        post: operations["PartnerAccountController_requestCode[0]"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-auth/me/delete/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Email the owner a code to confirm deleting the whole partner account (kitchen and store). Refused while orders are in progress or earnings are unpaid. */
+        post: operations["PartnerAccountController_requestCode[1]"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/kitchen-auth/me/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete the partner account — anonymizes the owner, kitchen and store, removes their photos and documents, and signs out every device. Needs the password and the emailed code. */
+        post: operations["PartnerAccountController_deleteAccount[0]"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/store-auth/me/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete the partner account — anonymizes the owner, kitchen and store, removes their photos and documents, and signs out every device. Needs the password and the emailed code. */
+        post: operations["PartnerAccountController_deleteAccount[1]"];
         delete?: never;
         options?: never;
         head?: never;
@@ -651,6 +736,23 @@ export interface paths {
         head?: never;
         /** Update the signed-in staff member's contact phone. */
         patch: operations["StoreAuthController_updateProfile"];
+        trace?: never;
+    };
+    "/v1/store-auth/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload the signed-in staff member's profile picture (jpeg/png/webp). Returns the updated profile. */
+        post: operations["StoreAuthController_uploadAvatar"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/v1/store-auth/password/change": {
@@ -3673,6 +3775,8 @@ export interface components {
             email: string;
             name: string;
             phone: string | null;
+            /** @description Profile picture URL; null until the person uploads one. */
+            avatarUrl: string | null;
             /** Format: date-time */
             emailVerifiedAt: string | null;
             /** @enum {string} */
@@ -3719,6 +3823,11 @@ export interface components {
         };
         UpdateKitchenStaffProfileDto: {
             phone: string;
+        };
+        DeletePartnerAccountDto: {
+            currentPassword: string;
+            /** @description The code emailed by POST …/me/delete/request. */
+            code: string;
         };
         RegisterStoreDto: {
             name: string;
@@ -6192,6 +6301,27 @@ export interface components {
             kitchen: components["schemas"]["KitchenResponseDto"];
             items: components["schemas"]["OrderItemResponseDto"][];
         };
+        OrderDetailStoreOrderDto: {
+            /** @enum {string} */
+            status: "PLACED" | "ACCEPTED" | "PREPARING" | "READY" | "PICKED_UP" | "CANCELLED";
+            id: string;
+            orderId: string;
+            storeId: string;
+            subtotalNaira: number;
+            deliveryFeeNaira: number;
+            payoutId: string | null;
+            /**
+             * Format: date-time
+             * @description When the store marked its part READY; null until then.
+             */
+            readyAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            store: components["schemas"]["StorePublicResponseDto"];
+            items: components["schemas"]["StoreOrderItemResponseDto"][];
+        };
         OrderDetailRiderDto: {
             user: {
                 name: string | null;
@@ -6265,6 +6395,8 @@ export interface components {
             address: components["schemas"]["AddressResponseDto"];
             payments: components["schemas"]["PaymentResponseDto"][];
             kitchenOrders: components["schemas"]["OrderDetailKitchenOrderDto"][];
+            /** @description One slice per store in the order; empty for an all-kitchen order. */
+            storeOrders: components["schemas"]["OrderDetailStoreOrderDto"][];
             rider: components["schemas"]["OrderDetailRiderDto"] | null;
         };
         ValidatePromoDto: {
@@ -7366,6 +7498,39 @@ export interface operations {
             };
         };
     };
+    KitchenAuthController_uploadAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KitchenStaffResponseDto"];
+                };
+            };
+            /** @description Missing file, wrong MIME type, or over the size limit. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     KitchenAuthController_changePassword: {
         parameters: {
             query?: never;
@@ -7387,6 +7552,160 @@ export interface operations {
             };
             /** @description Current password is incorrect. */
             401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "PartnerAccountController_requestCode[0]": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        resendCooldownSeconds?: number;
+                    };
+                };
+            };
+            /** @description Caller is not the owner. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description ORDERS_IN_PROGRESS or PAYOUT_OUTSTANDING. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "PartnerAccountController_requestCode[1]": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        resendCooldownSeconds?: number;
+                    };
+                };
+            };
+            /** @description Caller is not the owner. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description ORDERS_IN_PROGRESS or PAYOUT_OUTSTANDING. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "PartnerAccountController_deleteAccount[0]": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeletePartnerAccountDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Password is incorrect. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is not the owner. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description ORDERS_IN_PROGRESS or PAYOUT_OUTSTANDING. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "PartnerAccountController_deleteAccount[1]": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeletePartnerAccountDto"];
+            };
+        };
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Password is incorrect. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Caller is not the owner. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description ORDERS_IN_PROGRESS or PAYOUT_OUTSTANDING. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7673,6 +7992,39 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["KitchenStaffResponseDto"];
                 };
+            };
+        };
+    };
+    StoreAuthController_uploadAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KitchenStaffResponseDto"];
+                };
+            };
+            /** @description Missing file, wrong MIME type, or over the size limit. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

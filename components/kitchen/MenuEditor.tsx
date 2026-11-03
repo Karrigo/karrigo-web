@@ -48,6 +48,10 @@ const KITCHEN_ACTIONS: MenuActions = {
 
 const ActionsContext = createContext<MenuActions>(KITCHEN_ACTIONS);
 
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+/** Matches the upload action; checked here so a too-big photo is caught before the dish is created. */
+const PHOTO_MAX_BYTES = 2.5 * 1024 * 1024;
+
 const quiet = "text-accent-text text-site-label font-bold disabled:opacity-50";
 
 /**
@@ -207,6 +211,11 @@ function DishRow({ dish, options, grocery }: { dish: Dish; options: { id: string
             {formatKobo(dish.priceKobo)}
             {soldOut && <span className="text-danger-text font-semibold"> · Sold out</span>}
           </p>
+          {!dish.imageUrl && (
+            <p className="bg-warning-bg text-warning rounded-field text-site-chip mt-xs inline-block px-md py-xs font-bold">
+              Needs a photo
+            </p>
+          )}
           {dish.flag && (
             <p className="bg-danger-bg text-danger-text rounded-field text-site-chip mt-xs inline-block px-md py-xs font-bold">
               {dish.flag.appealedAt ? "Hidden by Karrigo · appeal sent" : "Hidden by Karrigo"}
@@ -307,10 +316,16 @@ function DishForm({
   options: { id: string; label: string }[];
   idle: string;
   working: string;
-  save: (input: { sectionId: string; name: string; description: string; priceNaira: number; unit: string }) => Promise<Result>;
+  save: (input: { sectionId: string; name: string; description: string; priceNaira: number; unit: string }) => Promise<Result & { id?: string }>;
   done: () => void;
   clearOnSave?: boolean;
 }) {
+  const actions = useContext(ActionsContext);
+  // A new dish or product needs a photo: customers choose by picture. Editing
+  // keeps the one it has, and the photo control on the row replaces it.
+  const needsPhoto = !dish;
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoKey, setPhotoKey] = useState(0);
   const [name, setName] = useState(dish?.name ?? "");
   const [price, setPrice] = useState(dish ? String(Math.round(dish.priceKobo / 100)) : "");
   const [description, setDescription] = useState(dish?.description ?? "");
@@ -324,15 +339,33 @@ function DishForm({
       className="gap-md flex flex-col"
       onSubmit={(e) => {
         e.preventDefault();
+        if (needsPhoto) {
+          if (!photo) return setError(`Add a photo of the ${grocery ? "product" : "dish"}.`);
+          if (!PHOTO_TYPES.includes(photo.type)) return setError("Use a JPG, PNG or WebP photo.");
+          if (photo.size > PHOTO_MAX_BYTES) return setError("That photo is too large. Try a smaller one.");
+        }
         startTransition(async () => {
           const result = await save({ sectionId: section, name, description, priceNaira: Number(price), unit: grocery ? unit : "" });
           if (!result.ok) return setError(result.error);
+          if (needsPhoto && photo && result.id) {
+            const form = new FormData();
+            form.set("id", result.id);
+            form.set("file", photo);
+            const uploaded = await actions.uploadDishPhoto(form);
+            if (!uploaded.ok) {
+              // Never leave a listing without its picture: take it back out.
+              await actions.removeDish(result.id);
+              return setError(`The photo didn't upload, so the ${grocery ? "product" : "dish"} wasn't added. ${uploaded.error}`);
+            }
+          }
           setError("");
           if (clearOnSave) {
             setName("");
             setPrice("");
             setDescription("");
             setUnit("");
+            setPhoto(null);
+            setPhotoKey((k) => k + 1);
           }
           done();
         });
@@ -352,6 +385,18 @@ function DishForm({
         <label className={fieldLabel}>
           Sold as (optional)
           <input value={unit} onChange={(e) => { setUnit(e.target.value); setError(""); }} placeholder="1 kg, pack of 6" className={field} />
+        </label>
+      )}
+      {needsPhoto && (
+        <label className={fieldLabel}>
+          Photo
+          <input
+            key={photoKey}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(e) => { setPhoto(e.target.files?.[0] ?? null); setError(""); }}
+            className={cn(field, "file:bg-surface-raised file:text-text file:mr-md file:rounded-pill file:border-0 file:px-lg file:py-xs file:font-bold")}
+          />
         </label>
       )}
       <label className={fieldLabel}>
