@@ -18,7 +18,14 @@ export function Door({ name, isOpen, canSwitch }: { name: string; isOpen: boolea
   const [busy, startTransition] = useTransition();
 
   return (
-    <section className={cn(panel, "transition-colors duration-(--duration-normal)", open && "bg-accent text-on-accent")}>
+    <section
+      className={cn(
+        // Not `panel`: it carries bg-bg, and with both backgrounds on one
+        // element bg-bg won, leaving the open state's dark text on a dark card.
+        "rounded-panel-sm p-xl md:p-xxl transition-colors duration-(--duration-normal)",
+        open ? "bg-accent text-on-accent" : "bg-bg",
+      )}
+    >
       <div className="gap-lg flex items-center justify-between">
         <div className="min-w-0">
           <h2 className="text-panel-small">{open ? "You're open" : "You're closed"}</h2>
