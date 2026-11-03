@@ -257,10 +257,6 @@ export function QueueDetail({
   ];
   const photos = extra?.photos ?? null;
   // Only known once the detail has loaded; the server refuses regardless.
-  const approveBlocked =
-    isPartner && photos !== null && photos.length < VERIFICATION_PHOTOS_REQUIRED
-      ? photosNeededText(photos.length)
-      : null;
   const checks = extra
     ? [
         ...item.checks,
@@ -277,6 +273,15 @@ export function QueueDetail({
         }] : []),
       ]
     : item.checks;
+  // Dishes are shown for context; the server doesn't require them.
+  const incomplete = checks.some((c) => !c.ok && !/dishes/i.test(c.label));
+  const approveBlocked = !isPartner
+    ? incomplete ? "Rider must submit the required documents." : null
+    : photos !== null && photos.length < VERIFICATION_PHOTOS_REQUIRED
+      ? photosNeededText(photos.length)
+      : incomplete
+        ? `${noun[0].toUpperCase()}${noun.slice(1)} must submit the required details.`
+        : null;
   const blocked = !!confirm?.requiresNote && !note.trim();
 
   return (
