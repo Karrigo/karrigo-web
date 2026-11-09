@@ -52,7 +52,7 @@ export function CategoryPicker({
                   type="button"
                   role="checkbox"
                   aria-checked={selected}
-                  aria-disabled={!selected && atMax}
+                  disabled={!selected && atMax}
                   onClick={() => onChange(toggleCategory(selectedIds, c.id))}
                   className={cn(
                     "rounded-pill text-nav-link px-lg py-sm font-bold transition-colors duration-(--duration-fast)",

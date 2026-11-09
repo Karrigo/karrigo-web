@@ -45,3 +45,14 @@ describe("initialCategoryIds / partitionKnownIds", () => {
     });
   });
 });
+
+describe("stale ids after a late category load", () => {
+  test("re-partitioning against the loaded list drops a deactivated id", () => {
+    const stale = ["soups", "old"];
+    expect(partitionKnownIds(stale, [{ id: "soups" }, { id: "rice" }])).toEqual({ ids: ["soups"], dropped: true });
+    // Only a deactivated id: nothing valid is left, so the form must block.
+    const only = partitionKnownIds(["old"], [{ id: "soups" }]);
+    expect(only.ids).toEqual([]);
+    expect(hasValidCategories(only.ids)).toBe(false);
+  });
+});

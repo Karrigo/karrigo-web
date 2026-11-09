@@ -342,6 +342,16 @@ function DishForm({
   const prefill = categories ? partitionKnownIds(dish?.categoryIds ?? [], categories) : null;
   const [categoryIds, setCategoryIds] = useState<string[]>(prefill?.ids ?? dish?.categoryIds ?? []);
   const [droppedPrevious, setDroppedPrevious] = useState(prefill?.dropped ?? false);
+  // The list may arrive after first render (Retry): drop ids no longer active then too.
+  const [reconciled, setReconciled] = useState(!!categories);
+  const [error, setError] = useState("");
+  if (categories && !reconciled) {
+    const next = partitionKnownIds(categoryIds, categories);
+    setReconciled(true);
+    setCategoryIds(next.ids);
+    if (next.dropped) setDroppedPrevious(true);
+    if (error) setError("");
+  }
   // A new dish or product needs a photo: customers choose by picture. Editing
   // keeps the one it has, and the photo control on the row replaces it.
   const needsPhoto = !dish;
@@ -352,7 +362,6 @@ function DishForm({
   const [description, setDescription] = useState(dish?.description ?? "");
   const [unit, setUnit] = useState(dish?.unit ?? "");
   const [section, setSection] = useState(sectionId);
-  const [error, setError] = useState("");
   const [busy, startTransition] = useTransition();
 
   return (
@@ -366,9 +375,11 @@ function DishForm({
           if (photo.size > PHOTO_MAX_BYTES) return setError("That photo is too large. Try a smaller one.");
         }
         if (!categories) return setError("Categories haven't loaded. Retry, then pick at least 1.");
-        if (!hasValidCategories(categoryIds)) return setError("Pick at least 1 category.");
+        // Safety net: never send an id that is not in the active list.
+        const sendIds = partitionKnownIds(categoryIds, categories).ids;
+        if (!hasValidCategories(sendIds)) return setError("Pick at least 1 category.");
         startTransition(async () => {
-          const result = await save({ sectionId: section, name, description, priceNaira: Number(price), unit: grocery ? unit : "", categoryIds });
+          const result = await save({ sectionId: section, name, description, priceNaira: Number(price), unit: grocery ? unit : "", categoryIds: sendIds });
           if (!result.ok) return setError(result.error);
           if (needsPhoto && photo && result.id) {
             const form = new FormData();
