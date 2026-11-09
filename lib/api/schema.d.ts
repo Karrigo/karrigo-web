@@ -3566,6 +3566,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Active categories ordered by sortOrder then name. `type` (FOOD or GROCERY) filters; omit for both. No auth. */
+        get: operations["CategoriesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every category including deactivated ones. `?type=` filters. Any admin role. */
+        get: operations["AdminCategoriesController_list"];
+        put?: never;
+        /** Create a category. Names are unique per type, ignoring case. SUPER_ADMIN only. Writes an AuditLog row. */
+        post: operations["AdminCategoriesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename, reorder, or (de)activate a category. Categories are never deleted. SUPER_ADMIN only. Writes an AuditLog row. */
+        patch: operations["AdminCategoriesController_update"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -6631,6 +6683,51 @@ export interface components {
         };
         ReportProblemDto: {
             reason: string;
+        };
+        ItemCategoryDto: {
+            id: string;
+            name: string;
+            slug: string;
+        };
+        CategoryResponseDto: {
+            id: string;
+            /** @example Soups */
+            name: string;
+            /** @example soups */
+            slug: string;
+            /** @enum {string} */
+            type: "FOOD" | "GROCERY";
+            sortOrder: number;
+        };
+        AdminCategoryResponseDto: {
+            id: string;
+            /** @example Soups */
+            name: string;
+            /** @example soups */
+            slug: string;
+            /** @enum {string} */
+            type: "FOOD" | "GROCERY";
+            sortOrder: number;
+            isActive: boolean;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        CreateCategoryDto: {
+            /** @example Soups */
+            name: string;
+            /**
+             * @description FOOD for dishes, GROCERY for store products.
+             * @enum {string}
+             */
+            type: "FOOD" | "GROCERY";
+            /** @default 0 */
+            sortOrder: number;
+        };
+        UpdateCategoryDto: {
+            name?: string;
+            sortOrder?: number;
+            /** @description false deactivates; rows are never deleted. */
+            isActive?: boolean;
         };
     };
     responses: never;
@@ -15184,6 +15281,172 @@ export interface operations {
             };
             /** @description Order doesn't exist or isn't assigned to this rider. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CategoriesController_list: {
+        parameters: {
+            query?: {
+                /** @description Defaults to FOOD. */
+                type?: "FOOD" | "GROCERY";
+                /** @description Only vendors with at least one item in this category. An unknown id returns an empty list. */
+                categoryId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryResponseDto"][];
+                };
+            };
+        };
+    };
+    AdminCategoriesController_list: {
+        parameters: {
+            query?: {
+                /** @description Defaults to FOOD. */
+                type?: "FOOD" | "GROCERY";
+                /** @description Only vendors with at least one item in this category. An unknown id returns an empty list. */
+                categoryId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryResponseDto"][];
+                };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminCategoriesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCategoryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryResponseDto"];
+                };
+            };
+            /** @description Validation failed. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requires SUPER_ADMIN. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description A category with this name already exists. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminCategoriesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCategoryDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryResponseDto"];
+                };
+            };
+            /** @description Validation failed. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requires SUPER_ADMIN. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Category not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description A category with this name already exists. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
