@@ -14,14 +14,20 @@ const NAME_ERROR = "Give the category a name of 2 to 40 characters.";
 
 /** Runs one change. Only a super admin may write; the backend enforces it too,
  *  so a refusal there (403) surfaces as its own message. */
-async function attempt(work: () => Promise<string>): Promise<ActionResult> {
+async function attempt(work: () => Promise<string>, partialFailure?: string): Promise<ActionResult> {
+  let authorised = false;
   try {
     await requireSuperAdmin();
+    authorised = true;
     const message = await work();
     revalidatePath("/admin", "layout");
     return { ok: true, message };
   } catch (error) {
-    return { ok: false, error: error instanceof Error ? error.message : "That didn't go through. Try again." };
+    // A multi-step change may have got partway before failing: reload the list
+    // so the page shows what the server actually holds.
+    if (authorised && partialFailure) revalidatePath("/admin", "layout");
+    const reason = error instanceof Error ? error.message : "That didn't go through. Try again.";
+    return { ok: false, error: authorised && partialFailure ? `${reason} ${partialFailure}` : reason };
   }
 }
 
@@ -78,5 +84,5 @@ export async function moveCategory(id: string, type: CategoryType, direction: "u
       if (category.sortOrder !== index) await patch(category.id, { sortOrder: index });
     }
     return "Order updated";
-  });
+  }, "The order may have partly changed; the list has been reloaded.");
 }
