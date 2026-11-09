@@ -52,6 +52,8 @@ export type ShopKitchen = {
   /** A store's own rules, from the backend. Only applied to grocery orders. */
   minOrderKobo: number | null;
   maxItems: number | null;
+  /** Admin-verified label. False when the API did not say. */
+  verified: boolean;
 };
 
 /** The two things a customer can order. A place serving both has a page for each. */

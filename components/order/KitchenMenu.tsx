@@ -9,6 +9,7 @@ import { addDish, cartCount, removeDish, useOrderState } from "@/lib/order/store
 import { basketIssue } from "@/lib/shop/limits";
 import type { ShopMenu } from "@/lib/shop/types";
 import { cn } from "@/lib/cn";
+import { VerifiedBadge } from "./VerifiedBadge";
 import { QtyStepper } from "./QtyStepper";
 
 export function KitchenMenu({
@@ -61,6 +62,7 @@ export function KitchenMenu({
         <Screen mode="dark" className="rounded-panel-md grid overflow-hidden sm:grid-cols-2">
           <div className="p-xxl md:p-pad-card flex flex-col justify-center">
             <h1 className="text-panel-small md:text-panel text-cream text-balance">{menu.name}</h1>
+            {menu.verified ? <VerifiedBadge vendor={menu.vendor} className="mt-sm self-start" /> : null}
             <p className="text-site-body text-cream/62 mt-sm">
               {menu.cuisine} · {menu.area}
             </p>

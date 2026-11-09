@@ -4,6 +4,7 @@ import { api, ApiError, type Schemas } from "@/lib/api/client";
 import { DEFAULT_RIDER_BASE_FEE_NAIRA } from "@/lib/kitchen/types";
 import { categoryNames } from "@/lib/category-filter";
 import { nairaToKobo } from "@/lib/money";
+import { isVerified } from "./verified";
 import type { PricedCart, ShopKitchen, ShopMenu, Side, Vendor } from "./types";
 
 /** Delivery = rider pay = max(base fee, km x per-km rate), worked out by the
@@ -35,12 +36,14 @@ function kitchen(k: Schemas["KitchenResponseDto"], side: Side = "FOOD"): ShopKit
     ratingsCount: k.ratingsCount,
     minOrderKobo: k.minOrderNaira != null ? nairaToKobo(k.minOrderNaira) : null,
     maxItems: k.maxItemsPerOrder ?? null,
+    verified: isVerified(k.verified),
   };
 }
 
 /** A store, shown the way a kitchen is. It has no cuisine, rating or landmark
- *  of its own, so those read as a plain grocery store. */
-function store(s: Schemas["StorePublicResponseDto"]): ShopKitchen {
+ *  of its own, so those read as a plain grocery store. The generated store
+ *  type predates `verified`; the backend sends it (absent on older responses). */
+function store(s: Schemas["StorePublicResponseDto"] & { verified?: boolean }): ShopKitchen {
   return {
     id: s.id,
     vendor: "store",
@@ -58,6 +61,7 @@ function store(s: Schemas["StorePublicResponseDto"]): ShopKitchen {
     ratingsCount: 0,
     minOrderKobo: s.minOrderNaira != null ? nairaToKobo(s.minOrderNaira) : null,
     maxItems: s.maxItemsPerOrder ?? null,
+    verified: isVerified(s.verified),
   };
 }
 

@@ -6,6 +6,8 @@ import { formatKobo } from "@/lib/money";
 import { placeHref } from "@/lib/shop/paths";
 import type { ShopKitchen, Side } from "@/lib/shop/types";
 
+import { VerifiedBadge } from "./VerifiedBadge";
+
 /** A kitchen in the grid. A closed kitchen stays visible, dimmed and labelled,
  *  because "where did Terkimbi's go?" is worse than "closed until 11". */
 export function ShopKitchenCard({
@@ -53,7 +55,10 @@ export function ShopKitchenCard({
       </div>
 
       <div className="px-lg pt-xl pb-lg">
-        <div className="text-site-title">{kitchen.name}</div>
+        <div className="gap-sm flex items-center">
+          <div className="text-site-title min-w-0 truncate">{kitchen.name}</div>
+          {kitchen.verified ? <VerifiedBadge vendor={kitchen.vendor} compact /> : null}
+        </div>
         <div className="text-site-label text-text-secondary mt-xs">
           {kitchen.cuisine} · {kitchen.area}
         </div>
