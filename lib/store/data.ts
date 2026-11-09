@@ -7,6 +7,7 @@ import { cache } from "react";
 import { ApiError, api, type Schemas } from "@/lib/api/client";
 import { SCOPES } from "@/lib/api/scopes";
 import type { Earnings, KitchenOrder, MenuSection, Payout, StaffRole } from "@/lib/kitchen/types";
+import { initialCategoryIds } from "@/lib/categories";
 import { nairaToKobo } from "@/lib/money";
 import { getPartner } from "@/lib/partners/data";
 
@@ -107,6 +108,7 @@ export async function getStoreSections(): Promise<MenuSection[]> {
           priceKobo: nairaToKobo(p.priceNaira),
           imageUrl: p.imageUrl ?? null,
           unit: p.unit ?? "",
+          categoryIds: initialCategoryIds((p as { categories?: { id: string }[] }).categories),
           soldOut: p.isSoldOut,
           flag: p.flaggedAt
             ? {
