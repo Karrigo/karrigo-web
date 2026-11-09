@@ -13,6 +13,7 @@ import {
   type QueueStatus,
 } from "@/lib/admin/queue";
 import { say } from "@/lib/admin/store";
+import { VERIFIED_FILTERS, verifiedParam, type VerifiedFilter } from "@/lib/admin/verified";
 import {
   declineAppeal,
   payOut,
@@ -22,9 +23,9 @@ import {
   setStoreStatus,
 } from "@/app/(admin)/admin/queue-actions";
 import type { AdminRole } from "@/lib/admin/types";
-import { CountTab, EmptyState, StatusChip, type Tone } from "@/components/admin/ui";
+import { CountTab, EmptyState, LinkTab, StatusChip, type Tone } from "@/components/admin/ui";
 
-import { QueueDetail } from "./QueueDetail";
+import { QueueDetail, VerifiedBadge } from "./QueueDetail";
 
 const TONE: Record<QueueStatus, Tone> = {
   PENDING: "warning",
@@ -43,10 +44,13 @@ export function ReviewQueue({
   kind,
   role,
   items,
+  verified = "all",
 }: {
   kind: QueueKind;
   role: AdminRole;
   items: QueueItem[];
+  /** Kitchens and stores: which verified filter the page was loaded with. */
+  verified?: VerifiedFilter;
 }) {
   const [busy, startTransition] = useTransition();
 
@@ -106,6 +110,23 @@ export function ReviewQueue({
           ))}
         </div>
 
+        {kind !== "riders" && (
+          <div className="border-text/6 flex flex-wrap items-center gap-2 border-b px-lg py-3">
+            <span className="text-text/55 text-[12px] font-light">Verified</span>
+            {VERIFIED_FILTERS.map(({ key, label }) => {
+              const param = verifiedParam(key);
+              return (
+                <LinkTab
+                  key={key}
+                  href={`/${kind}${param ? `?verified=${param}` : ""}`}
+                  label={label}
+                  selected={verified === key}
+                />
+              );
+            })}
+          </div>
+        )}
+
         {list.length === 0 ? (
           <EmptyState
             title={`No ${tabs
@@ -127,8 +148,9 @@ export function ReviewQueue({
                 )}
               >
                 <span className="flex min-w-0 flex-col gap-1">
-                  <span className="text-text truncate text-[14px] font-semibold">
-                    {item.title}
+                  <span className="text-text flex items-center gap-1.5 text-[14px] font-semibold">
+                    <span className="truncate">{item.title}</span>
+                    {item.verified && <VerifiedBadge />}
                   </span>
                   <span className="text-text/55 truncate text-[12px] font-light">
                     {item.sub}

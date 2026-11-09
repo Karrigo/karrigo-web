@@ -14,8 +14,14 @@ const rows = ["a", "b", "c"].map((name) => ({
 }));
 
 mock.module("next/cache", () => ({ revalidatePath: (path: string) => revalidated.push(path) }));
-mock.module("@/lib/admin/session", () => ({ requireSuperAdmin: async () => ({ role: "SUPER_ADMIN" }) }));
+mock.module("@/lib/admin/session", () => ({
+  // Bun module mocks are process-wide and fix their export names on first use.
+  requireAdmin: async () => ({ role: "SUPER_ADMIN" }),
+  requireSuperAdmin: async () => ({ role: "SUPER_ADMIN" }),
+}));
 mock.module("@/lib/api/client", () => ({
+  // Bun module mocks are process-wide: other action files import ApiError from here.
+  ApiError: class ApiError extends Error {},
   api: async (path: string, options: { method?: string } = {}) => {
     if (options.method === "PATCH") {
       patched.push(path);

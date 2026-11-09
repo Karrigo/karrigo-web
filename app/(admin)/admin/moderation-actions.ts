@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { ApiError, api, type Schemas } from "@/lib/api/client";
-import { requireAdmin } from "@/lib/admin/session";
+import { requireAdmin, requireSuperAdmin } from "@/lib/admin/session";
 import { nairaToKobo } from "@/lib/money";
 
 import type { ActionResult } from "./queue-actions";
@@ -19,6 +19,27 @@ async function attempt(work: () => Promise<string>): Promise<ActionResult> {
     const message = await work();
     revalidatePath("/admin", "layout");
     return { ok: true, message };
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+/* -------------------------------------------------------------- verified */
+
+/** Sets or clears the "verified" label on a kitchen or store. Super admin only:
+ *  the backend refuses a moderator too (403), so this is the second lock. The
+ *  label is independent of status, and repeating the current state is a no-op. */
+export async function setVerified(kind: "kitchens" | "stores", id: string, verified: boolean): Promise<ActionResult> {
+  try {
+    await requireSuperAdmin();
+    await api(`/admin/${kind}/${encodeURIComponent(id)}/verified`, {
+      method: "PATCH",
+      scope: "admin",
+      body: { verified },
+    });
+    revalidatePath("/admin", "layout");
+    const noun = kind === "kitchens" ? "Kitchen" : "Store";
+    return { ok: true, message: verified ? `${noun} verified` : `${noun} verification removed` };
   } catch (error) {
     return fail(error);
   }

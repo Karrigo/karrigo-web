@@ -8,6 +8,7 @@
 import type { Schemas } from "@/lib/api/types";
 import { formatKobo, nairaToKobo } from "@/lib/money";
 import { whenLabel } from "./format";
+import { isVerified } from "./verified";
 import type { KitchenStatus, RiderStatus } from "./types";
 
 export type QueueKind = "kitchens" | "riders" | "stores";
@@ -41,6 +42,8 @@ export type QueueItem = {
   neverApproved: boolean;
   /** Ops has asked for the CAC certificate before approval. Kitchens and stores only. */
   requiresCac: boolean;
+  /** Carries the admin-verified label. Kitchens and stores only; independent of status. */
+  verified: boolean;
   fields: { key: string; value: string }[];
   checks: QueueCheck[];
   /** Owed to them, before anything is netted off. */
@@ -118,6 +121,7 @@ export function kitchenItem(
       : null,
     neverApproved: !kitchen.firstApprovedAt,
     requiresCac: kitchen.requiresCac,
+    verified: isVerified(kitchen),
     fields: [
       { key: "Area", value: area },
       { key: "Cuisine", value: cuisine },
@@ -169,6 +173,7 @@ export function riderItem(
     appealResponse: null,
     neverApproved: false,
     requiresCac: false,
+    verified: false,
     fields: [
       { key: "Phone", value: rider.user.phone },
       { key: "Vehicle", value: vehicle },
@@ -223,6 +228,7 @@ export function storeItem(
       : null,
     neverApproved: !store.firstApprovedAt,
     requiresCac: store.requiresCac,
+    verified: isVerified(detail),
     fields: [
       { key: "Area", value: area },
       { key: "Owner", value: ownerNames },
