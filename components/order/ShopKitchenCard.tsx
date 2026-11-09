@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { cn } from "@/lib/cn";
+import { formatOrderCount } from "@/lib/format-order-count";
 import { formatKobo } from "@/lib/money";
 import { placeHref } from "@/lib/shop/paths";
 import type { ShopKitchen, Side } from "@/lib/shop/types";
@@ -20,6 +21,7 @@ export function ShopKitchenCard({
   priority?: boolean;
 }) {
   const shut = !kitchen.open;
+  const ordersText = formatOrderCount(kitchen.completedOrdersCount);
 
   return (
     <Link
@@ -61,6 +63,7 @@ export function ShopKitchenCard({
         </div>
         <div className="text-site-label text-text-secondary mt-xs">
           {kitchen.cuisine} · {kitchen.area}
+          {ordersText ? ` · ${ordersText}` : ""}
         </div>
         {!shut && (
           <div className="text-site-chip text-text-secondary mt-md flex flex-wrap gap-x-md gap-y-xs font-semibold">

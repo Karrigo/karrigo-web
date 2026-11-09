@@ -18,7 +18,7 @@ function deliveryFromKobo(k: Schemas["KitchenResponseDto"]): number {
 /** The generated API types predate item categories; the backend sends `categories: {id, name, slug}[]` on dishes and products. */
 type WithCategories = { categories?: { name: string }[] };
 
-function kitchen(k: Schemas["KitchenResponseDto"], side: Side = "FOOD"): ShopKitchen {
+function kitchen(k: Schemas["KitchenResponseDto"] & { completedOrdersCount?: number }, side: Side = "FOOD"): ShopKitchen {
   return {
     id: k.id,
     vendor: "kitchen",
@@ -37,13 +37,14 @@ function kitchen(k: Schemas["KitchenResponseDto"], side: Side = "FOOD"): ShopKit
     minOrderKobo: k.minOrderNaira != null ? nairaToKobo(k.minOrderNaira) : null,
     maxItems: k.maxItemsPerOrder ?? null,
     verified: isVerified(k.verified),
+    completedOrdersCount: k.completedOrdersCount,
   };
 }
 
 /** A store, shown the way a kitchen is. It has no cuisine, rating or landmark
  *  of its own, so those read as a plain grocery store. The generated store
  *  type predates `verified`; the backend sends it (absent on older responses). */
-function store(s: Schemas["StorePublicResponseDto"] & { verified?: boolean }): ShopKitchen {
+function store(s: Schemas["StorePublicResponseDto"] & { verified?: boolean; completedOrdersCount?: number }): ShopKitchen {
   return {
     id: s.id,
     vendor: "store",
@@ -62,6 +63,7 @@ function store(s: Schemas["StorePublicResponseDto"] & { verified?: boolean }): S
     minOrderKobo: s.minOrderNaira != null ? nairaToKobo(s.minOrderNaira) : null,
     maxItems: s.maxItemsPerOrder ?? null,
     verified: isVerified(s.verified),
+    completedOrdersCount: s.completedOrdersCount,
   };
 }
 

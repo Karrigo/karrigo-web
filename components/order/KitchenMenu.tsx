@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Screen } from "@/components/ui/Screen";
 import { ButtonLink } from "@/components/ui/Button";
+import { formatOrderCount } from "@/lib/format-order-count";
 import { formatKobo } from "@/lib/money";
 import { addDish, cartCount, removeDish, useOrderState } from "@/lib/order/store";
 import { basketIssue } from "@/lib/shop/limits";
@@ -26,6 +27,7 @@ export function KitchenMenu({
   const inThisKitchen =
     cart?.kitchenSlug === menu.slug && cart.side === menu.side && (cart.vendor ?? "kitchen") === menu.vendor;
   const closed = !menu.open;
+  const ordersText = formatOrderCount(menu.completedOrdersCount);
 
   // The menu on this page is fresh from the server, so the sidebar is priced
   // from it directly — a dish that has since sold out is simply left out.
@@ -65,6 +67,7 @@ export function KitchenMenu({
             {menu.verified ? <VerifiedBadge vendor={menu.vendor} className="mt-sm self-start" /> : null}
             <p className="text-site-body text-cream/62 mt-sm">
               {menu.cuisine} · {menu.area}
+              {ordersText ? ` · ${ordersText}` : ""}
             </p>
             {menu.landmarkNote && <p className="text-site-label text-cream/50 mt-xs">{menu.landmarkNote}</p>}
             <div className="gap-xs text-site-chip text-cream mt-lg flex flex-wrap">

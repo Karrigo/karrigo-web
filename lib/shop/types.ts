@@ -54,6 +54,8 @@ export type ShopKitchen = {
   maxItems: number | null;
   /** Admin-verified label. False when the API did not say. */
   verified: boolean;
+  /** Delivered orders; absent on older API responses. Shown via formatOrderCount. */
+  completedOrdersCount?: number;
 };
 
 /** The two things a customer can order. A place serving both has a page for each. */
