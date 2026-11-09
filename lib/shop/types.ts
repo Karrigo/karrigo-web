@@ -12,6 +12,8 @@ export type ShopDish = {
   soldOut: boolean;
   imageUrl: string | null;
   tags: string[];
+  /** Names of the global categories the item is filed under; empty if none. */
+  categories: string[];
   /** How a grocery product is sold, "1 kg" or "pack of 6". Empty for food. */
   unit: string;
 };

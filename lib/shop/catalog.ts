@@ -2,6 +2,7 @@ import "server-only";
 
 import { api, ApiError, type Schemas } from "@/lib/api/client";
 import { DEFAULT_RIDER_BASE_FEE_NAIRA } from "@/lib/kitchen/types";
+import { categoryNames } from "@/lib/category-filter";
 import { nairaToKobo } from "@/lib/money";
 import type { PricedCart, ShopKitchen, ShopMenu, Side, Vendor } from "./types";
 
@@ -12,6 +13,9 @@ function deliveryFromKobo(k: Schemas["KitchenResponseDto"]): number {
   const base = k.riderBaseFeeNaira;
   return nairaToKobo(base != null && base > 0 ? base : DEFAULT_RIDER_BASE_FEE_NAIRA);
 }
+
+/** The generated API types predate item categories; the backend sends `categories: {id, name, slug}[]` on dishes and products. */
+type WithCategories = { categories?: { name: string }[] };
 
 function kitchen(k: Schemas["KitchenResponseDto"], side: Side = "FOOD"): ShopKitchen {
   return {
@@ -59,12 +63,12 @@ function store(s: Schemas["StorePublicResponseDto"]): ShopKitchen {
 
 /** Every request is live: a kitchen changes a price or sells out and the next
  *  page load shows it (CLAUDE.md rule 5). Nothing here is cached. */
-export async function listKitchens(side: Side = "FOOD"): Promise<ShopKitchen[]> {
+export async function listKitchens(side: Side = "FOOD", categoryId?: string): Promise<ShopKitchen[]> {
   // Groceries come from kitchens that stock them and from stores, which are
   // separate businesses with their own list. Food is kitchens only.
   const [rows, stores] = await Promise.all([
-    api<Schemas["KitchenResponseDto"][]>("/kitchens", { query: { type: side } }),
-    side === "GROCERY" ? api<Schemas["StorePublicResponseDto"][]>("/stores") : Promise.resolve([]),
+    api<Schemas["KitchenResponseDto"][]>("/kitchens", { query: { type: side, categoryId } }),
+    side === "GROCERY" ? api<Schemas["StorePublicResponseDto"][]>("/stores", { query: { categoryId } }) : Promise.resolve([]),
   ]);
   // Open places first; closed ones stay visible below, never hidden.
   return [...rows.map((k) => kitchen(k, side)), ...stores.map(store)].sort(
@@ -91,6 +95,7 @@ export async function getStoreMenu(slug: string): Promise<ShopMenu | null> {
           soldOut: p.isSoldOut,
           imageUrl: p.imageUrl ?? null,
           tags: [],
+          categories: categoryNames((p as WithCategories).categories),
           unit: p.unit ?? "",
         })),
       })),
@@ -125,6 +130,7 @@ export async function getKitchenMenu(slug: string, side: Side = "FOOD"): Promise
               soldOut: i.isSoldOut,
               imageUrl: i.imageUrl ?? null,
               tags: (i.tags ?? []).map((t) => t.label),
+              categories: categoryNames((i as WithCategories).categories),
               unit: i.unit ?? "",
             })),
         })),

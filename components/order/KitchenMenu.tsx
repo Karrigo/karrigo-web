@@ -137,6 +137,15 @@ export function KitchenMenu({
                       <div className={cn("min-w-0 flex-1", dish.soldOut && "opacity-50")}>
                         <div className="text-site-question">{dish.name}</div>
                         {dish.unit && <div className="text-site-label text-text-secondary mt-xs">{dish.unit}</div>}
+                        {dish.categories.length > 0 && (
+                          <div className="gap-xs mt-xs flex flex-wrap">
+                            {dish.categories.map((name) => (
+                              <span key={name} className="bg-surface-raised rounded-pill text-site-label text-text-secondary px-sm font-semibold">
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         {dish.description && (
                           <div className="text-site-label text-text-secondary mt-xs">{dish.description}</div>
                         )}
