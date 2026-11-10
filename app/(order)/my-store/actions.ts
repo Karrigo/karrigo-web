@@ -117,7 +117,7 @@ export async function removeStoreSection(id: string): Promise<Done> {
   }
 }
 
-type ProductInput = { sectionId: string; name: string; description: string; priceNaira: number; unit: string };
+type ProductInput = { sectionId: string; name: string; description: string; priceNaira: number; unit: string; categoryIds?: string[] };
 
 /** Returns the new product's id, so its photo can be attached straight after. */
 export async function addStoreProduct(input: ProductInput): Promise<Failure | { ok: true; id: string }> {

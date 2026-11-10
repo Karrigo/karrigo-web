@@ -12,6 +12,7 @@ import {
   uploadStoreProductPhoto,
 } from "@/app/(order)/my-store/actions";
 import { MenuEditor, type MenuActions } from "@/components/kitchen/MenuEditor";
+import { getActiveCategories } from "@/lib/categories-data";
 import { getStoreSections, requireStoreOwner } from "@/lib/store/data";
 
 export const metadata: Metadata = { title: "Products · Your store · Karrigo" };
@@ -31,11 +32,12 @@ const actions: MenuActions = {
 
 export default async function StoreProductsPage() {
   const store = await requireStoreOwner();
-  const sections = await getStoreSections();
+  const [sections, categories] = await Promise.all([getStoreSections(), getActiveCategories()]);
   return (
     <MenuEditor
       kitchenName={store.name}
       sections={sections}
+      categories={categories}
       servesFood={false}
       servesGrocery
       actions={actions}

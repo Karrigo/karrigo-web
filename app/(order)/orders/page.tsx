@@ -32,11 +32,28 @@ const when = new Intl.DateTimeFormat("en-GB", {
 
 export default async function OrdersPage() {
   if (!(await getCustomer())) redirect("/login?next=/orders");
-  const orders = await api<Schemas["OrderWithDetailsResponseDto"][]>("/orders", { scope: "customer" });
+  const [mine, incoming] = await Promise.all([
+    api<Schemas["OrderWithDetailsResponseDto"][]>("/orders", { scope: "customer" }),
+    // Orders other people sent to this customer. Never let a failure here hide their own.
+    api<Schemas["OrderWithDetailsResponseDto"][]>("/orders/incoming", { scope: "customer" }).catch(() => []),
+  ]);
+  const orders = [...mine, ...incoming].sort((a, b) => b.placedAt.localeCompare(a.placedAt));
+  const giftNote = (o: Schemas["OrderWithDetailsResponseDto"]): string | null => {
+    const g = o as unknown as { isGift?: boolean; senderDisplayName?: string | null; recipientDisplayName?: string | null };
+    if (!g.isGift) return null;
+    return g.senderDisplayName !== undefined
+      ? `From ${g.senderDisplayName ?? "a friend"}`
+      : `Sent to ${g.recipientDisplayName ?? "a friend"}`;
+  };
 
   return (
     <div className="mx-auto max-w-[760px]">
-      <h1 className="text-section-small md:text-section mt-sm mb-xl">My orders</h1>
+      <h1 className="text-section-small md:text-section mt-sm mb-md">My orders</h1>
+      <p className="text-site-label mb-xl">
+        <Link href="/account" className="text-accent-text font-bold">
+          Your tag &amp; who can send you orders
+        </Link>
+      </p>
 
       {orders.length === 0 ? (
         <div className="bg-bg rounded-panel-sm px-xl py-[48px] text-center">
@@ -59,7 +76,7 @@ export default async function OrdersPage() {
                     {[...o.kitchenOrders.map((k) => k.kitchen.name), ...o.storeOrders.map((s) => s.store.name)].join(" + ")}
                   </span>
                   <span className="text-site-label text-text-secondary mt-xs block">
-                    {o.code} · {when.format(new Date(o.placedAt))} · {LABEL[o.status]}
+                    {giftNote(o) ? `${giftNote(o)} · ` : ""}{o.code} · {when.format(new Date(o.placedAt))} · {LABEL[o.status]}
                   </span>
                 </span>
                 <span className="text-site-body shrink-0 font-bold">{formatKobo(nairaToKobo(o.totalNaira))}</span>

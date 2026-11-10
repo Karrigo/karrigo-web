@@ -2,9 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { cn } from "@/lib/cn";
+import { formatOrderCount } from "@/lib/format-order-count";
 import { formatKobo } from "@/lib/money";
 import { placeHref } from "@/lib/shop/paths";
 import type { ShopKitchen, Side } from "@/lib/shop/types";
+
+import { VerifiedBadge } from "./VerifiedBadge";
 
 /** A kitchen in the grid. A closed kitchen stays visible, dimmed and labelled,
  *  because "where did Terkimbi's go?" is worse than "closed until 11". */
@@ -18,6 +21,7 @@ export function ShopKitchenCard({
   priority?: boolean;
 }) {
   const shut = !kitchen.open;
+  const ordersText = formatOrderCount(kitchen.completedOrdersCount);
 
   return (
     <Link
@@ -53,9 +57,13 @@ export function ShopKitchenCard({
       </div>
 
       <div className="px-lg pt-xl pb-lg">
-        <div className="text-site-title">{kitchen.name}</div>
+        <div className="gap-sm flex items-center">
+          <div className="text-site-title min-w-0 truncate">{kitchen.name}</div>
+          {kitchen.verified ? <VerifiedBadge vendor={kitchen.vendor} compact /> : null}
+        </div>
         <div className="text-site-label text-text-secondary mt-xs">
           {kitchen.cuisine} · {kitchen.area}
+          {ordersText ? ` · ${ordersText}` : ""}
         </div>
         {!shut && (
           <div className="text-site-chip text-text-secondary mt-md flex flex-wrap gap-x-md gap-y-xs font-semibold">

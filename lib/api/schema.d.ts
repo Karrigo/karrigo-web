@@ -3566,6 +3566,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Active categories ordered by sortOrder then name. `type` (FOOD or GROCERY) filters; omit for both. No auth. */
+        get: operations["CategoriesController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every category including deactivated ones. `?type=` filters. Any admin role. */
+        get: operations["AdminCategoriesController_list"];
+        put?: never;
+        /** Create a category. Names are unique per type, ignoring case. SUPER_ADMIN only. Writes an AuditLog row. */
+        post: operations["AdminCategoriesController_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/admin/categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Rename, reorder, or (de)activate a category. Categories are never deleted. SUPER_ADMIN only. Writes an AuditLog row. */
+        patch: operations["AdminCategoriesController_update"];
+        trace?: never;
+    };
+    "/v1/admin/kitchens/{id}/verified": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set or clear the "verified" label on a kitchen, whatever its status (a SUSPENDED kitchen can be verified; status is never touched). No-op if already in that state. SUPER_ADMIN only. Writes an AuditLog row with before and after. */
+        patch: operations["AdminController_setKitchenVerified"];
+        trace?: never;
+    };
+    "/v1/admin/stores/{id}/verified": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set or clear the "verified" label on a store, whatever its status (a SUSPENDED store can be verified; status is never touched). No-op if already in that state. SUPER_ADMIN only. Writes an AuditLog row with before and after. */
+        patch: operations["AdminStoresController_setStoreVerified"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3746,6 +3832,8 @@ export interface components {
             requiresCac: boolean;
             /** Format: date-time */
             reviewedAt: string | null;
+            /** @description Admin-verified label; independent of status. */
+            verified: boolean;
             payoutBankCode: string | null;
             payoutAccountNumber: string | null;
             payoutAccountName: string | null;
@@ -3875,6 +3963,8 @@ export interface components {
             requiresCac: boolean;
             /** Format: date-time */
             reviewedAt: string | null;
+            /** @description Admin-verified label; independent of status. */
+            verified: boolean;
             payoutBankCode: string | null;
             payoutAccountNumber: string | null;
             payoutAccountName: string | null;
@@ -4421,6 +4511,8 @@ export interface components {
             requiresCac: boolean;
             /** Format: date-time */
             reviewedAt: string | null;
+            /** @description Admin-verified label; independent of status. */
+            verified: boolean;
             payoutBankCode: string | null;
             payoutAccountNumber: string | null;
             payoutAccountName: string | null;
@@ -5783,6 +5875,8 @@ export interface components {
             requiresCac: boolean;
             /** Format: date-time */
             reviewedAt: string | null;
+            /** @description Admin-verified label; independent of status. */
+            verified: boolean;
             payoutBankCode: string | null;
             payoutAccountNumber: string | null;
             payoutAccountName: string | null;
@@ -5893,6 +5987,8 @@ export interface components {
             requiresCac: boolean;
             /** Format: date-time */
             reviewedAt: string | null;
+            /** @description Admin-verified label; independent of status. */
+            verified: boolean;
             payoutBankCode: string | null;
             payoutAccountNumber: string | null;
             payoutAccountName: string | null;
@@ -6631,6 +6727,54 @@ export interface components {
         };
         ReportProblemDto: {
             reason: string;
+        };
+        ItemCategoryDto: {
+            id: string;
+            name: string;
+            slug: string;
+        };
+        CategoryResponseDto: {
+            id: string;
+            /** @example Soups */
+            name: string;
+            /** @example soups */
+            slug: string;
+            /** @enum {string} */
+            type: "FOOD" | "GROCERY";
+            sortOrder: number;
+        };
+        AdminCategoryResponseDto: {
+            id: string;
+            /** @example Soups */
+            name: string;
+            /** @example soups */
+            slug: string;
+            /** @enum {string} */
+            type: "FOOD" | "GROCERY";
+            sortOrder: number;
+            isActive: boolean;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        CreateCategoryDto: {
+            /** @example Soups */
+            name: string;
+            /**
+             * @description FOOD for dishes, GROCERY for store products.
+             * @enum {string}
+             */
+            type: "FOOD" | "GROCERY";
+            /** @default 0 */
+            sortOrder: number;
+        };
+        UpdateCategoryDto: {
+            name?: string;
+            sortOrder?: number;
+            /** @description false deactivates; rows are never deleted. */
+            isActive?: boolean;
+        };
+        UpdateVerifiedDto: {
+            verified: boolean;
         };
     };
     responses: never;
@@ -9987,6 +10131,8 @@ export interface operations {
                 type?: "FOOD" | "GROCERY";
                 /** @description Matches part of the kitchen name, slug, or area. */
                 q?: string;
+                /** @description true: only verified; false: only unverified. Omit for both. */
+                verified?: boolean;
             };
             header?: never;
             path?: never;
@@ -11893,6 +12039,8 @@ export interface operations {
                 status?: "ACTIVE" | "SUSPENDED" | "PENDING";
                 /** @description Matches part of the store name, slug, or area. */
                 q?: string;
+                /** @description true: only verified; false: only unverified. Omit for both. */
+                verified?: boolean;
             };
             header?: never;
             path?: never;
@@ -15183,6 +15331,264 @@ export interface operations {
                 content?: never;
             };
             /** @description Order doesn't exist or isn't assigned to this rider. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    CategoriesController_list: {
+        parameters: {
+            query?: {
+                /** @description Defaults to FOOD. */
+                type?: "FOOD" | "GROCERY";
+                /** @description Only vendors with at least one item in this category. An unknown id returns an empty list. */
+                categoryId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryResponseDto"][];
+                };
+            };
+        };
+    };
+    AdminCategoriesController_list: {
+        parameters: {
+            query?: {
+                /** @description Defaults to FOOD. */
+                type?: "FOOD" | "GROCERY";
+                /** @description Only vendors with at least one item in this category. An unknown id returns an empty list. */
+                categoryId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryResponseDto"][];
+                };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminCategoriesController_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCategoryDto"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryResponseDto"];
+                };
+            };
+            /** @description Validation failed. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requires SUPER_ADMIN. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description A category with this name already exists. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminCategoriesController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCategoryDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryResponseDto"];
+                };
+            };
+            /** @description Validation failed. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requires SUPER_ADMIN. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Category not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description A category with this name already exists. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminController_setKitchenVerified: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateVerifiedDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KitchenResponseDto"];
+                };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requires SUPER_ADMIN. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Kitchen not found. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    AdminStoresController_setStoreVerified: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateVerifiedDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreResponseDto"];
+                };
+            };
+            /** @description Missing or invalid admin access token. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Requires SUPER_ADMIN. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Store not found. */
             404: {
                 headers: {
                     [name: string]: unknown;

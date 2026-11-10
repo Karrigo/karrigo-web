@@ -30,6 +30,7 @@ export const OPS_NAV: OpsSection[] = [
   { href: "/reviews", label: "Reviews" },
   { href: "/promos", label: "Promo codes" },
   { href: "/areas", label: "Areas" },
+  { href: "/categories", label: "Categories" },
   { href: "/team", label: "Team" },
   { href: "/audit", label: "Audit log" },
 ];

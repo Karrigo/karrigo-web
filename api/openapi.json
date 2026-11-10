@@ -3921,6 +3921,15 @@
               "maxLength": 64,
               "type": "string"
             }
+          },
+          {
+            "name": "verified",
+            "required": false,
+            "in": "query",
+            "description": "true: only verified; false: only unverified. Omit for both.",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -6750,6 +6759,15 @@
             "schema": {
               "maxLength": 64,
               "type": "string"
+            }
+          },
+          {
+            "name": "verified",
+            "required": false,
+            "in": "query",
+            "description": "true: only verified; false: only unverified. Omit for both.",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -10406,6 +10424,328 @@
           "Riders"
         ]
       }
+    },
+    "/v1/categories": {
+      "get": {
+        "operationId": "CategoriesController_list",
+        "parameters": [
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Defaults to FOOD.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "FOOD",
+                "GROCERY"
+              ]
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "Only vendors with at least one item in this category. An unknown id returns an empty list.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryResponseDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Active categories ordered by sortOrder then name. `type` (FOOD or GROCERY) filters; omit for both. No auth.",
+        "tags": [
+          "Categories (public)"
+        ]
+      }
+    },
+    "/v1/admin/categories": {
+      "get": {
+        "operationId": "AdminCategoriesController_list",
+        "parameters": [
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "description": "Defaults to FOOD.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "FOOD",
+                "GROCERY"
+              ]
+            }
+          },
+          {
+            "name": "categoryId",
+            "required": false,
+            "in": "query",
+            "description": "Only vendors with at least one item in this category. An unknown id returns an empty list.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminCategoryResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Every category including deactivated ones. `?type=` filters. Any admin role.",
+        "tags": [
+          "Admin — Categories"
+        ]
+      },
+      "post": {
+        "operationId": "AdminCategoriesController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCategoryResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          },
+          "403": {
+            "description": "Requires SUPER_ADMIN."
+          },
+          "409": {
+            "description": "A category with this name already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a category. Names are unique per type, ignoring case. SUPER_ADMIN only. Writes an AuditLog row.",
+        "tags": [
+          "Admin — Categories"
+        ]
+      }
+    },
+    "/v1/admin/categories/{id}": {
+      "patch": {
+        "operationId": "AdminCategoriesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminCategoryResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed."
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          },
+          "403": {
+            "description": "Requires SUPER_ADMIN."
+          },
+          "404": {
+            "description": "Category not found."
+          },
+          "409": {
+            "description": "A category with this name already exists."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename, reorder, or (de)activate a category. Categories are never deleted. SUPER_ADMIN only. Writes an AuditLog row.",
+        "tags": [
+          "Admin — Categories"
+        ]
+      }
+    },
+    "/v1/admin/kitchens/{id}/verified": {
+      "patch": {
+        "operationId": "AdminController_setKitchenVerified",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVerifiedDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitchenResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          },
+          "403": {
+            "description": "Requires SUPER_ADMIN."
+          },
+          "404": {
+            "description": "Kitchen not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set or clear the \"verified\" label on a kitchen, whatever its status (a SUSPENDED kitchen can be verified; status is never touched). No-op if already in that state. SUPER_ADMIN only. Writes an AuditLog row with before and after.",
+        "tags": [
+          "Admin"
+        ]
+      }
+    },
+    "/v1/admin/stores/{id}/verified": {
+      "patch": {
+        "operationId": "AdminStoresController_setStoreVerified",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateVerifiedDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid admin access token."
+          },
+          "403": {
+            "description": "Requires SUPER_ADMIN."
+          },
+          "404": {
+            "description": "Store not found."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set or clear the \"verified\" label on a store, whatever its status (a SUSPENDED store can be verified; status is never touched). No-op if already in that state. SUPER_ADMIN only. Writes an AuditLog row with before and after.",
+        "tags": [
+          "Admin — Stores"
+        ]
+      }
     }
   },
   "info": {
@@ -11045,6 +11385,10 @@
             "type": "string",
             "nullable": true
           },
+          "verified": {
+            "type": "boolean",
+            "description": "Admin-verified label; independent of status."
+          },
           "payoutBankCode": {
             "type": "string",
             "nullable": true
@@ -11129,6 +11473,7 @@
           "ownerName",
           "requiresCac",
           "reviewedAt",
+          "verified",
           "payoutBankCode",
           "payoutAccountNumber",
           "payoutAccountName",
@@ -11496,6 +11841,10 @@
             "type": "string",
             "nullable": true
           },
+          "verified": {
+            "type": "boolean",
+            "description": "Admin-verified label; independent of status."
+          },
           "payoutBankCode": {
             "type": "string",
             "nullable": true
@@ -11541,6 +11890,7 @@
           "ownerName",
           "requiresCac",
           "reviewedAt",
+          "verified",
           "payoutBankCode",
           "payoutAccountNumber",
           "payoutAccountName",
@@ -13495,6 +13845,10 @@
             "type": "string",
             "nullable": true
           },
+          "verified": {
+            "type": "boolean",
+            "description": "Admin-verified label; independent of status."
+          },
           "payoutBankCode": {
             "type": "string",
             "nullable": true
@@ -13610,6 +13964,7 @@
           "ownerName",
           "requiresCac",
           "reviewedAt",
+          "verified",
           "payoutBankCode",
           "payoutAccountNumber",
           "payoutAccountName",
@@ -18605,6 +18960,10 @@
             "type": "string",
             "nullable": true
           },
+          "verified": {
+            "type": "boolean",
+            "description": "Admin-verified label; independent of status."
+          },
           "payoutBankCode": {
             "type": "string",
             "nullable": true
@@ -18692,6 +19051,7 @@
           "ownerName",
           "requiresCac",
           "reviewedAt",
+          "verified",
           "payoutBankCode",
           "payoutAccountNumber",
           "payoutAccountName",
@@ -19016,6 +19376,10 @@
             "type": "string",
             "nullable": true
           },
+          "verified": {
+            "type": "boolean",
+            "description": "Admin-verified label; independent of status."
+          },
           "payoutBankCode": {
             "type": "string",
             "nullable": true
@@ -19106,6 +19470,7 @@
           "ownerName",
           "requiresCac",
           "reviewedAt",
+          "verified",
           "payoutBankCode",
           "payoutAccountNumber",
           "payoutAccountName",
@@ -21585,6 +21950,155 @@
         },
         "required": [
           "reason"
+        ]
+      },
+      "ItemCategoryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug"
+        ]
+      },
+      "CategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "Soups"
+          },
+          "slug": {
+            "type": "string",
+            "example": "soups"
+          },
+          "type": {
+            "enum": [
+              "FOOD",
+              "GROCERY"
+            ],
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "type",
+          "sortOrder"
+        ]
+      },
+      "AdminCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "Soups"
+          },
+          "slug": {
+            "type": "string",
+            "example": "soups"
+          },
+          "type": {
+            "enum": [
+              "FOOD",
+              "GROCERY"
+            ],
+            "type": "string"
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "type",
+          "sortOrder",
+          "isActive",
+          "createdAt"
+        ]
+      },
+      "CreateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 40,
+            "example": "Soups"
+          },
+          "type": {
+            "enum": [
+              "FOOD",
+              "GROCERY"
+            ],
+            "type": "string",
+            "description": "FOOD for dishes, GROCERY for store products."
+          },
+          "sortOrder": {
+            "type": "number",
+            "default": 0
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ]
+      },
+      "UpdateCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 40
+          },
+          "sortOrder": {
+            "type": "number"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "false deactivates; rows are never deleted."
+          }
+        }
+      },
+      "UpdateVerifiedDto": {
+        "type": "object",
+        "properties": {
+          "verified": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "verified"
         ]
       }
     }

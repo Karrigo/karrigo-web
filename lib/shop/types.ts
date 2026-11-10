@@ -12,6 +12,8 @@ export type ShopDish = {
   soldOut: boolean;
   imageUrl: string | null;
   tags: string[];
+  /** Names of the global categories the item is filed under; empty if none. */
+  categories: string[];
   /** How a grocery product is sold, "1 kg" or "pack of 6". Empty for food. */
   unit: string;
 };
@@ -50,6 +52,10 @@ export type ShopKitchen = {
   /** A store's own rules, from the backend. Only applied to grocery orders. */
   minOrderKobo: number | null;
   maxItems: number | null;
+  /** Admin-verified label. False when the API did not say. */
+  verified: boolean;
+  /** Delivered orders; absent on older API responses. Shown via formatOrderCount. */
+  completedOrdersCount?: number;
 };
 
 /** The two things a customer can order. A place serving both has a page for each. */

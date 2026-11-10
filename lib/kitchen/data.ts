@@ -7,6 +7,7 @@ import { cache } from "react";
 import { ApiError, api, type Schemas } from "@/lib/api/client";
 import type { PhotoUpdateRequest } from "@/lib/photo-lock";
 import { SCOPES } from "@/lib/api/scopes";
+import { initialCategoryIds } from "@/lib/categories";
 import { nairaToKobo } from "@/lib/money";
 import { getPartner } from "@/lib/partners/data";
 import type { DayHours, Earnings, Kitchen, KitchenOrder, Payout, StaffProfile, Ticket } from "./types";
@@ -68,6 +69,8 @@ export const getKitchen = cache(async (): Promise<Kitchen | null> => {
               priceKobo: nairaToKobo(i.priceNaira),
               imageUrl: i.imageUrl ?? null,
               unit: i.unit ?? "",
+              // Older generated types predate `categories`; an old server omits it.
+              categoryIds: initialCategoryIds((i as { categories?: { id: string }[] }).categories),
               soldOut: i.isSoldOut,
               flag: i.flaggedAt
                 ? {

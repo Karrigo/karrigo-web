@@ -2,7 +2,9 @@ import "server-only";
 
 import { api, ApiError, type Schemas } from "@/lib/api/client";
 import { DEFAULT_RIDER_BASE_FEE_NAIRA } from "@/lib/kitchen/types";
+import { categoryNames } from "@/lib/category-filter";
 import { nairaToKobo } from "@/lib/money";
+import { isVerified } from "./verified";
 import type { PricedCart, ShopKitchen, ShopMenu, Side, Vendor } from "./types";
 
 /** Delivery = rider pay = max(base fee, km x per-km rate), worked out by the
@@ -13,7 +15,10 @@ function deliveryFromKobo(k: Schemas["KitchenResponseDto"]): number {
   return nairaToKobo(base != null && base > 0 ? base : DEFAULT_RIDER_BASE_FEE_NAIRA);
 }
 
-function kitchen(k: Schemas["KitchenResponseDto"], side: Side = "FOOD"): ShopKitchen {
+/** The generated API types predate item categories; the backend sends `categories: {id, name, slug}[]` on dishes and products. */
+type WithCategories = { categories?: { name: string }[] };
+
+function kitchen(k: Schemas["KitchenResponseDto"] & { completedOrdersCount?: number }, side: Side = "FOOD"): ShopKitchen {
   return {
     id: k.id,
     vendor: "kitchen",
@@ -31,12 +36,15 @@ function kitchen(k: Schemas["KitchenResponseDto"], side: Side = "FOOD"): ShopKit
     ratingsCount: k.ratingsCount,
     minOrderKobo: k.minOrderNaira != null ? nairaToKobo(k.minOrderNaira) : null,
     maxItems: k.maxItemsPerOrder ?? null,
+    verified: isVerified(k.verified),
+    completedOrdersCount: k.completedOrdersCount,
   };
 }
 
 /** A store, shown the way a kitchen is. It has no cuisine, rating or landmark
- *  of its own, so those read as a plain grocery store. */
-function store(s: Schemas["StorePublicResponseDto"]): ShopKitchen {
+ *  of its own, so those read as a plain grocery store. The generated store
+ *  type predates `verified`; the backend sends it (absent on older responses). */
+function store(s: Schemas["StorePublicResponseDto"] & { verified?: boolean; completedOrdersCount?: number }): ShopKitchen {
   return {
     id: s.id,
     vendor: "store",
@@ -54,17 +62,19 @@ function store(s: Schemas["StorePublicResponseDto"]): ShopKitchen {
     ratingsCount: 0,
     minOrderKobo: s.minOrderNaira != null ? nairaToKobo(s.minOrderNaira) : null,
     maxItems: s.maxItemsPerOrder ?? null,
+    verified: isVerified(s.verified),
+    completedOrdersCount: s.completedOrdersCount,
   };
 }
 
 /** Every request is live: a kitchen changes a price or sells out and the next
  *  page load shows it (CLAUDE.md rule 5). Nothing here is cached. */
-export async function listKitchens(side: Side = "FOOD"): Promise<ShopKitchen[]> {
+export async function listKitchens(side: Side = "FOOD", categoryId?: string): Promise<ShopKitchen[]> {
   // Groceries come from kitchens that stock them and from stores, which are
   // separate businesses with their own list. Food is kitchens only.
   const [rows, stores] = await Promise.all([
-    api<Schemas["KitchenResponseDto"][]>("/kitchens", { query: { type: side } }),
-    side === "GROCERY" ? api<Schemas["StorePublicResponseDto"][]>("/stores") : Promise.resolve([]),
+    api<Schemas["KitchenResponseDto"][]>("/kitchens", { query: { type: side, categoryId } }),
+    side === "GROCERY" ? api<Schemas["StorePublicResponseDto"][]>("/stores", { query: { categoryId } }) : Promise.resolve([]),
   ]);
   // Open places first; closed ones stay visible below, never hidden.
   return [...rows.map((k) => kitchen(k, side)), ...stores.map(store)].sort(
@@ -91,6 +101,7 @@ export async function getStoreMenu(slug: string): Promise<ShopMenu | null> {
           soldOut: p.isSoldOut,
           imageUrl: p.imageUrl ?? null,
           tags: [],
+          categories: categoryNames((p as WithCategories).categories),
           unit: p.unit ?? "",
         })),
       })),
@@ -125,6 +136,7 @@ export async function getKitchenMenu(slug: string, side: Side = "FOOD"): Promise
               soldOut: i.isSoldOut,
               imageUrl: i.imageUrl ?? null,
               tags: (i.tags ?? []).map((t) => t.label),
+              categories: categoryNames((i as WithCategories).categories),
               unit: i.unit ?? "",
             })),
         })),

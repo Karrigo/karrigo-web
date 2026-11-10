@@ -38,6 +38,23 @@ function failure(error: unknown, fallback = "That didn't go through. Try again."
 
 /* ------------------------------------------------------------------ auth */
 
+
+const RIDER_MESSAGE =
+  "Riders sign in on the Karrigo Partner app. The website is for customers and kitchens.";
+
+/**
+ * Riders only have the partner app (a shareholder decision), so a rider's
+ * phone and password must never open a website session. The API signs them in
+ * like anyone else, so after sign-in we look at the role and, for a rider,
+ * revoke the session we just stored.
+ */
+async function refuseRider(): Promise<boolean> {
+  const me = await api<{ role?: string }>("/auth/me", { scope: "customer" });
+  if (me.role !== "RIDER") return false;
+  await logOut();
+  return true;
+}
+
 export async function logIn(phone: string, password: string): Promise<Done<{ needsOtp?: boolean }>> {
   try {
     const tokens = await api<Schemas["TokenPairResponseDto"]>("/auth/login", {
@@ -45,6 +62,7 @@ export async function logIn(phone: string, password: string): Promise<Done<{ nee
       body: { phone: e164(phone), password },
     });
     await storeTokens("customer", tokens);
+    if (await refuseRider()) return { ok: false, error: RIDER_MESSAGE };
     return { ok: true };
   } catch (error) {
     if (error instanceof ApiError && error.status === 401 && error.body.passwordNotSet) {
@@ -105,6 +123,7 @@ export async function verifyAndSetPassword(input: {
       body: { setupToken: verified.setupToken, password: input.password },
     });
     await storeTokens("customer", tokens);
+    if (await refuseRider()) return { ok: false, error: RIDER_MESSAGE };
 
     if (input.name?.trim()) {
       // A name that fails to save must not undo a successful signup.
@@ -118,6 +137,67 @@ export async function verifyAndSetPassword(input: {
       return { ok: false, error: "That code didn't work, or it has expired. Check it or ask for a new one." };
     }
     return failure(error);
+  }
+}
+
+/* ------------------------------------------------------------- gift tag */
+
+export type GiftRecipient = { tag: string; displayName: string | null; avatarUrl: string | null };
+
+/** Who a tag belongs to, for the "Sending to …" line. Name and avatar only. */
+export async function lookupRecipient(tag: string): Promise<Done<{ recipient: GiftRecipient }>> {
+  const clean = tag.trim().replace(/^@+/, "").toLowerCase();
+  if (!/^[a-z0-9_]{3,20}$/.test(clean)) {
+    return { ok: false, error: "Tags are 3–20 letters, numbers or underscores." };
+  }
+  try {
+    const recipient = await api<GiftRecipient>(`/users/by-tag/${encodeURIComponent(clean)}`, { scope: "customer" });
+    return { ok: true, recipient };
+  } catch (error) {
+    return failure(error, "We couldn't find that person. Check the tag and try again.");
+  }
+}
+
+export type TagSettings = { tag: string | null; allowOrdersFromOthers: boolean };
+
+export async function getTagSettings(): Promise<TagSettings | { error: string; message?: string }> {
+  try {
+    const [me, settings] = await Promise.all([
+      api<{ tag?: string | null }>("/auth/me", { scope: "customer" }),
+      api<{ allowOrdersFromOthers: boolean }>("/users/me/settings", { scope: "customer" }),
+    ]);
+    return { tag: me.tag ?? null, allowOrdersFromOthers: settings.allowOrdersFromOthers };
+  } catch (error) {
+    // The page only says it couldn't load; the reason belongs in the server log.
+    const reason = error instanceof ApiError ? `${error.status} ${error.message}` : String(error);
+    console.warn("[getTagSettings] failed:", reason);
+    // Tags belong to customer accounts; a rider account is refused by the API.
+    if (error instanceof ApiError && error.status === 403) {
+      return { error: reason, message: "Tags are only available on customer accounts, and this account is a rider account. Log in with a customer account to set one." };
+    }
+    return { error: reason };
+  }
+}
+
+export async function saveTag(tag: string): Promise<Done<{ tag: string }>> {
+  try {
+    const saved = await api<{ tag: string }>("/users/me/tag", {
+      method: "PUT",
+      scope: "customer",
+      body: { tag: tag.trim().replace(/^@+/, "") },
+    });
+    return { ok: true, tag: saved.tag };
+  } catch (error) {
+    return failure(error, "We couldn't save your tag. Try again.");
+  }
+}
+
+export async function setAllowOrdersFromOthers(allow: boolean): Promise<Done> {
+  try {
+    await api("/users/me/settings", { method: "PATCH", scope: "customer", body: { allowOrdersFromOthers: allow } });
+    return { ok: true };
+  } catch (error) {
+    return failure(error, "We couldn't update that. Try again.");
   }
 }
 
@@ -213,6 +293,9 @@ export type PlaceInput = {
   promoCode?: string;
   /** From the browser's location, when they chose to share it. */
   coords?: { lat: number; lng: number };
+  /** Sending to someone else: their tag. The server delivers to their saved address, so the address fields above are ignored. */
+  recipientTag?: string;
+  giftMessage?: string;
 };
 
 /** Where an address is, best answer first: what the customer shared or
@@ -287,31 +370,40 @@ export async function placeOrder(
       await api("/auth/me", { method: "PATCH", scope: "customer", body: { email } });
     }
 
-    const where = input.landmark.trim();
-    const street = input.address.trim();
-    const coordinates = await locate(input.coords, [
-      [street, input.area].filter(Boolean).join(", "),
-      [where, input.area].filter(Boolean).join(", "),
-    ]);
-    const normalizedArea = input.area.trim().toLowerCase();
-    const areaId = (await listAreas()).find(
-      (area) => area.name.trim().toLowerCase() === normalizedArea,
-    )?.id;
-    if (!coordinates && !areaId) {
-      return { ok: false, error: "Pick one of the listed delivery areas so we can place it on the map." };
+    // A gift goes to the recipient's own saved address, chosen by the server;
+    // nothing about where we'd deliver for ourselves is looked up or sent.
+    const recipientTag = input.recipientTag?.trim().replace(/^@+/, "").toLowerCase();
+    let addressId: string | undefined;
+    if (!recipientTag) {
+      const where = input.landmark.trim();
+      const street = input.address.trim();
+      const coordinates = await locate(input.coords, [
+        [street, input.area].filter(Boolean).join(", "),
+        [where, input.area].filter(Boolean).join(", "),
+      ]);
+      const normalizedArea = input.area.trim().toLowerCase();
+      const areaId = (await listAreas()).find(
+        (area) => area.name.trim().toLowerCase() === normalizedArea,
+      )?.id;
+      if (!coordinates && !areaId) {
+        return { ok: false, error: "Pick one of the listed delivery areas so we can place it on the map." };
+      }
+      addressId = await saveAddress({
+        line1: street || where,
+        area: input.area,
+        instructions: [where && street ? `Landmark: ${where}` : "", input.note.trim()].filter(Boolean).join(". ") || undefined,
+        ...(coordinates ?? { areaId: areaId! }),
+      });
     }
-    const addressId = await saveAddress({
-      line1: street || where,
-      area: input.area,
-      instructions: [where && street ? `Landmark: ${where}` : "", input.note.trim()].filter(Boolean).join(". ") || undefined,
-      ...(coordinates ?? { areaId: areaId! }),
-    });
 
+    const giftMessage = input.giftMessage?.trim();
     const order = await api<Schemas["OrderWithDetailsResponseDto"]>("/orders", {
       method: "POST",
       scope: "customer",
       body: {
-        addressId,
+        ...(recipientTag
+          ? { recipientTag, ...(giftMessage ? { giftMessage } : {}) }
+          : { addressId }),
         items: cart.lines.map((l) =>
           input.vendor === "store" ? { storeProductId: l.dishId, qty: l.qty } : { menuItemId: l.dishId, qty: l.qty },
         ),
@@ -478,7 +570,17 @@ export async function verifyPayment(orderId: string): Promise<Done> {
 
 /* -------------------------------------------------------------- tracking */
 
+export type TrackedGift = {
+  /** "sent": the customer paid for someone else; "received": someone sent it to them. */
+  role: "sent" | "received";
+  /** The other person's display name. */
+  otherName: string | null;
+  message: string | null;
+};
+
 export type TrackedOrder = {
+  /** Present on a gift order. */
+  gift?: TrackedGift;
   id: string;
   code: string;
   trackingToken: string | null;
@@ -529,12 +631,28 @@ export async function fetchOrder(id: string): Promise<Done<{ order: TrackedOrder
       scope: "customer",
     });
     const p = o.payments[0];
+    const g = o as unknown as {
+      isGift?: boolean;
+      senderDisplayName?: string | null;
+      recipientDisplayName?: string | null;
+      giftMessage?: string | null;
+    };
+    const received = g.isGift === true && g.senderDisplayName !== undefined;
     const riderUser = (o.rider?.user ?? null) as { name?: string | null; phone?: string | null } | null;
     const place = o.kitchenOrders[0]?.kitchen ?? o.storeOrders[0]?.store;
 
     return {
       ok: true,
       order: {
+        ...(g.isGift
+          ? {
+              gift: {
+                role: received ? ("received" as const) : ("sent" as const),
+                otherName: (received ? g.senderDisplayName : g.recipientDisplayName) ?? null,
+                message: g.giftMessage ?? null,
+              },
+            }
+          : {}),
         id: o.id,
         code: o.code,
         trackingToken: o.trackingToken,

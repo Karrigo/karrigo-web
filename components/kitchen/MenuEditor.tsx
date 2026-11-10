@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { createContext, useContext, useOptimistic, useState, useTransition } from "react";
 
 import {
@@ -15,7 +16,9 @@ import {
   uploadDishPhoto,
 } from "@/app/(order)/my-kitchen/actions";
 import { FormError, PhotoUpload, SubmitButton, field, fieldLabel } from "@/components/partners/parts";
+import { CategoryPicker } from "@/components/kitchen/CategoryPicker";
 import { cn } from "@/lib/cn";
+import { hasValidCategories, MAX_CATEGORIES, partitionKnownIds, type Category } from "@/lib/categories";
 import { formatKobo } from "@/lib/money";
 import type { Dish, MenuSection } from "@/lib/kitchen/types";
 import { Switch, panel, type Result } from "./parts";
@@ -47,6 +50,8 @@ const KITCHEN_ACTIONS: MenuActions = {
 };
 
 const ActionsContext = createContext<MenuActions>(KITCHEN_ACTIONS);
+/** Active categories for both sides; null when they could not be loaded. */
+const CategoriesContext = createContext<Category[] | null>(null);
 
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 /** Matches the upload action; checked here so a too-big photo is caught before the dish is created. */
@@ -62,12 +67,14 @@ const quiet = "text-accent-text text-site-label font-bold disabled:opacity-50";
 export function MenuEditor({
   kitchenName,
   sections,
+  categories,
   servesFood,
   servesGrocery,
   actions = KITCHEN_ACTIONS,
 }: {
   kitchenName: string;
   sections: MenuSection[];
+  categories: Category[] | null;
   servesFood: boolean;
   servesGrocery: boolean;
   actions?: MenuActions;
@@ -77,6 +84,7 @@ export function MenuEditor({
 
   return (
     <ActionsContext.Provider value={actions}>
+    <CategoriesContext.Provider value={categories}>
     <div className="gap-lg flex flex-col">
       {sections.length === 0 && (
         <div className={panel}>
@@ -95,6 +103,7 @@ export function MenuEditor({
 
       <NewSection first={sections.length === 0} servesFood={servesFood} servesGrocery={servesGrocery} />
     </div>
+    </CategoriesContext.Provider>
     </ActionsContext.Provider>
   );
 }
@@ -169,6 +178,7 @@ function Section({ section, options, showSide }: { section: MenuSection; options
             idle={`Add ${noun}`}
             working="Adding…"
             grocery={grocery}
+            side={section.type}
             save={actions.addDish}
             // Stay open: a kitchen setting up its menu adds dishes in a run.
             done={() => {}}
@@ -255,6 +265,7 @@ function DishRow({ dish, options, grocery }: { dish: Dish; options: { id: string
             idle={`Save ${noun}`}
             working="Saving…"
             grocery={grocery}
+            side={grocery ? "GROCERY" : "FOOD"}
             save={(input) => actions.saveDish(dish.id, input)}
             done={() => setEditing(false)}
           />
@@ -309,18 +320,38 @@ function DishForm({
   done,
   clearOnSave = false,
   grocery = false,
+  side,
 }: {
   grocery?: boolean;
+  /** Which categories apply: a dish takes FOOD, a product GROCERY. */
+  side: Category["type"];
   dish?: Dish;
   sectionId: string;
   options: { id: string; label: string }[];
   idle: string;
   working: string;
-  save: (input: { sectionId: string; name: string; description: string; priceNaira: number; unit: string }) => Promise<Result & { id?: string }>;
+  save: (input: { sectionId: string; name: string; description: string; priceNaira: number; unit: string; categoryIds?: string[] }) => Promise<Result & { id?: string }>;
   done: () => void;
   clearOnSave?: boolean;
 }) {
   const actions = useContext(ActionsContext);
+  const router = useRouter();
+  const allCategories = useContext(CategoriesContext);
+  const categories = allCategories && allCategories.filter((c) => c.type === side);
+  // A category switched off since this item was saved is dropped, with a note.
+  const prefill = categories ? partitionKnownIds(dish?.categoryIds ?? [], categories) : null;
+  const [categoryIds, setCategoryIds] = useState<string[]>(prefill?.ids ?? dish?.categoryIds ?? []);
+  const [droppedPrevious, setDroppedPrevious] = useState(prefill?.dropped ?? false);
+  // The list may arrive after first render (Retry): drop ids no longer active then too.
+  const [reconciled, setReconciled] = useState(!!categories);
+  const [error, setError] = useState("");
+  if (categories && !reconciled) {
+    const next = partitionKnownIds(categoryIds, categories);
+    setReconciled(true);
+    setCategoryIds(next.ids);
+    if (next.dropped) setDroppedPrevious(true);
+    if (error) setError("");
+  }
   // A new dish or product needs a photo: customers choose by picture. Editing
   // keeps the one it has, and the photo control on the row replaces it.
   const needsPhoto = !dish;
@@ -331,7 +362,6 @@ function DishForm({
   const [description, setDescription] = useState(dish?.description ?? "");
   const [unit, setUnit] = useState(dish?.unit ?? "");
   const [section, setSection] = useState(sectionId);
-  const [error, setError] = useState("");
   const [busy, startTransition] = useTransition();
 
   return (
@@ -344,8 +374,12 @@ function DishForm({
           if (!PHOTO_TYPES.includes(photo.type)) return setError("Use a JPG, PNG or WebP photo.");
           if (photo.size > PHOTO_MAX_BYTES) return setError("That photo is too large. Try a smaller one.");
         }
+        // Categories are optional. Only ids checked against the loaded list are
+        // sent; when the list never loaded, the dish's categories stay as they are.
+        const sendIds = categories ? partitionKnownIds(categoryIds, categories).ids : undefined;
+        if (sendIds && !hasValidCategories(sendIds)) return setError(`Pick up to ${MAX_CATEGORIES} categories.`);
         startTransition(async () => {
-          const result = await save({ sectionId: section, name, description, priceNaira: Number(price), unit: grocery ? unit : "" });
+          const result = await save({ sectionId: section, name, description, priceNaira: Number(price), unit: grocery ? unit : "", categoryIds: sendIds });
           if (!result.ok) return setError(result.error);
           if (needsPhoto && photo && result.id) {
             const form = new FormData();
@@ -364,6 +398,7 @@ function DishForm({
             setPrice("");
             setDescription("");
             setUnit("");
+            setCategoryIds([]);
             setPhoto(null);
             setPhotoKey((k) => k + 1);
           }
@@ -387,6 +422,14 @@ function DishForm({
           <input value={unit} onChange={(e) => { setUnit(e.target.value); setError(""); }} placeholder="1 kg, pack of 6" className={field} />
         </label>
       )}
+      <CategoryPicker
+        label={grocery ? "Product categories" : "Dish categories"}
+        categories={categories}
+        selectedIds={categoryIds}
+        onChange={(ids) => { setCategoryIds(ids); setDroppedPrevious(false); setError(""); }}
+        onRetry={() => router.refresh()}
+        droppedPrevious={droppedPrevious}
+      />
       {needsPhoto && (
         <label className={fieldLabel}>
           Photo

@@ -15,7 +15,9 @@ import {
 import type { AdminRole } from "@/lib/admin/types";
 import { Eyebrow, StatusChip, type Tone } from "@/components/admin/ui";
 import { VERIFICATION_PHOTOS_REQUIRED, photosNeededText } from "@/lib/kitchen/types";
+import { setVerified } from "@/app/(admin)/admin/moderation-actions";
 import { kitchenDetail, riderDocumentUrl, storePhotos } from "@/app/(admin)/admin/queue-actions";
+import { ConfirmAction } from "@/components/admin/ConfirmAction";
 import { KitchenProducts } from "./KitchenProducts";
 
 type Decision = "approve" | "reject" | "suspend" | "payout" | "declineAppeal";
@@ -27,6 +29,15 @@ const TONE: Record<QueueStatus, Tone> = {
   SUSPENDED: "danger",
   REJECTED: "danger",
 };
+
+/** The small "Verified" mark shown beside a kitchen's or store's name. */
+export function VerifiedBadge() {
+  return (
+    <span className="bg-accent/14 text-accent-text flex-none rounded-pill px-2 py-0.5 text-[10.5px] font-bold">
+      Verified
+    </span>
+  );
+}
 
 /**
  * One application, and the decision about it.
@@ -385,6 +396,34 @@ export function QueueDetail({
           >
             {item.requiresCac ? "Make optional" : "Require it"}
           </button>
+        </div>
+      )}
+
+      {isPartner && (
+        <div className="border-text/8 flex flex-col gap-2.5 border-b px-[22px] py-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="flex items-center gap-2 text-[13px]">
+              {item.verified ? <VerifiedBadge /> : "Not verified"}
+            </span>
+            {/* Only a super admin sets it. The server action and the backend
+                check this too — hiding the button is the courtesy. */}
+            {role === "SUPER_ADMIN" && (
+              <ConfirmAction
+                key={`${item.id}-${item.verified}`}
+                size="sm"
+                tone={item.verified ? "line" : "dark"}
+                label={item.verified ? "Remove verification" : "Verify"}
+                title={item.verified ? `Remove verification from ${item.title}?` : `Verify ${item.title}?`}
+                text={
+                  item.verified
+                    ? "The Verified label disappears for customers. Its status does not change."
+                    : "Customers will see a Verified label on it. Its status does not change."
+                }
+                confirm={item.verified ? "Remove verification" : "Verify"}
+                run={() => setVerified(kind as "kitchens" | "stores", item.id, !item.verified)}
+              />
+            )}
+          </div>
         </div>
       )}
 

@@ -13,6 +13,8 @@ export type Dish = {
   imageUrl: string | null;
   /** "kg", "pack" — how a grocery product is sold. Empty for most dishes. */
   unit: string;
+  /** Ids of the global categories this is filed under. Empty for items made before categories. */
+  categoryIds: string[];
   soldOut: boolean;
   /** Hidden from customers by Karrigo. The owner can appeal; if ops declines, the answer shows and they can appeal again. */
   flag: {

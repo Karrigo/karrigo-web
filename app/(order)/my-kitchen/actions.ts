@@ -194,7 +194,7 @@ export async function removeSection(id: string): Promise<Done> {
   }
 }
 
-type DishInput = { sectionId: string; name: string; description: string; priceNaira: number; unit: string };
+type DishInput = { sectionId: string; name: string; description: string; priceNaira: number; unit: string; categoryIds?: string[] };
 
 /** Returns the new dish's id, so its photo can be attached straight after. */
 export async function addDish(input: DishInput): Promise<Failure | { ok: true; id: string }> {

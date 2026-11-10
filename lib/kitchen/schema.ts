@@ -18,6 +18,8 @@ export const dishSchema = z.object({
   priceNaira,
   /** How a grocery product is sold, e.g. "1 kg" or "pack of 6". */
   unit: z.string().trim().max(30, { message: "Keep the unit under 30 characters." }),
+  /** Optional for old callers; the form requires 1 to 5. */
+  categoryIds: z.array(z.string().min(1)).max(5, { message: "Pick up to 5 categories." }).optional(),
 });
 
 export const sectionSchema = z.object({

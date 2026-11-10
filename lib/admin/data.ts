@@ -5,15 +5,17 @@ import type { Ticket } from "./types";
 import { ageLabel } from "./format";
 import { kitchenItem, riderItem, storeItem, type QueueItem, type QueueKind } from "./queue";
 import { staffWorkplace } from "./staff";
+import { verifiedQuery, type VerifiedFilter } from "./verified";
 
 /**
  * The queue for kitchens or riders, with what each is owed folded in from the
  * payouts-due endpoint — the same rows and arithmetic the payout itself uses,
  * so the figure on screen is the figure that will be sent.
  */
-export async function loadQueue(kind: QueueKind): Promise<QueueItem[]> {
+export async function loadQueue(kind: QueueKind, verified: VerifiedFilter = "all"): Promise<QueueItem[]> {
+  const query = { verified: verifiedQuery(verified) };
   if (kind === "stores") {
-    const stores = await api<Schemas["StoreResponseDto"][]>("/admin/stores", { scope: "admin" });
+    const stores = await api<Schemas["StoreResponseDto"][]>("/admin/stores", { scope: "admin", query });
     const details = await Promise.all(
       stores.map((store) =>
         api<Schemas["AdminStoreDetailDto"]>(`/admin/stores/${encodeURIComponent(store.id)}`, {
@@ -29,7 +31,7 @@ export async function loadQueue(kind: QueueKind): Promise<QueueItem[]> {
   const [due, items] = await Promise.all([
     api<Schemas["PayoutsDueResponseDto"]>("/admin/payouts/due", { scope: "admin" }),
     kind === "kitchens"
-      ? api<Schemas["KitchenResponseDto"][]>("/admin/kitchens", { scope: "admin" })
+      ? api<Schemas["KitchenResponseDto"][]>("/admin/kitchens", { scope: "admin", query })
       : api<Schemas["AdminRiderListItemDto"][]>("/admin/riders", { scope: "admin" }),
   ]);
 
