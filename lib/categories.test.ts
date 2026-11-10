@@ -23,7 +23,7 @@ describe("toggleCategory", () => {
 
 describe("hasValidCategories", () => {
   test("needs 1 to 5", () => {
-    expect(hasValidCategories([])).toBe(false);
+    expect(hasValidCategories([])).toBe(true);
     expect(hasValidCategories(["a"])).toBe(true);
     expect(hasValidCategories(["a", "b", "c", "d", "e", "f"])).toBe(false);
   });
@@ -53,6 +53,6 @@ describe("stale ids after a late category load", () => {
     // Only a deactivated id: nothing valid is left, so the form must block.
     const only = partitionKnownIds(["old"], [{ id: "soups" }]);
     expect(only.ids).toEqual([]);
-    expect(hasValidCategories(only.ids)).toBe(false);
+    expect(hasValidCategories(only.ids)).toBe(true);
   });
 });

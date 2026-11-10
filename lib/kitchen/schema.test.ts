@@ -23,9 +23,9 @@ describe("dishSchema categoryIds", () => {
         .success,
     ).toBe(true);
   });
-  test("rejects 0 and 6 ids", () => {
+  test("accepts 0 ids and rejects 6", () => {
     expect(dishSchema.safeParse({ ...base, categoryIds: [] }).success).toBe(
-      false,
+      true,
     );
     expect(
       dishSchema.safeParse({

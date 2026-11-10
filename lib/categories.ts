@@ -14,12 +14,12 @@ export function toggleCategory(
   return [...selected, id];
 }
 
-/** At least one, at most MAX_CATEGORIES (the API keeps the field optional for old app builds). */
+/** Categories are optional: none is fine, more than MAX_CATEGORIES is not. */
 export function hasValidCategories(
   selected: string[],
   max: number = MAX_CATEGORIES,
 ): boolean {
-  return selected.length >= 1 && selected.length <= max;
+  return selected.length <= max;
 }
 
 /** Ids to prefill an edit form with; empty when the item has none (or an old server omits the field). */

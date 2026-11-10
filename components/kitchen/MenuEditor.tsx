@@ -18,7 +18,7 @@ import {
 import { FormError, PhotoUpload, SubmitButton, field, fieldLabel } from "@/components/partners/parts";
 import { CategoryPicker } from "@/components/kitchen/CategoryPicker";
 import { cn } from "@/lib/cn";
-import { hasValidCategories, partitionKnownIds, type Category } from "@/lib/categories";
+import { hasValidCategories, MAX_CATEGORIES, partitionKnownIds, type Category } from "@/lib/categories";
 import { formatKobo } from "@/lib/money";
 import type { Dish, MenuSection } from "@/lib/kitchen/types";
 import { Switch, panel, type Result } from "./parts";
@@ -330,7 +330,7 @@ function DishForm({
   options: { id: string; label: string }[];
   idle: string;
   working: string;
-  save: (input: { sectionId: string; name: string; description: string; priceNaira: number; unit: string; categoryIds: string[] }) => Promise<Result & { id?: string }>;
+  save: (input: { sectionId: string; name: string; description: string; priceNaira: number; unit: string; categoryIds?: string[] }) => Promise<Result & { id?: string }>;
   done: () => void;
   clearOnSave?: boolean;
 }) {
@@ -374,10 +374,10 @@ function DishForm({
           if (!PHOTO_TYPES.includes(photo.type)) return setError("Use a JPG, PNG or WebP photo.");
           if (photo.size > PHOTO_MAX_BYTES) return setError("That photo is too large. Try a smaller one.");
         }
-        if (!categories) return setError("Categories haven't loaded. Retry, then pick at least 1.");
-        // Safety net: never send an id that is not in the active list.
-        const sendIds = partitionKnownIds(categoryIds, categories).ids;
-        if (!hasValidCategories(sendIds)) return setError("Pick at least 1 category.");
+        // Categories are optional. Only ids checked against the loaded list are
+        // sent; when the list never loaded, the dish's categories stay as they are.
+        const sendIds = categories ? partitionKnownIds(categoryIds, categories).ids : undefined;
+        if (sendIds && !hasValidCategories(sendIds)) return setError(`Pick up to ${MAX_CATEGORIES} categories.`);
         startTransition(async () => {
           const result = await save({ sectionId: section, name, description, priceNaira: Number(price), unit: grocery ? unit : "", categoryIds: sendIds });
           if (!result.ok) return setError(result.error);

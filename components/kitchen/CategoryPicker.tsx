@@ -27,7 +27,7 @@ export function CategoryPicker({
   const atMax = selectedIds.length >= MAX_CATEGORIES;
   return (
     <div role="group" aria-label={label}>
-      <p className="text-label font-bold">{`${label} (pick 1 to ${MAX_CATEGORIES})`}</p>
+      <p className="text-label font-bold">{`${label} (optional, up to ${MAX_CATEGORIES})`}</p>
       {categories === null ? (
         <div className="gap-sm mt-sm flex flex-col items-start">
           <p className="text-site-label text-text-secondary">
@@ -70,11 +70,6 @@ export function CategoryPicker({
           {droppedPrevious && (
             <p className="text-site-chip text-text-secondary mt-xs">
               A previous category is no longer available. Pick another.
-            </p>
-          )}
-          {selectedIds.length === 0 && categories.length > 0 && (
-            <p className="text-site-chip text-text-secondary mt-xs">
-              Pick at least 1 category
             </p>
           )}
           <p className="text-site-chip text-text-secondary mt-xs">
