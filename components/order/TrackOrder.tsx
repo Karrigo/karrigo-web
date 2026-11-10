@@ -150,7 +150,8 @@ export function TrackOrder({
   // request the kitchen has to confirm — until a rider has the food.
   const cancelNow = order.status === "PLACED" || order.status === "AWAITING_PAYMENT";
   const cancelByAsking = order.status === "ACCEPTED" || order.status === "PREPARING" || order.status === "READY";
-  const canCancel = cancelNow || (cancelByAsking && !order.cancelRequested);
+  // Paying and cancelling belong to whoever placed a gift order, not the person it was sent to.
+  const canCancel = order.gift?.role !== "received" && (cancelNow || (cancelByAsking && !order.cancelRequested));
 
   return (
     <div className="gap-xl mx-auto flex max-w-[1240px] flex-wrap items-start">
@@ -166,6 +167,14 @@ export function TrackOrder({
           <p className="text-label text-cream/50 font-bold tracking-[0.06em] uppercase">
             Order {order.code} · {order.kitchen}
           </p>
+          {order.gift && (
+            <p className="text-site-label text-cream/80 mt-sm font-semibold">
+              {order.gift.role === "received"
+                ? `${order.gift.otherName ?? "Someone"} sent you this order`
+                : `Sent to ${order.gift.otherName ?? "a friend"}`}
+              {order.gift.message ? ` — “${order.gift.message}”` : ""}
+            </p>
+          )}
           <h1 className="text-panel-small md:text-panel text-cream mt-sm">
             {cancelled
               ? order.status === "REFUNDED"
@@ -299,7 +308,7 @@ export function TrackOrder({
                 Share tracking link
               </button>
             )}
-            {canPay ? (
+            {canPay && order.gift?.role !== "received" ? (
               <Button
                 type="button"
                 variant="accent"

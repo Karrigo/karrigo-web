@@ -16,7 +16,7 @@ import {
   useHydrated,
   useOrderState,
 } from "@/lib/order/store";
-import { addressAt, placeOrder, priceCartAction, validatePromo } from "@/app/(order)/actions";
+import { addressAt, lookupRecipient, placeOrder, priceCartAction, validatePromo, type GiftRecipient } from "@/app/(order)/actions";
 import { AddressSearch } from "./AddressSearch";
 import type { Customer, PricedCart } from "@/lib/shop/types";
 import { cn } from "@/lib/cn";
@@ -47,6 +47,24 @@ export function Checkout({
   const [promo, setPromo] = useState("");
   const [discount, setDiscount] = useState<{ code: string; kobo: number } | null>(null);
   const [busy, startTransition] = useTransition();
+
+  // Sending to someone else by their Karrigo tag. They are delivered to at
+  // their own saved address, which we never see.
+  const [gift, setGift] = useState(false);
+  const [giftTag, setGiftTag] = useState("");
+  const [recipient, setRecipient] = useState<GiftRecipient | null>(null);
+  const [giftMessage, setGiftMessage] = useState("");
+  const [giftError, setGiftError] = useState("");
+  const [finding, startFinding] = useTransition();
+
+  function findRecipient() {
+    setGiftError("");
+    startFinding(async () => {
+      const result = await lookupRecipient(giftTag);
+      if (!result.ok) return setGiftError(result.error);
+      setRecipient(result.recipient);
+    });
+  }
 
   // Priced against the live menu every time the cart changes — never from
   // anything remembered on this phone.
@@ -168,7 +186,10 @@ export function Checkout({
       router.push("/login?next=/checkout");
       return;
     }
-    const parsed = deliverySchema.safeParse({ landmark, address, area, note });
+    if (gift && !recipient) return setError("Find the person you're sending this to first.");
+    const parsed = deliverySchema.safeParse(
+      gift ? { landmark: "gift", address: "", area: "gift", note: "" } : { landmark, address, area, note },
+    );
     if (!parsed.success) return setError(firstIssue(parsed.error));
     setError("");
 
@@ -188,7 +209,8 @@ export function Checkout({
         // unique per account, stands in until email collection is designed.
         email: customer.email ?? `${customer.id}@receipts.karrigo.app`,
         promoCode: discount?.code,
-        coords: coords ?? undefined,
+        coords: gift ? undefined : (coords ?? undefined),
+        ...(gift && recipient ? { recipientTag: recipient.tag, giftMessage } : {}),
       });
       if (!result.ok) return setError(result.error);
       clearCart();
@@ -205,6 +227,80 @@ export function Checkout({
         <div className="gap-lg flex min-w-0 flex-[2_1_480px] flex-col">
           <section className="bg-bg rounded-panel-sm p-xl md:p-xxl gap-md flex flex-col">
             <h2 className="text-h1 font-extrabold">Where should we bring it?</h2>
+            <div role="group" aria-label="Who is this for" className="gap-sm flex">
+              <button
+                type="button"
+                aria-pressed={!gift}
+                onClick={() => { setGift(false); setError(""); }}
+                className={cn("rounded-pill text-nav-link px-lg py-sm font-bold", !gift ? "bg-surface-raised" : "text-text-secondary")}
+              >
+                For me
+              </button>
+              <button
+                type="button"
+                aria-pressed={gift}
+                onClick={() => { setGift(true); setError(""); }}
+                className={cn("rounded-pill text-nav-link px-lg py-sm font-bold", gift ? "bg-surface-raised" : "text-text-secondary")}
+              >
+                Send to someone
+              </button>
+            </div>
+            {gift ? (
+              <div className="gap-md flex flex-col">
+                {recipient ? (
+                  <div className="bg-surface-raised rounded-field p-lg">
+                    <p className="text-site-body font-bold">
+                      Sending to {recipient.displayName ?? `@${recipient.tag}`}
+                    </p>
+                    <p className="text-site-label text-text-secondary mt-xs">
+                      @{recipient.tag} · Delivered to their saved address. You pay; they&rsquo;re told once it&rsquo;s paid.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => { setRecipient(null); setGiftTag(""); }}
+                      className="text-accent-text text-site-label mt-sm font-bold"
+                    >
+                      Pick someone else
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <label className={fieldLabel}>
+                      Their Karrigo tag
+                      <input
+                        value={giftTag}
+                        onChange={(e) => { setGiftTag(e.target.value); setGiftError(""); }}
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); findRecipient(); } }}
+                        placeholder="@terkimbi_k"
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        className={field}
+                      />
+                    </label>
+                    {giftError && (
+                      <p role="alert" className="text-danger-text text-site-label font-semibold">{giftError}</p>
+                    )}
+                    <Button type="button" variant="dark" size="site" onClick={findRecipient} disabled={finding || giftTag.trim().length === 0}>
+                      {finding ? "Looking…" : "Find them"}
+                    </Button>
+                  </>
+                )}
+                {recipient && (
+                  <label className={fieldLabel}>
+                    Message (optional)
+                    <textarea
+                      value={giftMessage}
+                      onChange={(e) => setGiftMessage(e.target.value.slice(0, 200))}
+                      rows={2}
+                      maxLength={200}
+                      placeholder="Happy birthday!"
+                      className={cn(field, "resize-y")}
+                    />
+                  </label>
+                )}
+              </div>
+            ) : (
+            <>
             <label className={fieldLabel}>
               Landmark
               <input
@@ -259,6 +355,8 @@ export function Checkout({
             >
               {coords ? "✓ Location shared — tap to update" : "Help the rider: share my location (optional)"}
             </button>
+            </>
+            )}
           </section>
 
           <section className="bg-bg rounded-panel-sm p-xl md:p-xxl">
@@ -369,7 +467,7 @@ export function Checkout({
             size="site"
             full
             className="mt-lg"
-            disabled={busy || checking || !kitchen.open || issue !== null || businessSignedIn}
+            disabled={busy || checking || !kitchen.open || issue !== null || businessSignedIn || (gift && !recipient)}
           >
             {busy
               ? "Placing your order…"
