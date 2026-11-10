@@ -14,14 +14,15 @@ import type { Customer } from "./types";
  * are signed out or are kitchen staff, who have nobody to look up. (Asking
  * anyway is a guaranteed 401 each time.)
  */
-export const getCustomer = cache(async (): Promise<Customer | null> => {
+async function loadAccount(allowRider: boolean): Promise<Customer | null> {
   if (!(await cookies()).get(SCOPES.customer.access)?.value) return null;
 
   try {
     const me = await api<Schemas["UserResponseDto"]>("/auth/me", { scope: "customer" });
     // Riders are partner-app only. A rider session left over from before this
-    // rule (or any other way in) counts as signed out on the website.
-    if ((me as { role?: string }).role === "RIDER") return null;
+    // rule (or any other way in) counts as signed out on the website, except
+    // on the rider application itself, which is the one thing a rider does here.
+    if (!allowRider && (me as { role?: string }).role === "RIDER") return null;
     return {
       id: me.id,
       name: me.name ?? "",
@@ -33,4 +34,13 @@ export const getCustomer = cache(async (): Promise<Customer | null> => {
     if (error instanceof ApiError && (error.unauthorized || error.status === 403)) return null;
     throw error;
   }
-});
+}
+
+export const getCustomer = cache(() => loadAccount(false));
+
+/**
+ * The signed-in account on the rider application pages: a customer, or a
+ * rider who has just applied. Applying on the website is allowed; staying
+ * signed in as a rider anywhere else is not (see getCustomer).
+ */
+export const getApplicant = cache(() => loadAccount(true));

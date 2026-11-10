@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Eyebrow } from "@/components/site/Eyebrow";
 import { RiderApply } from "@/components/partners/RiderApply";
 import { getRiderApplication, listBanks } from "@/lib/partners/data";
-import { getCustomer } from "@/lib/shop/session";
+import { getApplicant } from "@/lib/shop/session";
 
 export const metadata: Metadata = {
   title: "Ride with Karrigo",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
  *  by making sure there is an account — verified by the SMS code — to attach
  *  it to. */
 export default async function RiderPartnerPage() {
-  const customer = await getCustomer();
+  const customer = await getApplicant();
   if (!customer) redirect("/signup?next=/partners/rider");
 
   const [rider, banks] = await Promise.all([getRiderApplication(), listBanks()]);
