@@ -141,15 +141,22 @@ export async function lookupRecipient(tag: string): Promise<Done<{ recipient: Gi
 
 export type TagSettings = { tag: string | null; allowOrdersFromOthers: boolean };
 
-export async function getTagSettings(): Promise<TagSettings | null> {
+export async function getTagSettings(): Promise<TagSettings | { error: string; message?: string }> {
   try {
     const [me, settings] = await Promise.all([
       api<{ tag?: string | null }>("/auth/me", { scope: "customer" }),
       api<{ allowOrdersFromOthers: boolean }>("/users/me/settings", { scope: "customer" }),
     ]);
     return { tag: me.tag ?? null, allowOrdersFromOthers: settings.allowOrdersFromOthers };
-  } catch {
-    return null;
+  } catch (error) {
+    // The page only says it couldn't load; the reason belongs in the server log.
+    const reason = error instanceof ApiError ? `${error.status} ${error.message}` : String(error);
+    console.warn("[getTagSettings] failed:", reason);
+    // Tags belong to customer accounts; a rider account is refused by the API.
+    if (error instanceof ApiError && error.status === 403) {
+      return { error: reason, message: "Tags are only available on customer accounts, and this account is a rider account. Log in with a customer account to set one." };
+    }
+    return { error: reason };
   }
 }
 

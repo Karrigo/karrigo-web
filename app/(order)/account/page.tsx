@@ -13,12 +13,15 @@ export default async function AccountPage() {
   return (
     <div className="mx-auto max-w-[560px]">
       <h1 className="text-section-small md:text-section mt-sm mb-xl">Your tag</h1>
-      {settings ? (
-        <TagSettings initial={settings} />
+      {"error" in settings ? (
+        <div role="alert" className="text-danger-text text-site-body">
+          <p>{settings.message ?? "We couldn’t load your settings just now. Refresh to try again."}</p>
+          {process.env.NODE_ENV !== "production" && (
+            <p className="text-site-label mt-sm font-mono">Dev only: {settings.error}</p>
+          )}
+        </div>
       ) : (
-        <p role="alert" className="text-danger-text text-site-body">
-          We couldn&rsquo;t load your settings just now. Refresh to try again.
-        </p>
+        <TagSettings initial={settings} />
       )}
     </div>
   );
