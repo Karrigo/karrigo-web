@@ -38,6 +38,23 @@ function failure(error: unknown, fallback = "That didn't go through. Try again."
 
 /* ------------------------------------------------------------------ auth */
 
+
+const RIDER_MESSAGE =
+  "Riders sign in on the Karrigo Partner app. The website is for customers and kitchens.";
+
+/**
+ * Riders only have the partner app (a shareholder decision), so a rider's
+ * phone and password must never open a website session. The API signs them in
+ * like anyone else, so after sign-in we look at the role and, for a rider,
+ * revoke the session we just stored.
+ */
+async function refuseRider(): Promise<boolean> {
+  const me = await api<{ role?: string }>("/auth/me", { scope: "customer" });
+  if (me.role !== "RIDER") return false;
+  await logOut();
+  return true;
+}
+
 export async function logIn(phone: string, password: string): Promise<Done<{ needsOtp?: boolean }>> {
   try {
     const tokens = await api<Schemas["TokenPairResponseDto"]>("/auth/login", {
@@ -45,6 +62,7 @@ export async function logIn(phone: string, password: string): Promise<Done<{ nee
       body: { phone: e164(phone), password },
     });
     await storeTokens("customer", tokens);
+    if (await refuseRider()) return { ok: false, error: RIDER_MESSAGE };
     return { ok: true };
   } catch (error) {
     if (error instanceof ApiError && error.status === 401 && error.body.passwordNotSet) {
@@ -105,6 +123,7 @@ export async function verifyAndSetPassword(input: {
       body: { setupToken: verified.setupToken, password: input.password },
     });
     await storeTokens("customer", tokens);
+    if (await refuseRider()) return { ok: false, error: RIDER_MESSAGE };
 
     if (input.name?.trim()) {
       // A name that fails to save must not undo a successful signup.

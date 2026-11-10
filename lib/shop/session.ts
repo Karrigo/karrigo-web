@@ -19,6 +19,9 @@ export const getCustomer = cache(async (): Promise<Customer | null> => {
 
   try {
     const me = await api<Schemas["UserResponseDto"]>("/auth/me", { scope: "customer" });
+    // Riders are partner-app only. A rider session left over from before this
+    // rule (or any other way in) counts as signed out on the website.
+    if ((me as { role?: string }).role === "RIDER") return null;
     return {
       id: me.id,
       name: me.name ?? "",
