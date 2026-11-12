@@ -172,15 +172,20 @@ export async function lookupRecipient(tag: string): Promise<Done<{ recipient: Gi
   }
 }
 
-export type TagSettings = { tag: string | null; allowOrdersFromOthers: boolean };
+export type TagSettings = { tag: string | null; allowOrdersFromOthers: boolean; email: string | null; emailVerified: boolean };
 
 export async function getTagSettings(): Promise<TagSettings | { error: string; message?: string }> {
   try {
     const [me, settings] = await Promise.all([
-      api<{ tag?: string | null }>("/auth/me", { scope: "customer" }),
+      api<{ tag?: string | null; email?: string | null; emailVerifiedAt?: string | null }>("/auth/me", { scope: "customer" }),
       api<{ allowOrdersFromOthers: boolean }>("/users/me/settings", { scope: "customer" }),
     ]);
-    return { tag: me.tag ?? null, allowOrdersFromOthers: settings.allowOrdersFromOthers };
+    return {
+      tag: me.tag ?? null,
+      allowOrdersFromOthers: settings.allowOrdersFromOthers,
+      email: me.email ?? null,
+      emailVerified: !!me.emailVerifiedAt,
+    };
   } catch (error) {
     // The page only says it couldn't load; the reason belongs in the server log.
     const reason = error instanceof ApiError ? `${error.status} ${error.message}` : String(error);
@@ -203,6 +208,33 @@ export async function saveTag(tag: string): Promise<Done<{ tag: string }>> {
     return { ok: true, tag: saved.tag };
   } catch (error) {
     return failure(error, "We couldn't save your tag. Try again.");
+  }
+}
+
+/** Step 1 of setting or changing the account email: a code goes to the new address. The password is needed once a verified email exists. */
+export async function requestEmailChange(email: string, currentPassword?: string): Promise<Done> {
+  try {
+    await api("/auth/email/change/request", {
+      method: "POST",
+      scope: "customer",
+      body: { email: email.trim().toLowerCase(), ...(currentPassword ? { currentPassword } : {}) },
+    });
+    return { ok: true };
+  } catch (error) {
+    return failure(error, "We couldn't send a code. Try again.");
+  }
+}
+
+export async function confirmEmailChange(email: string, code: string): Promise<Done> {
+  try {
+    await api("/auth/email/change/confirm", {
+      method: "POST",
+      scope: "customer",
+      body: { email: email.trim().toLowerCase(), code },
+    });
+    return { ok: true };
+  } catch (error) {
+    return failure(error, "That code didn't work. Check it or ask for a new one.");
   }
 }
 

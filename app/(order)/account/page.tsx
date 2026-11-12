@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getTagSettings } from "@/app/(order)/actions";
+import { EmailSettings } from "@/components/order/EmailSettings";
 import { TagSettings } from "@/components/order/TagSettings";
 import { getCustomer } from "@/lib/shop/session";
 
-export const metadata: Metadata = { title: "Your tag · Karrigo", robots: { index: false } };
+export const metadata: Metadata = { title: "Your account · Karrigo", robots: { index: false } };
 
 export default async function AccountPage() {
   if (!(await getCustomer())) redirect("/login?next=/account");
@@ -12,7 +13,7 @@ export default async function AccountPage() {
 
   return (
     <div className="mx-auto max-w-[560px]">
-      <h1 className="text-section-small md:text-section mt-sm mb-xl">Your tag</h1>
+      <h1 className="text-section-small md:text-section mt-sm mb-xl">Your account</h1>
       {"error" in settings ? (
         <div role="alert" className="text-danger-text text-site-body">
           <p>{settings.message ?? "We couldn’t load your settings just now. Refresh to try again."}</p>
@@ -21,7 +22,10 @@ export default async function AccountPage() {
           )}
         </div>
       ) : (
-        <TagSettings initial={settings} />
+        <div className="gap-xl flex flex-col">
+          <EmailSettings initial={{ email: settings.email, emailVerified: settings.emailVerified }} />
+          <TagSettings initial={settings} />
+        </div>
       )}
     </div>
   );
