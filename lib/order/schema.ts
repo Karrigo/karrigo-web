@@ -15,18 +15,39 @@ const password = z
   .min(8, { message: "Password needs at least 8 characters." })
   .max(72, { message: "Password can be at most 72 characters." });
 
+const email = z.email({ message: "Enter a valid email address." }).trim().toLowerCase();
+
+/** Sign-in takes a phone number or an email; the server tells them apart. */
 export const loginSchema = z.object({
-  phone,
+  identifier: z
+    .string()
+    .trim()
+    .min(1, { message: "Enter your phone number or email." })
+    .refine((v) => (v.includes("@") ? z.email().safeParse(v).success : phone.safeParse(v).success), {
+      message: "Enter a valid phone number or email address.",
+    }),
   password: z.string().min(1, { message: "Enter your password." }),
 });
 
-export const signupSchema = z.object({
-  name: z.string().trim().min(2, { message: "Enter your name." }),
-  phone,
-  password,
-});
+/**
+ * The code goes to the email (WhatsApp codes can't be sent until Meta
+ * business verification passes). The phone is saved as typed, so it is
+ * asked for twice.
+ */
+export const signupSchema = z
+  .object({
+    name: z.string().trim().min(2, { message: "Enter your name." }),
+    email,
+    phone,
+    confirmPhone: phone,
+    password,
+  })
+  .refine((v) => v.phone === v.confirmPhone, {
+    message: "The two phone numbers don't match.",
+    path: ["confirmPhone"],
+  });
 
-export const resetSchema = z.object({ phone, password });
+export const resetSchema = z.object({ email, password });
 
 export const codeSchema = z
   .string()

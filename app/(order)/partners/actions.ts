@@ -70,21 +70,7 @@ function otpFailure(error: unknown, taken: string): Failure {
   return failure(error);
 }
 
-/** Step one of applying: text a code to the number the owner will use. The
- *  same call for a kitchen and a store; the login is shared. */
-export async function requestPartnerOtp(phone: string): Promise<Done<{ resendCooldownSeconds: number }>> {
-  try {
-    const result = await api<Schemas["RequestOtpResponseDto"]>("/kitchen-auth/otp/request", {
-      method: "POST",
-      body: { phone: e164(phone) },
-    });
-    return { ok: true, resendCooldownSeconds: result.resendCooldownSeconds };
-  } catch (error) {
-    return otpFailure(error, "That number already has a Karrigo partner account. Log in instead.");
-  }
-}
-
-/** Step two: email a code, to prove the address is theirs. */
+/** Email a code, to prove the address is theirs. Phones are saved as typed (WhatsApp codes can't be sent yet). */
 export async function requestPartnerEmailOtp(email: string): Promise<Done<{ resendCooldownSeconds: number }>> {
   try {
     const result = await api<Schemas["RequestOtpResponseDto"]>("/kitchen-auth/email-otp/request", {
@@ -108,7 +94,8 @@ type PartnerFields = {
   email: string;
   password: string;
   phone: string;
-  otpCode: string;
+  /** Older forms sent a phone code; the server ignores it. */
+  otpCode?: string;
   emailOtpCode: string;
   areaId: string;
 };
@@ -150,7 +137,6 @@ function partnerBody(input: PartnerFields) {
     email: input.email.trim().toLowerCase(),
     password: input.password,
     phone: e164(input.phone),
-    otpCode: input.otpCode,
     emailOtpCode: input.emailOtpCode,
     areaId: input.areaId,
   };

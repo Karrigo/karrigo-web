@@ -55,11 +55,13 @@ async function refuseRider(): Promise<boolean> {
   return true;
 }
 
-export async function logIn(phone: string, password: string): Promise<Done<{ needsOtp?: boolean }>> {
+/** `identifier` is a phone number or an email address. */
+export async function logIn(identifier: string, password: string): Promise<Done<{ needsOtp?: boolean }>> {
   try {
+    const clean = identifier.trim();
     const tokens = await api<Schemas["TokenPairResponseDto"]>("/auth/login", {
       method: "POST",
-      body: { phone: e164(phone), password },
+      body: { identifier: clean.includes("@") ? clean.toLowerCase() : e164(clean), password },
     });
     await storeTokens("customer", tokens);
     if (await refuseRider()) return { ok: false, error: RIDER_MESSAGE };
@@ -68,11 +70,11 @@ export async function logIn(phone: string, password: string): Promise<Done<{ nee
     if (error instanceof ApiError && error.status === 401 && error.body.passwordNotSet) {
       return {
         ok: false,
-        error: "This number has no password yet. Use “Forgot password” to set one.",
+        error: "This account has no password yet. Use “Forgot password” to set one.",
       };
     }
     if (error instanceof ApiError && error.status === 401) {
-      return { ok: false, error: "That number and password don't match. Check both and try again." };
+      return { ok: false, error: "That phone or email and password don't match. Check both and try again." };
     }
     return failure(error);
   }
@@ -86,17 +88,23 @@ export async function logOut(): Promise<void> {
   await clearTokens("customer");
 }
 
-/** Step one of signup, and of resetting a forgotten password. */
-export async function requestCode(phone: string, intent: "signup" | "reset"): Promise<Done> {
+/**
+ * Step one of signup, and of resetting a forgotten password. The code is
+ * emailed; a signup also sends the phone the account is created with (saved
+ * as typed, not verified — WhatsApp codes can't be sent yet).
+ */
+export async function requestCode(email: string, phone: string | undefined, intent: "signup" | "reset"): Promise<Done> {
   try {
-    await api("/auth/otp/request", { method: "POST", body: { phone: e164(phone), intent } });
+    await api("/auth/otp/request", {
+      method: "POST",
+      body: { email: email.trim().toLowerCase(), ...(phone ? { phone: e164(phone) } : {}), intent },
+    });
     return { ok: true };
   } catch (error) {
-    if (error instanceof ApiError && error.status === 409) {
-      return { ok: false, error: "That number already has an account. Log in instead." };
-    }
-    if (error instanceof ApiError && error.status === 404) {
-      return { ok: false, error: "No account with that number. Sign up instead." };
+    if (error instanceof ApiError && (error.status === 409 || error.status === 404)) {
+      // The server's own words: which of the email or phone is taken, or that
+      // this account can't reset by email yet.
+      return { ok: false, error: error.message };
     }
     return failure(error);
   }
@@ -108,7 +116,9 @@ export async function requestCode(phone: string, intent: "signup" | "reset"): Pr
  * last, once there is a session to attach it to.
  */
 export async function verifyAndSetPassword(input: {
-  phone: string;
+  email: string;
+  /** The signup phone; omitted on a reset. */
+  phone?: string;
   code: string;
   password: string;
   name?: string;
@@ -116,7 +126,11 @@ export async function verifyAndSetPassword(input: {
   try {
     const verified = await api<Schemas["PhoneVerifiedResponseDto"]>("/auth/otp/verify", {
       method: "POST",
-      body: { phone: e164(input.phone), code: input.code },
+      body: {
+        email: input.email.trim().toLowerCase(),
+        code: input.code,
+        ...(input.phone ? { phone: e164(input.phone) } : {}),
+      },
     });
     const tokens = await api<Schemas["TokenPairResponseDto"]>("/auth/password/set", {
       method: "POST",
