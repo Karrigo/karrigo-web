@@ -13,6 +13,7 @@ import {
   requestPartnerEmailOtp,
 } from "@/app/(order)/partners/actions";
 import { OtpInput } from "@/components/ui/OtpInput";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { PhoneField } from "@/components/ui/PhoneField";
 import { Screen } from "@/components/ui/Screen";
 import { cn } from "@/lib/cn";
@@ -258,7 +259,7 @@ export function PartnerApply({ side, areas }: { side: PartnerSide; areas: { id: 
       )}
       <label className={fieldLabel}>
         Password
-        <input type="password" value={form.password} onChange={set("password")} placeholder="At least 8 characters" autoComplete="new-password" className={field} />
+        <PasswordInput value={form.password} onChange={set("password")} placeholder="At least 8 characters" autoComplete="new-password" className={field} />
       </label>
 
       <PhoneField label="Phone number" hint="We can't send a code to phones yet, so please check it carefully." onDigitsChange={editPhone} />
@@ -408,8 +409,7 @@ export function PartnerLogin({ side }: { side: PartnerSide }) {
         </label>
         <label className={fieldLabel}>
           Password
-          <input
-            type="password"
+          <PasswordInput
             value={password}
             onChange={(e) => { setPassword(e.target.value); setError(""); }}
             autoComplete="current-password"
