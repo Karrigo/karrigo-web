@@ -169,12 +169,12 @@ export async function lookupRecipient(tag: string): Promise<Done<{ recipient: Gi
   }
 }
 
-export type TagSettings = { tag: string | null; allowOrdersFromOthers: boolean; email: string | null; emailVerified: boolean };
+export type TagSettings = { tag: string | null; allowOrdersFromOthers: boolean; email: string | null; emailVerified: boolean; phone: string | null; phoneVerified: boolean };
 
 export async function getTagSettings(): Promise<TagSettings | { error: string; message?: string }> {
   try {
     const [me, settings] = await Promise.all([
-      api<{ tag?: string | null; email?: string | null; emailVerifiedAt?: string | null }>("/auth/me", { scope: "customer" }),
+      api<{ tag?: string | null; email?: string | null; emailVerifiedAt?: string | null; phone?: string | null; isPhoneVerified?: boolean }>("/auth/me", { scope: "customer" }),
       api<{ allowOrdersFromOthers: boolean }>("/users/me/settings", { scope: "customer" }),
     ]);
     return {
@@ -182,6 +182,8 @@ export async function getTagSettings(): Promise<TagSettings | { error: string; m
       allowOrdersFromOthers: settings.allowOrdersFromOthers,
       email: me.email ?? null,
       emailVerified: !!me.emailVerifiedAt,
+      phone: me.phone ?? null,
+      phoneVerified: !!me.isPhoneVerified,
     };
   } catch (error) {
     // The page only says it couldn't load; the reason belongs in the server log.
@@ -229,6 +231,39 @@ export async function confirmEmailChange(email: string, code: string): Promise<D
       scope: "customer",
       body: { email: email.trim().toLowerCase(), code },
     });
+    return { ok: true };
+  } catch (error) {
+    return failure(error, "That code didn't work. Check it or ask for a new one.");
+  }
+}
+
+/** Saves the phone number (typed twice in the form). A first number needs only the session; replacing one needs the password. */
+export async function savePhone(phone: string, currentPassword?: string): Promise<Done> {
+  try {
+    await api("/auth/me/phone", {
+      method: "PATCH",
+      scope: "customer",
+      body: { phone: e164(phone), ...(currentPassword ? { currentPassword } : {}) },
+    });
+    return { ok: true };
+  } catch (error) {
+    return failure(error, "We couldn't save that number. Try again.");
+  }
+}
+
+/** Sends a WhatsApp code to the number on file. In test mode the code comes back to be filled in. */
+export async function requestPhoneCode(): Promise<Done<{ testCode?: string }>> {
+  try {
+    const sent = await api<{ testCode?: string }>("/auth/me/phone/code", { method: "POST", scope: "customer" });
+    return { ok: true, ...(sent.testCode ? { testCode: sent.testCode } : {}) };
+  } catch (error) {
+    return failure(error, "We couldn't send a code. Try again.");
+  }
+}
+
+export async function confirmPhone(code: string): Promise<Done> {
+  try {
+    await api("/auth/me/phone/confirm", { method: "POST", scope: "customer", body: { code } });
     return { ok: true };
   } catch (error) {
     return failure(error, "That code didn't work. Check it or ask for a new one.");
