@@ -23,7 +23,7 @@ const clock = new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Lagos", hour:
 function actor(e: Schemas["AuditLogEntryDto"]): string {
   if (e.actorAdmin) return e.actorAdmin.name;
   if (e.actorKitchenStaff) return staffLabel(e.actorKitchenStaff);
-  if (e.actorUser) return e.actorUser.name ?? e.actorUser.phone;
+  if (e.actorUser) return e.actorUser.name ?? e.actorUser.phone ?? "Customer";
   return "System";
 }
 

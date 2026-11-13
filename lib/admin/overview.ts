@@ -58,7 +58,7 @@ function describe(entry: Schemas["AuditLogEntryDto"]): string {
     : entry.actorKitchenStaff
       ? entry.actorKitchenStaff.name
       : entry.actorUser
-        ? (entry.actorUser.name ?? entry.actorUser.phone)
+        ? (entry.actorUser.name ?? entry.actorUser.phone ?? "Customer")
         : "System";
   const action = (AUDIT_VERB[entry.action] ?? entry.action.replace(/[._]/g, " ").toLowerCase());
   return `${who} · ${action} · ${entry.entity.toLowerCase()}`;

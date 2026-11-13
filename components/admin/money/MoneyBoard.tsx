@@ -46,7 +46,7 @@ export function MoneyBoard({ role, money }: { role: AdminRole; money: MoneyView 
       .map((r) => ({
         id: r.riderId,
         kind: "riders" as const,
-        name: r.name ?? r.phone,
+        name: r.name ?? r.phone ?? "Customer",
         meta: `Rider · ${formatKobo(nairaToKobo(r.earnedNaira + r.waitPayNaira))} trip pay − ${formatKobo(
           nairaToKobo(r.cashHeldNaira),
         )} cash held`,
@@ -65,7 +65,7 @@ export function MoneyBoard({ role, money }: { role: AdminRole; money: MoneyView 
     .filter((r) => r.cashHeldNaira > r.earnedNaira + r.waitPayNaira)
     .map((r) => ({
       id: r.riderId,
-      name: r.name ?? r.phone,
+      name: r.name ?? r.phone ?? "Customer",
       owesKobo: nairaToKobo(r.cashHeldNaira - r.earnedNaira - r.waitPayNaira),
     }));
 

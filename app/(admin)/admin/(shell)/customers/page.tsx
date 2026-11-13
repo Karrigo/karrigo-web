@@ -76,7 +76,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                 )}
               >
                 <span className="flex min-w-0 flex-col gap-1">
-                  <span className="text-text truncate text-[14px] font-semibold">{u.name ?? u.phone}</span>
+                  <span className="text-text truncate text-[14px] font-semibold">{u.name ?? u.phone ?? "Customer"}</span>
                   <span className="text-text/55 truncate text-[12px] font-light">
                     {u.phone} · {u.role === "RIDER" ? "rider" : "customer"} · {u.orderCount} order{u.orderCount === 1 ? "" : "s"}
                   </span>
@@ -106,7 +106,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
 }
 
 function UserDetail({ user }: { user: Schemas["AdminUserDetailDto"] }) {
-  const name = user.name ?? user.phone;
+  const name = user.name ?? user.phone ?? "Customer";
   return (
     <div data-theme="light" className="bg-ops-surface text-text overflow-hidden rounded-[15px]">
       <header className="border-text/8 flex items-start justify-between gap-3 border-b px-[22px] py-lg">

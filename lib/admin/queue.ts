@@ -163,7 +163,7 @@ export function riderItem(
   const plate = rider.plateNumber ?? "—";
   return {
     id: rider.id,
-    title: rider.user.name ?? rider.user.phone,
+    title: rider.user.name ?? rider.user.phone ?? "Customer",
     sub: `${vehicle} · ${plate}`,
     status: rider.verificationStatus,
     when: whenLabel(rider.documentsSubmittedAt ?? rider.createdAt),

@@ -77,7 +77,7 @@ export default async function ReviewsPage({ searchParams }: { searchParams: Prom
           />
         ) : (
           items.map((r) => {
-            const target = r.kitchen ? r.kitchen.name : r.rider ? `${r.rider.user.name ?? r.rider.user.phone} (rider)` : "—";
+            const target = r.kitchen ? r.kitchen.name : r.rider ? `${r.rider.user.name ?? r.rider.user.phone ?? "Customer"} (rider)` : "—";
             const avg = r.kitchen ?? r.rider;
             return (
               <div key={r.id} className="border-text/6 flex flex-wrap items-start justify-between gap-3 border-b px-lg py-3.5">
@@ -96,7 +96,7 @@ export default async function ReviewsPage({ searchParams }: { searchParams: Prom
                   </span>
                   {r.comment && <p className="text-text/85 text-[13px]/[1.5]">“{r.comment}”</p>}
                   <span className="text-text/55 text-[12px] font-light">
-                    {r.author.name ?? r.author.phone} ·{" "}
+                    {r.author.name ?? r.author.phone ?? "Customer"} ·{" "}
                     <Link href={`/orders?order=${r.order.code}`} className="text-accent-text font-semibold">
                       {r.order.code}
                     </Link>{" "}
