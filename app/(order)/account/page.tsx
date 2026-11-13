@@ -25,7 +25,7 @@ export default async function AccountPage() {
       ) : (
         <div className="gap-xl flex flex-col">
           <EmailSettings initial={{ email: settings.email, emailVerified: settings.emailVerified }} />
-          <PhoneSettings initial={{ phone: settings.phone, phoneVerified: settings.phoneVerified }} />
+          <PhoneSettings initial={{ phone: settings.phone }} />
           <TagSettings initial={settings} />
         </div>
       )}
