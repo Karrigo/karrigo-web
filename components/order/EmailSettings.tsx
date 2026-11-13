@@ -25,7 +25,7 @@ export function EmailSettings({ initial }: { initial: { email: string | null; em
   function send() {
     setError("");
     startTransition(async () => {
-      const result = await requestEmailChange(email, initial.emailVerified ? password : undefined);
+      const result = await requestEmailChange(email, password);
       if (!result.ok) return setError(result.error);
       setStep("code");
     });
@@ -46,8 +46,8 @@ export function EmailSettings({ initial }: { initial: { email: string | null; em
     <section className="bg-bg rounded-panel-sm p-xl gap-md flex flex-col">
       <h2 className="text-h1 font-extrabold">Email</h2>
       <p className="text-site-label text-text-secondary">
-        {initial.emailVerified && initial.email
-          ? `Currently ${initial.email}. Enter a new address and we'll send it a code.`
+        {initial.email
+          ? `Currently ${initial.email}. Enter a new address and your password, and we'll send the address a code.`
           : "Used to reset your password if you forget it. We'll send a code to check it's yours."}
       </p>
       {step === "enter" ? (
@@ -63,7 +63,7 @@ export function EmailSettings({ initial }: { initial: { email: string | null; em
               className={field}
             />
           </label>
-          {initial.emailVerified && (
+          {(
             <label className="text-label gap-sm flex flex-col font-bold">
               Current password
               <input
@@ -76,7 +76,7 @@ export function EmailSettings({ initial }: { initial: { email: string | null; em
             </label>
           )}
           {error && <p role="alert" className="text-danger-text text-site-label font-semibold">{error}</p>}
-          <Button type="button" variant="dark" size="site" onClick={send} disabled={busy || !/^\S+@\S+\.\S+$/.test(email.trim())}>
+          <Button type="button" variant="dark" size="site" onClick={send} disabled={busy || password.length === 0 || !/^\S+@\S+\.\S+$/.test(email.trim())}>
             {busy ? "Sending…" : "Send me a code"}
           </Button>
         </>
