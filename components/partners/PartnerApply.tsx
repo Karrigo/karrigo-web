@@ -11,7 +11,6 @@ import {
   kitchenLogIn,
   storeLogIn,
   requestPartnerEmailOtp,
-  requestPartnerOtp,
 } from "@/app/(order)/partners/actions";
 import { OtpInput } from "@/components/ui/OtpInput";
 import { PhoneField } from "@/components/ui/PhoneField";
@@ -115,17 +114,17 @@ export function PartnerApply({ side, areas }: { side: PartnerSide; areas: { id: 
     email: "",
     password: "",
   });
-  // National digits from PhoneField; the code only belongs to `phoneStep.sentTo`.
+  // National digits from the two PhoneFields. Nothing verifies the number
+  // (WhatsApp codes can't be sent yet), so it is typed twice.
   const [digits, setDigits] = useState("");
-  const phoneStep = useCodeStep();
+  const [confirmDigits, setConfirmDigits] = useState("");
   const emailStep = useCodeStep();
   const [error, setError] = useState("");
   const [busy, startTransition] = useTransition();
-  const [sendingPhone, startSendingPhone] = useTransition();
   const [sendingEmail, startSendingEmail] = useTransition();
 
   const phoneValid = digits.length === 10;
-  const phoneSent = phoneStep.sentTo !== null && phoneStep.sentTo === digits;
+  const phonesMatch = digits === confirmDigits;
   const email = form.email.trim().toLowerCase();
   const emailValid = /^\S+@\S+\.\S+$/.test(email);
   const emailSent = emailStep.sentTo !== null && emailStep.sentTo === email;
@@ -141,21 +140,6 @@ export function PartnerApply({ side, areas }: { side: PartnerSide; areas: { id: 
   function editPhone(next: string) {
     setDigits(next);
     setError("");
-    if (phoneStep.sentTo !== next) phoneStep.reset();
-  }
-
-  function sendPhoneCode() {
-    if (!phoneValid) return setError("Add a valid phone number first.");
-    const target = digits;
-    startSendingPhone(async () => {
-      const result = await requestPartnerOtp(`+234${target}`);
-      if (!result.ok) {
-        if (result.retryAfter) phoneStep.setWait(result.retryAfter);
-        return setError(result.error);
-      }
-      setError("");
-      phoneStep.sent(target, result.resendCooldownSeconds);
-    });
   }
 
   function sendEmailCode() {
@@ -181,8 +165,7 @@ export function PartnerApply({ side, areas }: { side: PartnerSide; areas: { id: 
     if (!phoneValid) return setError("Add a valid phone number.");
     if (!emailValid) return setError("Add an email — it's how you'll log in.");
     if (form.password.length < 8) return setError("Password needs at least 8 characters.");
-    if (!phoneSent) return setError("Send a code to your phone first.");
-    if (!/^\d{6}$/.test(phoneStep.code)) return setError("Enter the 6-digit code we texted you.");
+    if (!phonesMatch) return setError("The two phone numbers don't match.");
     if (!emailSent) return setError("Send a code to your email first.");
     if (!/^\d{6}$/.test(emailStep.code)) return setError("Enter the 6-digit code we emailed you.");
 
@@ -192,7 +175,6 @@ export function PartnerApply({ side, areas }: { side: PartnerSide; areas: { id: 
       password: form.password,
       areaId: form.areaId,
       phone: `+234${digits}`,
-      otpCode: phoneStep.code,
       emailOtpCode: emailStep.code,
     };
     startTransition(async () => {
@@ -279,32 +261,15 @@ export function PartnerApply({ side, areas }: { side: PartnerSide; areas: { id: 
         <input type="password" value={form.password} onChange={set("password")} placeholder="At least 8 characters" autoComplete="new-password" className={field} />
       </label>
 
-      <PhoneField label="Phone number" hint="We'll text a code to confirm it's yours." onDigitsChange={editPhone} />
-      <div className="gap-md flex flex-wrap items-center">
-        <button
-          type="button"
-          onClick={sendPhoneCode}
-          disabled={!phoneValid || sendingPhone || phoneStep.wait > 0}
-          className="border-field-border text-site-button rounded-pill border-[1.5px] px-xl py-md font-bold transition-colors disabled:opacity-50"
-        >
-          {sendLabel(phoneStep, sendingPhone, phoneSent)}
-        </button>
-        {phoneSent && <span className="text-site-label text-text-secondary">Code sent to +234 {digits}.</span>}
-      </div>
-      {phoneSent && (
-        <div className="gap-sm flex flex-col">
-          <span className={fieldLabel}>Code from your text</span>
-          <OtpInput
-            key={phoneStep.inputKey}
-            name="otpCode"
-            error={Boolean(error)}
-            onChange={(c) => {
-              phoneStep.setCode(c);
-              setError("");
-            }}
-          />
-        </div>
-      )}
+      <PhoneField label="Phone number" hint="We can't send a code to phones yet, so please check it carefully." onDigitsChange={editPhone} />
+      <PhoneField
+        label="Confirm phone number"
+        error={confirmDigits.length === 10 && !phonesMatch ? "The two phone numbers don't match." : undefined}
+        onDigitsChange={(next) => {
+          setConfirmDigits(next);
+          setError("");
+        }}
+      />
 
       <FormError>{error}</FormError>
       <SubmitButton busy={busy} disabled={noAreas} idle={copy.submit} working={copy.working} />

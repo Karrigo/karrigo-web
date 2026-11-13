@@ -55,7 +55,9 @@ function AuthCard({ mode: initialMode, next }: { mode: Mode; next?: string }) {
   const [flow, setFlow] = useState<Flow>(initialMode)
   const [step, setStep] = useState<"details" | "code">("details")
   const [name, setName] = useState("")
+  const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
+  const [confirmPhone, setConfirmPhone] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [wait, setWait] = useState(0)
@@ -91,7 +93,7 @@ function AuthCard({ mode: initialMode, next }: { mode: Mode; next?: string }) {
 
   function sendCode() {
     startTransition(async () => {
-      const result = await requestCode(phone, reset ? "reset" : "signup")
+      const result = await requestCode(email, reset ? undefined : phone, reset ? "reset" : "signup")
       if (!result.ok) {
         if (result.retryAfter) setWait(result.retryAfter)
         return setError(result.error)
@@ -107,10 +109,10 @@ function AuthCard({ mode: initialMode, next }: { mode: Mode; next?: string }) {
     if (busy) return
 
     if (flow === "login") {
-      const parsed = loginSchema.safeParse({ phone, password })
+      const parsed = loginSchema.safeParse({ identifier: phone, password })
       if (!parsed.success) return setError(firstIssue(parsed.error))
       return startTransition(async () => {
-        const result = await logIn(parsed.data.phone, parsed.data.password)
+        const result = await logIn(parsed.data.identifier, parsed.data.password)
         if (!result.ok) return setError(result.error)
         done()
       })
@@ -118,7 +120,9 @@ function AuthCard({ mode: initialMode, next }: { mode: Mode; next?: string }) {
 
     const parsed = (signup ? signupSchema : resetSchema).safeParse({
       name,
+      email,
       phone,
+      confirmPhone,
       password,
     })
     if (!parsed.success) return setError(firstIssue(parsed.error))
@@ -130,7 +134,8 @@ function AuthCard({ mode: initialMode, next }: { mode: Mode; next?: string }) {
     if (!parsed.success) return setError(firstIssue(parsed.error))
     startTransition(async () => {
       const result = await verifyAndSetPassword({
-        phone,
+        email,
+        phone: signup ? phone : undefined,
         code,
         password,
         name: signup ? name : undefined,
@@ -176,8 +181,8 @@ function AuthCard({ mode: initialMode, next }: { mode: Mode; next?: string }) {
           <div>
             <h2 className="text-h1 font-extrabold">Reset your password</h2>
             <p className="text-site-label text-text-secondary mt-xs">
-              We&rsquo;ll text a code to your phone, then you choose a new
-              password.
+              We&rsquo;ll email a code to the address on your account, then
+              you choose a new password.
             </p>
           </div>
         ) : (
@@ -217,7 +222,7 @@ function AuthCard({ mode: initialMode, next }: { mode: Mode; next?: string }) {
         {step === "code" ? (
           <div className="gap-md mt-xl flex flex-col">
             <p className="text-site-body">
-              We texted a 6-digit code to <strong>{phone}</strong>.
+              We emailed a 6-digit code to <strong>{email}</strong>.
             </p>
             <OtpInput error={Boolean(error)} onComplete={verify} />
             {error && (
@@ -234,7 +239,7 @@ function AuthCard({ mode: initialMode, next }: { mode: Mode; next?: string }) {
                 onClick={() => setStep("details")}
                 className="text-text-secondary"
               >
-                ← Change number
+                ← Change email
               </button>
               <button
                 type="button"
@@ -267,20 +272,70 @@ function AuthCard({ mode: initialMode, next }: { mode: Mode; next?: string }) {
                 />
               </label>
             )}
-            <label className={fieldLabel}>
-              Phone number
-              <input
-                value={phone}
-                onChange={(e) => {
-                  setPhone(e.target.value)
-                  setError("")
-                }}
-                placeholder="0803 123 4567"
-                inputMode="tel"
-                autoComplete="tel"
-                className={field}
-              />
-            </label>
+            {flow === "login" ? (
+              <label className={fieldLabel}>
+                Phone or email
+                <input
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(e.target.value)
+                    setError("")
+                  }}
+                  placeholder="0803 123 4567 or you@example.com"
+                  autoComplete="username"
+                  className={field}
+                />
+              </label>
+            ) : (
+              <label className={fieldLabel}>
+                Email
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value)
+                    setError("")
+                  }}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  className={field}
+                />
+              </label>
+            )}
+            {signup && (
+              <>
+                <label className={fieldLabel}>
+                  Phone number
+                  <input
+                    value={phone}
+                    onChange={(e) => {
+                      setPhone(e.target.value)
+                      setError("")
+                    }}
+                    placeholder="0803 123 4567"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    className={field}
+                  />
+                </label>
+                <label className={fieldLabel}>
+                  Confirm phone number
+                  <input
+                    value={confirmPhone}
+                    onChange={(e) => {
+                      setConfirmPhone(e.target.value)
+                      setError("")
+                    }}
+                    placeholder="Type it again"
+                    inputMode="tel"
+                    className={field}
+                  />
+                  <span className="text-site-label text-text-secondary font-normal">
+                    We can&rsquo;t send a code to phones yet, so please check it carefully.
+                  </span>
+                </label>
+              </>
+            )}
             <label className={fieldLabel}>
               {reset ? "New password" : "Password"}
               <input
@@ -320,7 +375,7 @@ function AuthCard({ mode: initialMode, next }: { mode: Mode; next?: string }) {
                 : flow === "login"
                   ? "Log in"
                   : signup
-                    ? "Text me a code"
+                    ? "Email me a code"
                     : "Send reset code"}
             </Button>
           </form>
