@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { changePassword, reportProblem, saveStaffPhone } from "@/app/(order)/my-kitchen/actions";
 import { kitchenLogOut } from "@/app/(order)/partners/actions";
 import { FormError, SubmitButton, field, fieldLabel } from "@/components/partners/parts";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { cn } from "@/lib/cn";
 import { Saved, panel } from "./parts";
 
@@ -111,11 +112,11 @@ export function AccountForms({ name, email, phone: savedPhone, kitchenName }: { 
       >
         <label className={fieldLabel}>
           Current password
-          <input value={current} onChange={(e) => { setCurrent(e.target.value); setPasswordError(""); setPasswordDone(""); }} type="password" autoComplete="current-password" className={field} />
+          <PasswordInput value={current} onChange={(e) => { setCurrent(e.target.value); setPasswordError(""); setPasswordDone(""); }} autoComplete="current-password" className={field} />
         </label>
         <label className={fieldLabel}>
           New password
-          <input value={next} onChange={(e) => { setNext(e.target.value); setPasswordError(""); setPasswordDone(""); }} type="password" autoComplete="new-password" className={field} />
+          <PasswordInput value={next} onChange={(e) => { setNext(e.target.value); setPasswordError(""); setPasswordDone(""); }} autoComplete="new-password" className={field} />
         </label>
         <FormError>{passwordError}</FormError>
         <Saved>{passwordDone}</Saved>

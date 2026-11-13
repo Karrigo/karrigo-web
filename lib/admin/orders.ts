@@ -115,10 +115,10 @@ export function liveOrder(o: Schemas["AdminOrderListItemDto"], now = new Date())
     paidAt: o.paidAt,
     cancelReason: o.cancelReason,
     customerId: o.customerId,
-    customerName: o.customer.name ?? o.customer.phone,
+    customerName: o.customer.name ?? o.customer.phone ?? "Customer",
     customerPhone: o.customer.phone,
     kitchens: o.kitchenOrders.map((k) => k.kitchen.name).join(" + ") || "—",
-    riderName: o.rider ? (o.rider.user.name ?? o.rider.user.phone) : null,
+    riderName: o.rider ? (o.rider.user.name ?? o.rider.user.phone ?? "Customer") : null,
     riderId: o.riderId,
     currentRiderAcceptedAt: o.currentRiderAcceptedAt,
     assignmentCount: o.assignmentCount,
@@ -283,7 +283,7 @@ export function orderDetailView(o: Schemas["AdminOrderDetailDto"]): OrderDetailV
   return {
     riderOperations: {
       riderId: o.riderId,
-      riderName: o.rider ? (o.rider.user.name ?? o.rider.user.phone) : null,
+      riderName: o.rider ? (o.rider.user.name ?? o.rider.user.phone ?? "Customer") : null,
       currentRiderAcceptedAt: o.currentRiderAcceptedAt,
       assignmentCount: o.assignmentCount,
       reassignmentCount: o.reassignmentCount,
@@ -291,7 +291,7 @@ export function orderDetailView(o: Schemas["AdminOrderDetailDto"]): OrderDetailV
     },
     riderAssignments: o.riderAssignments.map((assignment) => ({
       id: assignment.id,
-      riderName: assignment.rider.user.name ?? assignment.rider.user.phone,
+      riderName: assignment.rider.user.name ?? assignment.rider.user.phone ?? "Customer",
       status: assignment.status,
       acceptedAt: assignment.acceptedAt,
       endedAt: assignment.endedAt,

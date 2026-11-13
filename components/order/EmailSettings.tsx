@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { confirmEmailChange, requestEmailChange } from "@/app/(order)/actions";
 import { Button } from "@/components/ui/Button";
 import { OtpInput } from "@/components/ui/OtpInput";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 
 const field =
   "border-field-border focus:border-field-border-active rounded-field text-site-body bg-bg border-[1.5px] px-lg py-md font-medium outline-none transition-colors duration-(--duration-fast)";
@@ -66,8 +67,7 @@ export function EmailSettings({ initial }: { initial: { email: string | null; em
           {(
             <label className="text-label gap-sm flex flex-col font-bold">
               Current password
-              <input
-                type="password"
+              <PasswordInput
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setError(""); }}
                 autoComplete="current-password"

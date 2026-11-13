@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getTagSettings } from "@/app/(order)/actions";
 import { EmailSettings } from "@/components/order/EmailSettings";
+import { PhoneSettings } from "@/components/order/PhoneSettings";
 import { TagSettings } from "@/components/order/TagSettings";
 import { getCustomer } from "@/lib/shop/session";
 
@@ -24,6 +25,7 @@ export default async function AccountPage() {
       ) : (
         <div className="gap-xl flex flex-col">
           <EmailSettings initial={{ email: settings.email, emailVerified: settings.emailVerified }} />
+          <PhoneSettings initial={{ phone: settings.phone }} />
           <TagSettings initial={settings} />
         </div>
       )}

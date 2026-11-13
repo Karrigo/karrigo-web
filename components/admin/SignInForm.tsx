@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { cn } from "@/lib/cn";
 import { signIn, type SignInState } from "@/app/(admin)/admin/actions";
 
@@ -56,9 +57,9 @@ export function SignInForm({ signedOut }: { signedOut: boolean }) {
 
       <label className="flex flex-col gap-[7px]">
         <span className="text-text/72 text-[12.5px] font-semibold">Password</span>
-        <input
+        <PasswordInput
           name="password"
-          type="password"
+          toggleClassName="text-text/60"
           autoComplete="current-password"
           className={cn(field, state.error ? "border-danger/60" : "border-text/12")}
         />
