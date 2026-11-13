@@ -343,7 +343,7 @@ function AuthCard({ mode: initialMode, next }: { mode: Mode; next?: string }) {
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   aria-pressed={showPassword}
-                  className="text-text-2 absolute inset-y-0 right-0 flex w-12 items-center justify-center"
+                  className="text-text-secondary absolute inset-y-0 right-0 flex w-12 items-center justify-center"
                 >
                   <EyeIcon off={showPassword} />
                 </button>
