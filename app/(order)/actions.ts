@@ -55,13 +55,13 @@ async function refuseRider(): Promise<boolean> {
   return true;
 }
 
-/** `identifier` is a phone number or an email address. */
+/** `identifier` is the account's email address. */
 export async function logIn(identifier: string, password: string): Promise<Done<{ needsOtp?: boolean }>> {
   try {
     const clean = identifier.trim();
     const tokens = await api<Schemas["TokenPairResponseDto"]>("/auth/login", {
       method: "POST",
-      body: { identifier: clean.includes("@") ? clean.toLowerCase() : e164(clean), password },
+      body: { identifier: clean.toLowerCase(), password },
     });
     await storeTokens("customer", tokens);
     if (await refuseRider()) return { ok: false, error: RIDER_MESSAGE };
@@ -74,7 +74,7 @@ export async function logIn(identifier: string, password: string): Promise<Done<
       };
     }
     if (error instanceof ApiError && error.status === 401) {
-      return { ok: false, error: "That phone or email and password don't match. Check both and try again." };
+      return { ok: false, error: "That email and password don't match. Check both and try again." };
     }
     return failure(error);
   }
@@ -93,11 +93,11 @@ export async function logOut(): Promise<void> {
  * emailed; a signup also sends the phone the account is created with (saved
  * as typed, not verified — WhatsApp codes can't be sent yet).
  */
-export async function requestCode(email: string, phone: string | undefined, intent: "signup" | "reset"): Promise<Done> {
+export async function requestCode(email: string, intent: "signup" | "reset"): Promise<Done> {
   try {
     await api("/auth/otp/request", {
       method: "POST",
-      body: { email: email.trim().toLowerCase(), ...(phone ? { phone: e164(phone) } : {}), intent },
+      body: { email: email.trim().toLowerCase(), intent },
     });
     return { ok: true };
   } catch (error) {
@@ -117,8 +117,6 @@ export async function requestCode(email: string, phone: string | undefined, inte
  */
 export async function verifyAndSetPassword(input: {
   email: string;
-  /** The signup phone; omitted on a reset. */
-  phone?: string;
   code: string;
   password: string;
   name?: string;
@@ -129,7 +127,6 @@ export async function verifyAndSetPassword(input: {
       body: {
         email: input.email.trim().toLowerCase(),
         code: input.code,
-        ...(input.phone ? { phone: e164(input.phone) } : {}),
       },
     });
     const tokens = await api<Schemas["TokenPairResponseDto"]>("/auth/password/set", {
@@ -336,6 +333,8 @@ export type PlaceInput = {
   area: string;
   note: string;
   email: string;
+  /** Saved to the account first when it has none (sign-up asks only for an email). */
+  phone?: string;
   promoCode?: string;
   /** From the browser's location, when they chose to share it. */
   coords?: { lat: number; lng: number };
@@ -414,6 +413,11 @@ export async function placeOrder(
         return { ok: false, error: "Add your email so Paystack can send your receipt." };
       }
       await api("/auth/me", { method: "PATCH", scope: "customer", body: { email } });
+    }
+
+    if (!customer.phone) {
+      if (!input.phone) return { ok: false, error: "Add your phone number so your rider can reach you." };
+      await api("/auth/me/phone", { method: "PATCH", scope: "customer", body: { phone: e164(input.phone) } });
     }
 
     // A gift goes to the recipient's own saved address, chosen by the server;

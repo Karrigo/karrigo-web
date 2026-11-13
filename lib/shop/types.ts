@@ -66,7 +66,8 @@ export type ShopMenu = ShopKitchen & { side: Side; sections: ShopSection[] };
 export type Customer = {
   id: string;
   name: string;
-  phone: string;
+  /** Null until the customer adds one (sign-up asks only for an email). */
+  phone: string | null;
   email: string | null;
   /** Store credit, applied in full at the next checkout. */
   creditKobo: number;

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { formatKobo } from "@/lib/money";
-import { deliverySchema, firstIssue } from "@/lib/order/schema";
+import { deliverySchema, firstIssue, phoneSchema } from "@/lib/order/schema";
 import {
   addDish,
   clearCart,
@@ -41,6 +41,8 @@ export function Checkout({
   const router = useRouter();
   const hydrated = useHydrated();
   const { cart, landmark, address, area } = useOrderState();
+  const [phoneInput, setPhoneInput] = useState("");
+  const [confirmPhoneInput, setConfirmPhoneInput] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -180,6 +182,11 @@ export function Checkout({
     });
   }
 
+  // Sign-up asks only for an email, so the first order is where we ask for a
+  // phone number: the rider calls it at the door. Typed twice, nothing verifies it.
+  const needsPhone = !!customer && !customer.phone;
+  const phoneCheck = needsPhone ? phoneSchema.safeParse({ phone: phoneInput, confirmPhone: confirmPhoneInput }) : null;
+
   function place() {
     if (businessSignedIn) return;
     if (!customer) {
@@ -191,6 +198,7 @@ export function Checkout({
       gift ? { landmark: "gift", address: "", area: "gift", note: "" } : { landmark, address, area, note },
     );
     if (!parsed.success) return setError(firstIssue(parsed.error));
+    if (needsPhone && !phoneCheck!.success) return setError(firstIssue(phoneCheck!.error));
     setError("");
 
     startTransition(async () => {
@@ -209,6 +217,7 @@ export function Checkout({
         // unique per account, stands in until email collection is designed.
         email: customer.email ?? `${customer.id}@receipts.karrigo.app`,
         promoCode: discount?.code,
+        ...(phoneCheck?.success ? { phone: phoneCheck.data.phone } : {}),
         coords: gift ? undefined : (coords ?? undefined),
         ...(gift && recipient ? { recipientTag: recipient.tag, giftMessage } : {}),
       });
@@ -447,6 +456,29 @@ export function Checkout({
           <p className="text-site-label text-text-secondary mt-sm">
             Delivery depends on how far you are from {kitchen.name}. You&rsquo;ll see the exact fee on your order before you pay.
           </p>
+
+          {needsPhone && (
+            <div className="mt-md grid gap-sm">
+              <p className="text-site-label text-text-secondary">
+                Your rider calls this number when they reach you. We can&rsquo;t send a code to phones yet, so type it twice.
+              </p>
+              <input
+                value={phoneInput}
+                onChange={(e) => { setPhoneInput(e.target.value); setError(""); }}
+                placeholder="Phone number, e.g. 0803 123 4567"
+                inputMode="tel"
+                autoComplete="tel"
+                className="bg-bg-secondary rounded-field px-md py-sm"
+              />
+              <input
+                value={confirmPhoneInput}
+                onChange={(e) => { setConfirmPhoneInput(e.target.value); setError(""); }}
+                placeholder="Type it again"
+                inputMode="tel"
+                className="bg-bg-secondary rounded-field px-md py-sm"
+              />
+            </div>
+          )}
 
           {issue && (
             <p role="alert" className="bg-danger-bg text-danger-text rounded-field text-site-label mt-md px-md py-sm font-semibold">

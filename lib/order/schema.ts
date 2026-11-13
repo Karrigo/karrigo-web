@@ -17,31 +17,22 @@ const password = z
 
 const email = z.email({ message: "Enter a valid email address." }).trim().toLowerCase();
 
-/** Sign-in takes a phone number or an email; the server tells them apart. */
+/** Sign-in is the account's email and password. */
 export const loginSchema = z.object({
-  identifier: z
-    .string()
-    .trim()
-    .min(1, { message: "Enter your phone number or email." })
-    .refine((v) => (v.includes("@") ? z.email().safeParse(v).success : phone.safeParse(v).success), {
-      message: "Enter a valid phone number or email address.",
-    }),
+  identifier: z.string().trim().min(1, { message: "Enter your email." }).pipe(z.email({ message: "Enter a valid email address." })),
   password: z.string().min(1, { message: "Enter your password." }),
 });
 
-/**
- * The code goes to the email (WhatsApp codes can't be sent until Meta
- * business verification passes). The phone is saved as typed, so it is
- * asked for twice.
- */
-export const signupSchema = z
-  .object({
-    name: z.string().trim().min(2, { message: "Enter your name." }),
-    email,
-    phone,
-    confirmPhone: phone,
-    password,
-  })
+/** The code goes to the email; sign-up asks for nothing else. */
+export const signupSchema = z.object({
+  name: z.string().trim().min(2, { message: "Enter your name." }),
+  email,
+  password,
+});
+
+/** A phone number typed twice, for the first order (nothing verifies it yet). */
+export const phoneSchema = z
+  .object({ phone, confirmPhone: phone })
   .refine((v) => v.phone === v.confirmPhone, {
     message: "The two phone numbers don't match.",
     path: ["confirmPhone"],
