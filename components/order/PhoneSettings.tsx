@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { savePhone } from "@/app/(order)/actions";
 import { Button } from "@/components/ui/Button";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { firstIssue, phoneSchema } from "@/lib/order/schema";
 
 const field =
@@ -61,7 +62,7 @@ export function PhoneSettings({ initial }: { initial: { phone: string | null } }
       {hasPhone && (
         <label className="text-label gap-sm flex flex-col font-bold">
           Current password
-          <input type="password" value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} autoComplete="current-password" className={field} />
+          <PasswordInput value={password} onChange={(e) => { setPassword(e.target.value); setError(""); }} autoComplete="current-password" className={field} />
         </label>
       )}
       {error && <p role="alert" className="text-danger-text text-site-label font-semibold">{error}</p>}

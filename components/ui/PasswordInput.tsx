@@ -24,7 +24,11 @@ function EyeIcon({ off }: { off: boolean }) {
 }
 
 /** A password input with a show/hide eye on its right edge. Takes the usual input props. */
-export function PasswordInput({ className, ...props }: Omit<ComponentProps<"input">, "type">) {
+export function PasswordInput({
+  className,
+  toggleClassName = "text-text-secondary",
+  ...props
+}: Omit<ComponentProps<"input">, "type"> & { toggleClassName?: string }) {
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
@@ -34,7 +38,7 @@ export function PasswordInput({ className, ...props }: Omit<ComponentProps<"inpu
         onClick={() => setShow((v) => !v)}
         aria-label={show ? "Hide password" : "Show password"}
         aria-pressed={show}
-        className="text-text-secondary absolute inset-y-0 right-0 flex w-12 items-center justify-center"
+        className={cn(toggleClassName, "absolute inset-y-0 right-0 flex w-12 items-center justify-center")}
       >
         <EyeIcon off={show} />
       </button>
