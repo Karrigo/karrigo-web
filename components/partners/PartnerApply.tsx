@@ -17,6 +17,7 @@ import { PasswordInput } from "@/components/ui/PasswordInput";
 import { PhoneField } from "@/components/ui/PhoneField";
 import { Screen } from "@/components/ui/Screen";
 import { cn } from "@/lib/cn";
+import { PartnerPasswordReset } from "./PartnerPasswordReset";
 import { FormError, SubmitButton, field, fieldLabel } from "./parts";
 
 /**
@@ -316,6 +317,8 @@ export function PartnerLogin({ side }: { side: PartnerSide }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [resetting, setResetting] = useState(false);
   const [busy, startTransition] = useTransition();
 
   return (
@@ -349,6 +352,19 @@ export function PartnerLogin({ side }: { side: PartnerSide }) {
         </div>
       </Screen>
 
+      {resetting ? (
+        <PartnerPasswordReset
+          side={active}
+          initialEmail={email}
+          onBack={() => setResetting(false)}
+          onDone={() => {
+            setResetting(false);
+            setPassword("");
+            setError("");
+            setNotice("Password changed. Log in with your new one.");
+          }}
+        />
+      ) : (
       <form
         noValidate
         className="p-xxl md:p-gap-wide gap-md flex flex-col justify-center"
@@ -381,6 +397,7 @@ export function PartnerLogin({ side }: { side: PartnerSide }) {
               onClick={() => {
                 setActive(s);
                 setError("");
+                setNotice("");
                 // Keeps the address honest for a refresh or a shared link.
                 window.history.replaceState(null, "", `/partners/${s}/login`);
               }}
@@ -416,8 +433,26 @@ export function PartnerLogin({ side }: { side: PartnerSide }) {
             className={field}
           />
         </label>
+        {notice && !error && (
+          <p role="status" className="bg-accent/15 text-accent-text rounded-chip text-site-label px-lg py-md font-semibold">
+            {notice}
+          </p>
+        )}
         <FormError>{error}</FormError>
-        <SubmitButton busy={busy} idle="Log in" working="One moment…" />
+        <div className="gap-md flex flex-wrap items-center justify-between">
+          <SubmitButton busy={busy} idle="Log in" working="One moment…" />
+          <button
+            type="button"
+            onClick={() => {
+              setResetting(true);
+              setError("");
+              setNotice("");
+            }}
+            className="text-text-secondary text-site-label font-semibold"
+          >
+            Forgot password?
+          </button>
+        </div>
         <p className="text-site-label text-text-secondary border-surface-raised mt-sm border-t pt-lg">
           New here?{" "}
           <Link href={copy.newHref} className="text-accent-text font-bold">
@@ -431,6 +466,7 @@ export function PartnerLogin({ side }: { side: PartnerSide }) {
           </Link>
         </p>
       </form>
+      )}
     </div>
   );
 }

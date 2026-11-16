@@ -10,6 +10,7 @@ import { clearTokens, readRefreshToken, storeTokens } from "@/lib/api/session";
 import { registrationFailureMessage, registrationRequest } from "@/lib/partners/register-side";
 import type { DocumentKind } from "@/lib/partners/types";
 import { e164 } from "@/lib/phone";
+import { resetFailureMessage, resetInputIssue, resetPath, type PartnerResetSide } from "@/lib/partners/password-reset";
 
 /**
  * Applying to cook or ride for Karrigo. Both end in the same place — a
@@ -279,6 +280,62 @@ export async function storeLogOut(): Promise<void> {
     await api("/store-auth/logout", { method: "POST", body: { refreshToken } }).catch(() => {});
   }
   await clearTokens("store");
+}
+
+/**
+ * Forgotten password, step one: email a code. The backend answers 200 whether
+ * or not the address has an account, so the screen must not promise one.
+ */
+export async function requestPartnerPasswordReset(
+  side: PartnerResetSide,
+  email: string,
+): Promise<Done<{ resendCooldownSeconds: number }>> {
+  const issue = resetInputIssue({ email });
+  if (issue) return { ok: false, error: issue };
+  try {
+    const result = await api<{ resendCooldownSeconds?: number }>(resetPath(side, "forgot"), {
+      method: "POST",
+      body: { email: email.trim().toLowerCase() },
+    });
+    return { ok: true, resendCooldownSeconds: result?.resendCooldownSeconds ?? 60 };
+  } catch (error) {
+    if (error instanceof ApiError) {
+      const message = resetFailureMessage(error);
+      if (message) {
+        const retry = error.body.retryAfterSeconds;
+        return { ok: false, error: message, ...(typeof retry === "number" ? { retryAfter: retry } : {}) };
+      }
+    }
+    return failure(error);
+  }
+}
+
+/**
+ * Step two: the emailed code and the new password. The backend signs the
+ * account out everywhere and returns no tokens, so this does not log in: the
+ * owner logs in with the new password.
+ */
+export async function resetPartnerPassword(
+  side: PartnerResetSide,
+  input: { email: string; code: string; password: string },
+): Promise<Done> {
+  const issue = resetInputIssue({ email: input.email, code: input.code, password: input.password });
+  if (issue) return { ok: false, error: issue };
+  try {
+    await api(resetPath(side, "reset"), {
+      method: "POST",
+      body: { email: input.email.trim().toLowerCase(), code: input.code, newPassword: input.password },
+    });
+    // The reset ends every session on that account, this browser's included.
+    await Promise.all([clearTokens("kitchen"), clearTokens("store")]);
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof ApiError) {
+      const message = resetFailureMessage(error);
+      if (message) return { ok: false, error: message };
+    }
+    return failure(error);
+  }
 }
 
 /** Ends every partner session this browser holds, kitchen and store. */

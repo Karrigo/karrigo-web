@@ -79,6 +79,9 @@ function AuthCard({ mode: initialMode, next }: { mode: Mode; next?: string }) {
   // mounted, so the pill slides and typed values survive. The URL follows
   // along in place so a refresh or a shared link still opens the right tab.
   function go(nextFlow: Flow) {
+    // A password typed for one purpose must not turn into another: the wrong
+    // one from a failed login would otherwise sit in "New password".
+    if ((nextFlow === "reset") !== reset) setPassword("")
     setFlow(nextFlow)
     setStep("details")
     setError("")
