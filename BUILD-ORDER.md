@@ -65,7 +65,7 @@ Prompts below are written to paste directly into Claude Code.
 > restaurant — never a flat number. Closed restaurants appear in a separate
 > section below, never hidden. Sold-out dishes stay visible, greyed, labelled
 > "Finished for today". Build search across dishes and restaurant names with its
-> empty state and the "suggest a kitchen" form.
+> empty state.
 
 **Done when:** changing your address visibly reorders the feed and changes fees.
 

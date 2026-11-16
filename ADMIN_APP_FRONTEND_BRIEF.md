@@ -80,7 +80,7 @@ This is what the admin app is *managing and observing* — even though it won't 
 - "Running late" — a dedicated reassurance/status screen for delayed orders.
 
 **Account**
-- Addresses (list/add), edit profile, notification preferences, help, "nominate a kitchen" / "suggest a kitchen" (lead-gen for kitchen sales, not order-related).
+- Addresses (list/add), edit profile, notification preferences, help.
 
 ### 3.2 `karrigo-partner` — kitchen mode
 

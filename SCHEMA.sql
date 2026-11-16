@@ -392,16 +392,6 @@ CREATE TABLE promo_redemptions (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
--- "Suggest a kitchen" from failed searches and thin areas. Feeds ops.
-CREATE TABLE kitchen_suggestions (
-  id         uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id    uuid REFERENCES users(id) ON DELETE SET NULL,
-  name       varchar(120) NOT NULL,
-  area_text  varchar(120),
-  note       varchar(300),
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-
 -- ============================================================================
 -- SEED HINTS
 -- ============================================================================
