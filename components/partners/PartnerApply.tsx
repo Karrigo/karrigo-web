@@ -295,6 +295,11 @@ const LOGIN_COPY = {
     after: "/my-kitchen",
     newText: "Apply to cook with Karrigo",
     newHref: "/partners/kitchen",
+    headline: "Open up.",
+    accent: "We\u2019re hungry for you.",
+    body: "Take orders, change today\u2019s prices and mark a dish sold out \u2014 all from your phone.",
+    image: "/food/terkimbis-kitchen.jpg",
+    imageAlt: "A kitchen plating up an order",
   },
   store: {
     title: "Log in to your store",
@@ -305,6 +310,11 @@ const LOGIN_COPY = {
     after: "/my-store",
     newText: "Register your store",
     newHref: "/partners/store",
+    headline: "Stock up.",
+    accent: "Your shelves, their doorstep.",
+    body: "Take orders, update today\u2019s prices and mark an item out of stock \u2014 all from your phone.",
+    image: "/food/vegetable.jpg",
+    imageAlt: "Fresh vegetables on a store shelf",
   },
 } as const;
 
@@ -333,18 +343,18 @@ export function PartnerLogin({ side }: { side: PartnerSide }) {
         />
         <div className="relative">
           <h1 className="text-panel-small md:text-panel text-cream text-balance">
-            Open up.
+            {copy.headline}
             <br />
-            <span className="text-accent-text">We&rsquo;re hungry for you.</span>
+            <span className="text-accent-text">{copy.accent}</span>
           </h1>
           <p className="text-panel-body text-cream/66 mt-lg max-w-[30ch]">
-            Take orders, change today&rsquo;s prices and mark a dish sold out — all from your phone.
+            {copy.body}
           </p>
         </div>
         <div className="rounded-step bg-surface relative hidden aspect-[16/10] overflow-hidden md:block">
           <Image
-            src="/food/terkimbis-kitchen.jpg"
-            alt="A kitchen plating up an order"
+            src={copy.image}
+            alt={copy.imageAlt}
             fill
             sizes="(max-width: 768px) 100vw, 440px"
             className="object-cover"
